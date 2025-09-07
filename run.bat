@@ -1,1 +1,1 @@
-streamlit run streamlit_quiz_app.py
+streamlit run streamlit_projectk_app.py
