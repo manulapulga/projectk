@@ -256,8 +256,9 @@ if "loaded_sheets" not in st.session_state:
     try:
         st.session_state.loaded_sheets = load_questions(DEFAULT_EXCEL_PATH)
     except Exception as e:
-        st.error(f"Failed to load questions. Path tried: {DEFAULT_EXCEL_PATH}. Error: {e}")
+        st.error(f"❌ Failed to load questions.\nPath: {DEFAULT_EXCEL_PATH}\nError: {type(e).__name__}: {e}")
         st.stop()
+
 
 
 # Sidebar exam selection
