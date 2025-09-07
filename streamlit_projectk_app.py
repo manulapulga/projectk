@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 # =============================
 # Configuration
 # =============================
-DEFAULT_EXCEL_PATH = "questions.xlsx"  # fixed file
+DEFAULT_EXCEL_PATH = "data/questions.xlsx"  # fixed file
 REQUIRED_COLUMNS = [
     "Sl No",
     "Medium of Question",
