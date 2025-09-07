@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 # =============================
 # Configuration
 # =============================
-DEFAULT_EXCEL_PATH = "data/questions.xlsx"  # fixed file
+DEFAULT_EXCEL_PATH = "questions.xlsx"  # fixed file
 REQUIRED_COLUMNS = [
     "Sl No",
     "Medium of Question",
@@ -256,8 +256,9 @@ if "loaded_sheets" not in st.session_state:
     try:
         st.session_state.loaded_sheets = load_questions(DEFAULT_EXCEL_PATH)
     except Exception as e:
-        st.error("Failed to load questions. Please check the Excel file.")
+        st.error(f"Failed to load questions. Path tried: {DEFAULT_EXCEL_PATH}. Error: {e}")
         st.stop()
+
 
 # Sidebar exam selection
 st.sidebar.subheader("Exam Selection")
