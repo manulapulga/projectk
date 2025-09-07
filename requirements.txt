@@ -1,4 +1,8 @@
 streamlit
 pandas
-numpy
+fpdf2
 openpyxl
+streamlit-modal
+num2words
+firebase-admin
+numpy
