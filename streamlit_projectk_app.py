@@ -6,7 +6,9 @@ from datetime import datetime, timedelta
 # =============================
 # Configuration
 # =============================
-DEFAULT_EXCEL_PATH = "data/questions.xlsx"  # fixed file
+DATA_FOLDER = "data"
+DEFAULT_EXCEL_PATH = f"{DATA_FOLDER}/questions.xlsx"
+LOGIN_FILE_PATH = f"{DATA_FOLDER}/login_details.xlsx"
 REQUIRED_COLUMNS = [
     "Sl No",
     "Medium of Question",
@@ -40,7 +42,77 @@ REQUIRED_COLUMNS = [
 
 
 # =============================
-# Helpers
+# Authentication Helpers
+# =============================
+
+def load_login_credentials():
+    """Load username and password from Excel file."""
+    try:
+        df = pd.read_excel(LOGIN_FILE_PATH, engine="openpyxl")
+        # Normalize column names
+        df.columns = [str(col).strip().lower() for col in df.columns]
+        
+        # Check if required columns exist
+        if "username" not in df.columns or "password" not in df.columns:
+            st.error("Login file must contain 'Username' and 'Password' columns")
+            return {}
+        
+        # Create dictionary of username:password
+        credentials = {}
+        for _, row in df.iterrows():
+            username = str(row["username"]).strip()
+            password = str(row["password"]).strip()
+            if username and password:
+                credentials[username] = password
+                
+        return credentials
+    except Exception as e:
+        st.error(f"Failed to load login credentials: {e}")
+        return {}
+
+
+def authenticate_user(username, password, credentials):
+    """Authenticate user against loaded credentials."""
+    return credentials.get(username) == password
+
+
+def show_login_screen():
+    """Display login form and handle authentication."""
+    st.title("MCQ Test Platform - Login")
+    
+    # Load credentials
+    credentials = load_login_credentials()
+    
+    if not credentials:
+        st.error("No valid login credentials found. Please contact administrator.")
+        return False
+    
+    # Login form
+    with st.form("login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submit_button = st.form_submit_button("Login")
+        
+        if submit_button:
+            if not username or not password:
+                st.error("Please enter both username and password")
+                return False
+                
+            if authenticate_user(username, password, credentials):
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.success(f"Welcome, {username}!")
+                st.rerun()
+                return True
+            else:
+                st.error("Invalid username or password")
+                return False
+    
+    return False
+
+
+# =============================
+# Existing Helpers
 # =============================
 
 def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
@@ -109,6 +181,8 @@ def initialize_state():
         "end_time": None,
         "use_final_key": True,
         "exam_name": None,
+        "logged_in": False,
+        "username": None,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -238,18 +312,33 @@ def compute_results():
         "Total Marks": total,
         "Marks Obtained": obtained,
         "Answer Key Used": "Final" if use_final else "Provisional",
+        "Username": st.session_state.username,
     }
     return df, summary
 
 
 # =============================
-# UI
+# Main App
 # =============================
 
 st.set_page_config(page_title="MCQ Test Platform", layout="wide")
-st.title("Online Test Platform")
 
+# Initialize session state
 initialize_state()
+
+# Check authentication
+if not st.session_state.logged_in:
+    show_login_screen()
+    st.stop()
+
+# User is logged in - show main app
+st.title("Online Test Platform")
+st.sidebar.write(f"Logged in as: **{st.session_state.username}**")
+
+if st.sidebar.button("Logout"):
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
+    st.rerun()
 
 # Load Excel once
 if "loaded_sheets" not in st.session_state:
@@ -258,8 +347,6 @@ if "loaded_sheets" not in st.session_state:
     except Exception as e:
         st.error(f"❌ Failed to load questions.\nPath: {DEFAULT_EXCEL_PATH}\nError: {type(e).__name__}: {e}")
         st.stop()
-
-
 
 # Sidebar exam selection
 st.sidebar.subheader("Exam Selection")
@@ -318,7 +405,7 @@ else:
             st.download_button(
                 label="Download Detailed Results (CSV)",
                 data=res_df.to_csv(index=False),
-                file_name=f"{summary['Exam Name']}_results.csv",
+                file_name=f"{summary['Exam Name']}_results_{st.session_state.username}.csv",
                 mime="text/csv",
             )
         with right:
