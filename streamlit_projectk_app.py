@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import os
 from pathlib import Path
 import json
+from streamlit_autorefresh import st_autorefresh
 
 # =============================
 # Configuration & Theme
@@ -512,23 +513,42 @@ def show_folder_view_screen():
                 sheet_names = list(questions_data.keys())
                 if sheet_names:
                     st.subheader("📑 Available Exams:")
+                
+                    # 🔹 Column titles row
+                    header1, header2, header3, header4 = st.columns([3, 1, 1, 1])
+                    with header1:
+                        st.markdown("**Exam Name**")
+                    with header2:
+                        st.markdown("**Questions**")
+                    with header3:
+                        st.markdown("**Difficulty**")
+                    with header4:
+                        st.markdown("**Action**")
+                
+                    # 🔹 Actual data rows
                     for sheet_name in sheet_names:
                         df = questions_data[sheet_name]
                         col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+                
                         with col1:
                             st.write(f"**{sheet_name}**")
+                
                         with col2:
                             st.write(f"❓ {len(df)} Qs")
+                
                         with col3:
-                            # Show difficulty distribution if available
                             if "Difficulty Level" in df.columns:
                                 difficulties = df["Difficulty Level"].value_counts()
                                 st.write(f"📊 {len(difficulties)} levels")
+                            else:
+                                st.write("-")
+                
                         with col4:
                             if st.button(f"Select", key=f"select_{sheet_name}"):
                                 st.session_state.selected_sheet = sheet_name
                                 st.session_state.current_screen = "exam_config"
                                 st.rerun()
+                
                 else:
                     st.error("No sheets found in the question bank file.")
                     
@@ -574,33 +594,26 @@ def show_exam_config_screen():
     st.write(f"**📍:** `{' > '.join(current_path)}`")
     
     # Enhanced metrics
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Total Questions", len(df_exam))
+        st.metric("Total No. of Questions", len(df_exam))
     with col2:
         if "Subject" in df_exam.columns:
             subjects = df_exam["Subject"].dropna().unique()
-            st.metric("Subjects", len(subjects))
+            st.metric("No. of Subjects Covered", len(subjects))
     with col3:
-        if "Difficulty Level" in df_exam.columns:
-            difficulties = df_exam["Difficulty Level"].dropna().unique()
-            st.metric("Difficulty Levels", len(difficulties))
-    with col4:
         if "Exam Year" in df_exam.columns:
             years = df_exam["Exam Year"].dropna().unique()
-            st.metric("Years", len(years))
+            st.metric("Years Covered", len(years))
     
     st.markdown("---")
     
     # Configuration options
+
     st.subheader("⚙️ Test Configuration")
-    
+    use_final_key = True
     col1, col2 = st.columns(2)
     with col1:
-        use_final_key = st.selectbox("🔑 Answer Key Type", ["Final", "Provisional"], index=0, key="answer_key_type") == "Final"
-        shuffle_questions = st.checkbox("🔀 Shuffle Questions", value=True, key="shuffle_questions")
-        
-    with col2:
         num_questions = st.number_input(
             "❓ Number of Questions", 
             min_value=1, 
@@ -609,6 +622,7 @@ def show_exam_config_screen():
             step=1,
             key="num_questions"
         )
+    with col2:
         exam_duration = st.number_input(
             "⏰ Duration (minutes)", 
             min_value=0, 
@@ -620,11 +634,8 @@ def show_exam_config_screen():
     
     # Advanced options - Use different variable names to avoid session state conflicts
     with st.expander("🎛️ Advanced Options"):
-        col1, col2 = st.columns(2)
-        with col1:
-            enable_calculator = st.checkbox("🧮 Enable Calculator", value=True, key="enable_calculator")
+            shuffle_questions = st.checkbox("🔀 Shuffle Questions", value=True, key="shuffle_questions")
             show_live_progress = st.checkbox("📊 Show Live Progress", value=True, key="show_live_progress")
-        with col2:
             enable_auto_save = st.checkbox("💾 Auto-save Progress", value=True, key="enable_auto_save")
             full_screen_mode = st.checkbox("🖥️ Full Screen Mode", value=False, key="full_screen_mode")
     
@@ -634,7 +645,6 @@ def show_exam_config_screen():
     with col2:
         if st.button("🚀 Start Test Now", type="primary", use_container_width=True, key="start_test"):
             # Store advanced settings using different variable names
-            st.session_state.calculator_enabled = enable_calculator
             st.session_state.live_progress_enabled = show_live_progress
             st.session_state.auto_save_enabled = enable_auto_save
             
@@ -700,19 +710,19 @@ def get_question_display_info(q_num):
     
     if has_answer and is_marked:
         color = "#FFD700"  # Gold for answered and marked
-        text = "✓★"
+        text = "🟩"
         tooltip = "Answered & Marked"
     elif has_answer:
         color = LITMUSQ_THEME['success']  # Green for answered
-        text = "✓"
+        text = "✅"
         tooltip = "Answered"
     elif is_marked:
         color = LITMUSQ_THEME['primary']  # Blue for marked
-        text = "★"
+        text = "🟨"
         tooltip = "Marked for Review"
     elif status_info['status'] == 'not_answered':
         color = LITMUSQ_THEME['secondary']  # Red for not answered
-        text = "✗"
+        text = "❌"
         tooltip = "Not Answered"
     else:
         color = LITMUSQ_THEME['background']  # White for not visited
@@ -745,24 +755,20 @@ def show_question_palette():
     </style>
     
     <div class="legend-item">
-        <div class="color-box" style="background-color: #F8FAFC;"></div>
-        <span>Not Visited</span>
+    </div>
+        <span>❌: Not Answered</span>
     </div>
     <div class="legend-item">
-        <div class="color-box" style="background-color: #DC2626;"></div>
-        <span>Not Answered</span>
+    </div>
+        <span>✅: Answered</span>
     </div>
     <div class="legend-item">
-        <div class="color-box" style="background-color: #059669;"></div>
-        <span>Answered</span>
+    </div>
+        <span>🟨: Marked for Review</span>
     </div>
     <div class="legend-item">
-        <div class="color-box" style="background-color: #1E3A8A;"></div>
-        <span>Marked for Review</span>
-    </div>
-    <div class="legend-item">
-        <div class="color-box" style="background-color: #FFD700;"></div>
-        <span>Answered & Marked</span>
+   </div>
+        <span>🟩: Answered & Marked</span>
     </div>
     """, unsafe_allow_html=True)
     
@@ -811,6 +817,31 @@ def show_question_palette():
                             update_question_status(q_num, 'not_answered')
                         st.rerun()
 
+def show_live_timer():
+    """Display live timer with auto-refresh."""
+    if not st.session_state.end_time or st.session_state.submitted:
+        return "00:00:00"
+    
+    time_left = st.session_state.end_time - datetime.now()
+    
+    if time_left.total_seconds() <= 0:
+        st.session_state.submitted = True
+        return "00:00:00"
+    
+    hours, remainder = divmod(int(time_left.total_seconds()), 3600)
+    minutes, seconds = divmod(remainder, 60)
+    
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+def get_time_color(seconds_left):
+    """Get color based on time remaining."""
+    if seconds_left < 300:  # 5 minutes
+        return LITMUSQ_THEME['secondary']  # Red
+    elif seconds_left < 900:  # 15 minutes
+        return LITMUSQ_THEME['warning']    # Amber
+    else:
+        return LITMUSQ_THEME['success']    # Green
+
 def show_test_header():
     """Display test header with timer and instructions."""
     col1, col2, col3 = st.columns([2, 1, 1])
@@ -820,24 +851,28 @@ def show_test_header():
         st.write(f"**Question {st.session_state.current_idx + 1} of {len(st.session_state.quiz_questions)}**")
     
     with col2:
-        if st.session_state.end_time:
+        if st.session_state.end_time and not st.session_state.submitted:
+            # Calculate time left
             time_left = st.session_state.end_time - datetime.now()
-            if time_left.total_seconds() <= 0:
+            seconds_left = time_left.total_seconds()
+            
+            if seconds_left <= 0:
                 st.session_state.submitted = True
                 st.rerun()
             
-            hours, remainder = divmod(int(time_left.total_seconds()), 3600)
+            hours, remainder = divmod(int(seconds_left), 3600)
             minutes, seconds = divmod(remainder, 60)
+            time_color = get_time_color(seconds_left)
             
-            if time_left.total_seconds() < 300:
-                time_color = LITMUSQ_THEME['secondary']  # Red
-            elif time_left.total_seconds() < 900:
-                time_color = LITMUSQ_THEME['warning']    # Amber
-            else:
-                time_color = LITMUSQ_THEME['success']    # Green
-                
-            st.markdown(f"<h3 style='color: {time_color};'>⏰ {hours:02d}:{minutes:02d}:{seconds:02d}</h3>", 
-                       unsafe_allow_html=True)
+            # Display timer
+            st.markdown(
+                f"<h3 style='color: {time_color}; text-align: center; margin: 0;'>⏰ {hours:02d}:{minutes:02d}:{seconds:02d}</h3>", 
+                unsafe_allow_html=True
+            )
+            
+            # Auto-refresh every second
+            st_autorefresh(interval=10000, limit=100, key="timer_refresh")
+            
         else:
             st.metric("⏰ Time Left", "No Limit")
     
@@ -850,62 +885,9 @@ def show_test_header():
                         if status['marked'])
             
             st.metric("✅ Answered", f"{answered}/{total}")
-            st.metric("🔵 Marked", marked)
+            st.metric("🟨 Marked", marked)
     
     st.markdown("---")
-
-def show_calculator():
-    """Display a simple calculator."""
-    if st.sidebar.button("🧮 Calculator", key="calc_toggle"):
-        st.session_state.calculator_visible = not st.session_state.get('calculator_visible', False)
-        st.rerun()
-    
-    if st.session_state.get('calculator_visible', False):
-        st.sidebar.markdown("---")
-        st.sidebar.subheader("Calculator")
-        
-        if 'calc_display' not in st.session_state:
-            st.session_state.calc_display = "0"
-        
-        st.sidebar.text_input("Result", st.session_state.calc_display, key="calc_output", disabled=True)
-        
-        buttons = [
-            ['7', '8', '9', '/'],
-            ['4', '5', '6', '*'],
-            ['1', '2', '3', '-'],
-            ['0', '.', '=', '+'],
-            ['C', '(', ')', '⌫']
-        ]
-        
-        for row in buttons:
-            cols = st.sidebar.columns(len(row))
-            for i, btn in enumerate(row):
-                with cols[i]:
-                    if st.button(btn, key=f"calc_{btn}", use_container_width=True):
-                        handle_calculator_input(btn)
-
-def handle_calculator_input(button):
-    """Handle calculator button presses."""
-    display = st.session_state.calc_display
-    
-    if button == 'C':
-        st.session_state.calc_display = "0"
-    elif button == '⌫':
-        st.session_state.calc_display = display[:-1] if len(display) > 1 else "0"
-    elif button == '=':
-        try:
-            if any(word in display.lower() for word in ['import', 'exec', 'eval', 'open', 'file']):
-                st.session_state.calc_display = "Error"
-            else:
-                result = eval(display)
-                st.session_state.calc_display = str(result)
-        except:
-            st.session_state.calc_display = "Error"
-    else:
-        if display == "0" or display == "Error":
-            st.session_state.calc_display = button
-        else:
-            st.session_state.calc_display += button
 
 def show_question_interface():
     """Display the current question with professional interface."""
@@ -975,7 +957,7 @@ def show_question_interface():
                  on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
     
     with col3:
-        button_text = "⭐ Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "❌ Unmark Review"
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "❌ Unmark Review"
         st.button(button_text, use_container_width=True,
                  key=f"mark_{current_idx}",
                  on_click=lambda: toggle_mark_review(current_idx))
@@ -1033,10 +1015,6 @@ def show_quiz_screen():
                 st.rerun()
     
     show_question_palette()
-    
-    # Use the correct session state variable name for calculator
-    if st.session_state.get('calculator_enabled', True):
-        show_calculator()
     
     show_test_header()
     
@@ -1212,7 +1190,7 @@ def show_results_screen():
                     status_info = st.session_state.question_status[i]
                     status_text = status_info['status'].replace('_', ' ').title()
                     if status_info['marked']:
-                        status_text += " ⭐"
+                        status_text += " 🟨"
                     st.write(f"**Status:** {status_text}")
 
 # =============================
@@ -1332,14 +1310,13 @@ def show_platform_guide():
     - **Professional Testing Interface** with real-time progress tracking
     - **Advanced Analytics** with performance dashboard
     - **Question Palette** with color-coded status
-    - **Built-in Calculator** for complex calculations
     - **Detailed Results** with explanations
     
-    ### 🎨 Color Coding
-    - 🟢 **Green**: Answered questions
-    - 🔴 **Red**: Not answered
-    - 🔵 **Blue**: Marked for review
-    - 🟡 **Yellow**: Answered & marked
+    ### Legends
+    - ✅: Answered questions
+    - ❌: Not answered
+    - 🟨: Marked for review
+    - 🟩 Answered & marked
     - ⚪ **White**: Not visited
     
     ### ⚡ Quick Tips
@@ -1399,12 +1376,10 @@ def initialize_state():
         "folder_structure": {},
         "quiz_duration": 0,
         "question_status": {},
-        "calculator_enabled": True,
         "live_progress_enabled": True,
         "auto_save_enabled": True,
         "show_detailed_analysis": False,
         "calc_display": "0",
-        "calculator_visible": False,
         "show_leave_confirmation": False,
     }
     for k, v in defaults.items():
