@@ -4,17 +4,146 @@ import numpy as np
 from datetime import datetime, timedelta
 import os
 from pathlib import Path
+import json
 
 # =============================
-# Configuration
+# Configuration & Theme
 # =============================
 QUESTION_DATA_FOLDER = "Question_Data_Folder"
 LOGIN_FILE_PATH = "data/login_details.xlsx"
+USER_PROGRESS_FOLDER = "user_progress"
+
+# LitmusQ Color Theme
+LITMUSQ_THEME = {
+    "primary": "#1E3A8A",      # Dark blue
+    "secondary": "#DC2626",    # Red
+    "accent": "#3B82F6",       # Light blue
+    "background": "#F8FAFC",
+    "text": "#1E293B",
+    "success": "#059669",      # Green for correct answers
+    "warning": "#D97706",      # Amber for warnings
+    "light_bg": "#EFF6FF"      # Light blue background
+}
 
 # =============================
-# Authentication Helpers (unchanged)
+# Custom CSS Injection
 # =============================
+def inject_custom_css():
+    st.markdown(f"""
+    <style>
+    .main .block-container {{
+        padding-top: 2rem;
+    }}
+    
+    /* Primary Buttons */
+    .stButton>button {{
+        background-color: {LITMUSQ_THEME['primary']};
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }}
+    .stButton>button:hover {{
+        background-color: {LITMUSQ_THEME['accent']};
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }}
+    
+    /* Secondary Buttons */
+    .secondary-button>button {{
+        background-color: {LITMUSQ_THEME['light_bg']};
+        color: {LITMUSQ_THEME['primary']};
+        border: 2px solid {LITMUSQ_THEME['primary']};
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+    }}
+    
+    /* Alerts */
+    .stAlert {{
+        border-left: 4px solid {LITMUSQ_THEME['secondary']};
+        background-color: {LITMUSQ_THEME['light_bg']};
+    }}
+    
+    /* Metrics */
+    .metric-container {{
+        background-color: {LITMUSQ_THEME['background']};
+        padding: 1rem;
+        border-radius: 10px;
+        border-left: 4px solid {LITMUSQ_THEME['primary']};
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }}
+    
+    /* Progress Bar */
+    .stProgress > div > div > div > div {{
+        background-color: {LITMUSQ_THEME['primary']};
+    }}
+    
+    /* Radio Buttons */
+    .stRadio > div {{
+        background-color: {LITMUSQ_THEME['light_bg']};
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #E2E8F0;
+    }}
+    
+    /* Sidebar */
+    .css-1d391kg {{
+        background-color: {LITMUSQ_THEME['light_bg']};
+    }}
+    
+    /* Custom Header */
+    .litmusq-header {{
+        background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
+        border-radius: 10px;
+        color: white;
+        padding: 2rem;
+        text-align: center;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }}
+    
+    /* Badge Styles */
+    .badge {{
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background-color: {LITMUSQ_THEME['accent']};
+        color: white;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin: 0.1rem;
+    }}
+    
+    /* Question Card */
+    .question-card {{
+        background-color: {LITMUSQ_THEME['light_bg']};
+        padding: 1.5rem;
+        border-radius: 10px;
+        border-left: 4px solid {LITMUSQ_THEME['primary']};
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }}
+    </style>
+    """, unsafe_allow_html=True)
 
+# =============================
+# Branded Header
+# =============================
+def show_litmusq_header(subtitle="Professional MCQ Assessment Platform"):
+    st.markdown(f"""
+    <div class="litmusq-header">
+        <h1 style="margin: 0; font-size: 3rem; font-weight: 700;">🧪 LitmusQ</h1>
+        <p style="margin: 0; opacity: 0.9; font-size: 1.2rem;">{subtitle}</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# =============================
+# Authentication Helpers
+# =============================
 def load_login_credentials():
     """Load username and password from Excel file."""
     try:
@@ -41,7 +170,8 @@ def authenticate_user(username, password, credentials):
     return credentials.get(username) == password
 
 def show_login_screen():
-    st.title("MCQ Test Platform - Login")
+    """Enhanced login screen with LitmusQ branding."""
+    show_litmusq_header("Assess Better. Learn Faster.")
     
     credentials = load_login_credentials()
     
@@ -49,32 +179,239 @@ def show_login_screen():
         st.error("No valid login credentials found. Please contact administrator.")
         return False
     
-    with st.form("login_form"):
-        username = st.text_input("Username")
-        password = st.text_input("Password", type="password")
-        submit_button = st.form_submit_button("Login")
-        
-        if submit_button:
-            if not username or not password:
-                st.error("Please enter both username and password")
-                return False
+    # Center the login form
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        with st.container():
+            st.markdown("### 🔐 Please Login")
+            
+            with st.form("login_form"):
+                username = st.text_input("👤 Username", placeholder="Enter your username", key="login_username")
+                password = st.text_input("🔒 Password", type="password", placeholder="Enter your password", key="login_password")
+                submit_button = st.form_submit_button("🚀 Login to LitmusQ", use_container_width=True)
                 
-            if authenticate_user(username, password, credentials):
-                st.session_state.logged_in = True
-                st.session_state.username = username
-                st.success(f"Welcome, {username}!")
-                st.rerun()
-                return True
-            else:
-                st.error("Invalid username or password")
-                return False
+                if submit_button:
+                    if not username or not password:
+                        st.error("Please enter both username and password")
+                        return False
+                        
+                    if authenticate_user(username, password, credentials):
+                        st.session_state.logged_in = True
+                        st.session_state.username = username
+                        st.success(f"🎉 Welcome back, {username}!")
+                        # Initialize user progress
+                        initialize_user_progress(username)
+                        st.rerun()
+                    else:
+                        st.error("❌ Invalid username or password")
+                        return False
+    
+    # Footer
+    st.markdown("---")
+    col1, col2, col3 = st.columns(3)
+    with col2:
+        st.markdown(
+            "<div style='text-align: center; color: #64748B;'>"
+            "🧪 LitmusQ v1.0 • Secure MCQ Test Platform"
+            "</div>", 
+            unsafe_allow_html=True
+        )
     
     return False
 
 # =============================
-# Folder Navigation System (unchanged)
+# User Progress & Analytics
 # =============================
+def ensure_user_progress_folder():
+    """Ensure user progress folder exists."""
+    os.makedirs(USER_PROGRESS_FOLDER, exist_ok=True)
 
+def get_user_progress_file(username):
+    """Get user progress file path."""
+    return os.path.join(USER_PROGRESS_FOLDER, f"user_{username}.json")
+
+def initialize_user_progress(username):
+    """Initialize user progress data."""
+    ensure_user_progress_folder()
+    progress_file = get_user_progress_file(username)
+    
+    if not os.path.exists(progress_file):
+        default_progress = {
+            "username": username,
+            "tests_taken": 0,
+            "total_score": 0,
+            "average_score": 0,
+            "test_history": [],
+            "achievements": [],
+            "weak_areas": [],
+            "strong_areas": [],
+            "join_date": datetime.now().isoformat()
+        }
+        save_user_progress(username, default_progress)
+
+def save_user_progress(username, progress_data):
+    """Save user progress to file."""
+    try:
+        progress_file = get_user_progress_file(username)
+        with open(progress_file, 'w') as f:
+            json.dump(progress_data, f, indent=2)
+    except Exception as e:
+        st.error(f"Error saving progress: {e}")
+
+def load_user_progress(username):
+    """Load user progress from file."""
+    try:
+        progress_file = get_user_progress_file(username)
+        if os.path.exists(progress_file):
+            with open(progress_file, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        st.error(f"Error loading progress: {e}")
+    return None
+
+def update_user_progress(test_results):
+    """Update user progress with new test results."""
+    username = st.session_state.username
+    progress = load_user_progress(username)
+    
+    if progress:
+        # Update basic stats
+        progress["tests_taken"] += 1
+        progress["total_score"] += test_results["Marks Obtained"]
+        progress["average_score"] = progress["total_score"] / progress["tests_taken"]
+        
+        # Add to test history
+        test_history_entry = {
+            "exam_name": test_results["Exam Name"],
+            "date": datetime.now().isoformat(),
+            "score": test_results["Marks Obtained"],
+            "total_marks": test_results["Total Marks"],
+            "percentage": (test_results["Marks Obtained"] / test_results["Total Marks"]) * 100,
+            "correct_answers": test_results["Correct"],
+            "total_questions": test_results["Total Questions"]
+        }
+        progress["test_history"].append(test_history_entry)
+        
+        # Update achievements
+        update_achievements(progress, test_results)
+        
+        # Save updated progress
+        save_user_progress(username, progress)
+
+def update_achievements(progress, test_results):
+    """Update user achievements based on test performance."""
+    achievements = progress.get("achievements", [])
+    
+    # First test achievement
+    if progress["tests_taken"] == 1 and "first_test" not in achievements:
+        achievements.append("first_test")
+    
+    # Perfect score achievement
+    if (test_results["Marks Obtained"] == test_results["Total Marks"] and 
+        "perfect_score" not in achievements):
+        achievements.append("perfect_score")
+    
+    # Speed demon (if time was limited and finished early)
+    if (st.session_state.quiz_duration > 0 and 
+        st.session_state.end_time and 
+        datetime.now() < st.session_state.end_time - timedelta(minutes=5) and
+        "speed_demon" not in achievements):
+        achievements.append("speed_demon")
+    
+    progress["achievements"] = achievements
+
+def show_student_dashboard():
+    """Display student dashboard with progress analytics."""
+    show_litmusq_header("Your Learning Dashboard")
+    
+    # Home button
+    if st.button("🏠 Home", use_container_width=False, key="dashboard_home"):
+        st.session_state.current_screen = "home"
+        st.rerun()
+    
+    username = st.session_state.username
+    progress = load_user_progress(username)
+    
+    if not progress:
+        st.info("📊 Start taking tests to see your progress analytics!")
+        return
+    
+    # Key Metrics
+    st.subheader("📈 Performance Overview")
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Tests Taken", progress["tests_taken"])
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        avg_score = progress.get("average_score", 0)
+        st.metric("Average Score", f"{avg_score:.1f}")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        total_correct = sum(entry["correct_answers"] for entry in progress["test_history"])
+        total_questions = sum(entry["total_questions"] for entry in progress["test_history"])
+        accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
+        st.metric("Overall Accuracy", f"{accuracy:.1f}%")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Achievements", len(progress.get("achievements", [])))
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Recent Test History
+    if progress["test_history"]:
+        st.subheader("📋 Recent Tests")
+        recent_tests = progress["test_history"][-5:]  # Last 5 tests
+        
+        for test in reversed(recent_tests):
+            test_date = datetime.fromisoformat(test["date"]).strftime("%Y-%m-%d %H:%M")
+            percentage = test["percentage"]
+            
+            col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+            with col1:
+                st.write(f"**{test['exam_name']}**")
+            with col2:
+                st.write(f"Score: {test['score']}/{test['total_marks']}")
+            with col3:
+                st.write(f"Accuracy: {percentage:.1f}%")
+            with col4:
+                st.write(test_date)
+            
+            st.progress(int(percentage))
+            st.markdown("---")
+    
+    # Achievements
+    if progress.get("achievements"):
+        st.subheader("🏆 Your Achievements")
+        achievement_data = {
+            "first_test": {"emoji": "🎯", "name": "First Test", "desc": "Completed your first test"},
+            "perfect_score": {"emoji": "🏆", "name": "Perfect Score", "desc": "Scored 100% on a test"},
+            "speed_demon": {"emoji": "⚡", "name": "Speed Demon", "desc": "Finished test with 5+ minutes remaining"}
+        }
+        
+        cols = st.columns(3)
+        for idx, achievement in enumerate(progress["achievements"]):
+            with cols[idx % 3]:
+                if achievement in achievement_data:
+                    data = achievement_data[achievement]
+                    st.markdown(f"""
+                    <div style="text-align: center; padding: 1rem; background: {LITMUSQ_THEME['light_bg']}; 
+                                border-radius: 10px; border: 2px solid {LITMUSQ_THEME['primary']};">
+                        <div style="font-size: 2rem;">{data['emoji']}</div>
+                        <h4>{data['name']}</h4>
+                        <p style="font-size: 0.8rem; color: #64748B;">{data['desc']}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+# =============================
+# Enhanced Folder Navigation
+# =============================
 def scan_folder_structure():
     """Scan the Question_Data_Folder and return the folder structure."""
     if not os.path.exists(QUESTION_DATA_FOLDER):
@@ -115,14 +452,21 @@ def display_folder_navigation(folder_structure, current_path=None, level=0):
         has_children = any(k != '_files' for k in item_content.keys())
         has_qb = '_files' in item_content and 'QB.xlsx' in item_content['_files']
         
+        # Use columns for better layout
         col1, col2 = st.columns([1, 20])
         with col1:
             if has_qb:
-                st.write("📁")
+                st.markdown(f"<span style='color: {LITMUSQ_THEME['secondary']}; font-size: 1.2rem;'></span>", unsafe_allow_html=True)
             else:
-                st.write("📂")
+                st.markdown(f"<span style='color: {LITMUSQ_THEME['primary']}; font-size: 1.2rem;'></span>", unsafe_allow_html=True)
         with col2:
-            if st.button(item_name, key=f"nav_{folder_key}", use_container_width=True):
+            # Use custom button styling
+            if st.button(
+                item_name, 
+                key=f"nav_{folder_key}", 
+                use_container_width=True,
+                help="Click to explore this folder" + (" (Contains Question Bank)" if has_qb else "")
+            ):
                 st.session_state.current_path = current_path + [item_name]
                 st.session_state.current_screen = "folder_view"
                 st.rerun()
@@ -131,10 +475,17 @@ def show_folder_view_screen():
     """Show contents of the currently selected folder."""
     current_path = st.session_state.get('current_path', [])
     
-    breadcrumb = " > ".join([QUESTION_DATA_FOLDER] + current_path)
-    st.write(f"**Location:** {breadcrumb}")
+    # Home and Navigation buttons
+    col1, col2 = st.columns([1, 4])
+    with col1:
+        if st.button("🏠 Home", use_container_width=True, key="folder_home"):
+            st.session_state.current_screen = "home"
+            st.rerun()
+    with col2:
+        breadcrumb = " > ".join(current_path) if current_path else ""
+        st.write(f"**📍:** `{breadcrumb}`")
     
-    if st.button("← Back"):
+    if st.button("← Back", use_container_width=False, key="folder_back"):
         if len(current_path) > 0:
             st.session_state.current_path = current_path[:-1]
         else:
@@ -149,7 +500,7 @@ def show_folder_view_screen():
     has_qb = '_files' in current_level and 'QB.xlsx' in current_level['_files']
     
     if has_qb:
-        st.success("🎯 Question bank found! You can start a test from this folder.")
+        st.success("🎯 **Question bank found!** You can start a test from this folder.")
         
         qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
         try:
@@ -160,15 +511,20 @@ def show_folder_view_screen():
                 
                 sheet_names = list(questions_data.keys())
                 if sheet_names:
-                    st.subheader("Available Exams in this Question Bank:")
+                    st.subheader("📑 Available Exams:")
                     for sheet_name in sheet_names:
                         df = questions_data[sheet_name]
-                        col1, col2, col3 = st.columns([3, 1, 1])
+                        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
                         with col1:
                             st.write(f"**{sheet_name}**")
                         with col2:
-                            st.write(f"{len(df)} questions")
+                            st.write(f"❓ {len(df)} Qs")
                         with col3:
+                            # Show difficulty distribution if available
+                            if "Difficulty Level" in df.columns:
+                                difficulties = df["Difficulty Level"].value_counts()
+                                st.write(f"📊 {len(difficulties)} levels")
+                        with col4:
                             if st.button(f"Select", key=f"select_{sheet_name}"):
                                 st.session_state.selected_sheet = sheet_name
                                 st.session_state.current_screen = "exam_config"
@@ -177,15 +533,18 @@ def show_folder_view_screen():
                     st.error("No sheets found in the question bank file.")
                     
         except Exception as e:
-            st.error(f"Error loading question bank: {e}")
+            st.error(f"❌ Error loading question bank: {e}")
     
+    # Show subfolders
     subfolders = {k: v for k, v in current_level.items() if k != '_files'}
     if subfolders:
-        st.subheader("Subfolders:")
         display_folder_navigation(subfolders, current_path)
     elif not has_qb:
-        st.info("This folder is empty. Add subfolders or a QB.xlsx file.")
+        st.info("ℹ️ This folder is empty. Add subfolders or a QB.xlsx file.")
 
+# =============================
+# Enhanced Exam Configuration
+# =============================
 def show_exam_config_screen():
     """Configure exam settings before starting."""
     current_path = st.session_state.get('current_path', [])
@@ -200,59 +559,92 @@ def show_exam_config_screen():
     
     df_exam = qb_data[sheet_name]
     
-    if st.button("← Back to Folder"):
-        st.session_state.current_screen = "folder_view"
-        st.rerun()
-    
-    st.title(f"Configure Test: {sheet_name}")
-    st.write(f"**Location:** {QUESTION_DATA_FOLDER} > {' > '.join(current_path)}")
-    st.write(f"Total questions available: {len(df_exam)}")
-    
-    col1, col2, col3 = st.columns(3)
+    # Add Home and Back buttons
+    col1, col2 = st.columns(2)
     with col1:
+        if st.button("🏠 Home", use_container_width=True, key="config_home"):
+            st.session_state.current_screen = "home"
+            st.rerun()
+    with col2:
+        if st.button("← Back to Folder", use_container_width=True, key="config_back"):
+            st.session_state.current_screen = "folder_view"
+            st.rerun()
+    
+    show_litmusq_header(f"Configure Test: {sheet_name}")
+    st.write(f"**📍:** `{' > '.join(current_path)}`")
+    
+    # Enhanced metrics
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Questions", len(df_exam))
+    with col2:
         if "Subject" in df_exam.columns:
             subjects = df_exam["Subject"].dropna().unique()
             st.metric("Subjects", len(subjects))
-    with col2:
+    with col3:
         if "Difficulty Level" in df_exam.columns:
             difficulties = df_exam["Difficulty Level"].dropna().unique()
             st.metric("Difficulty Levels", len(difficulties))
-    with col3:
+    with col4:
         if "Exam Year" in df_exam.columns:
             years = df_exam["Exam Year"].dropna().unique()
             st.metric("Years", len(years))
     
     st.markdown("---")
     
+    # Configuration options
+    st.subheader("⚙️ Test Configuration")
+    
     col1, col2 = st.columns(2)
     with col1:
-        use_final_key = st.selectbox("Answer key to use", ["Final", "Provisional"], index=0) == "Final"
+        use_final_key = st.selectbox("🔑 Answer Key Type", ["Final", "Provisional"], index=0, key="answer_key_type") == "Final"
+        shuffle_questions = st.checkbox("🔀 Shuffle Questions", value=True, key="shuffle_questions")
+        
+    with col2:
         num_questions = st.number_input(
-            "Number of questions", 
+            "❓ Number of Questions", 
             min_value=1, 
             max_value=len(df_exam),
             value=min(20, len(df_exam)), 
-            step=1
+            step=1,
+            key="num_questions"
         )
-    with col2:
-        duration_minutes = st.number_input(
-            "Duration (minutes)", 
+        exam_duration = st.number_input(
+            "⏰ Duration (minutes)", 
             min_value=0, 
             max_value=600, 
             value=60, 
-            help="0 means no timer"
+            help="Set to 0 for no time limit",
+            key="exam_duration_input"
         )
-        shuffle_questions = st.checkbox("Shuffle questions", value=True)
     
-    if st.button("Start Test", type="primary"):
-        start_quiz(df_exam, num_questions, duration_minutes, use_final_key, sheet_name)
-        st.session_state.current_screen = "quiz"
-        st.rerun()
+    # Advanced options - Use different variable names to avoid session state conflicts
+    with st.expander("🎛️ Advanced Options"):
+        col1, col2 = st.columns(2)
+        with col1:
+            enable_calculator = st.checkbox("🧮 Enable Calculator", value=True, key="enable_calculator")
+            show_live_progress = st.checkbox("📊 Show Live Progress", value=True, key="show_live_progress")
+        with col2:
+            enable_auto_save = st.checkbox("💾 Auto-save Progress", value=True, key="enable_auto_save")
+            full_screen_mode = st.checkbox("🖥️ Full Screen Mode", value=False, key="full_screen_mode")
+    
+    # Start test button
+    st.markdown("---")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        if st.button("🚀 Start Test Now", type="primary", use_container_width=True, key="start_test"):
+            # Store advanced settings using different variable names
+            st.session_state.calculator_enabled = enable_calculator
+            st.session_state.live_progress_enabled = show_live_progress
+            st.session_state.auto_save_enabled = enable_auto_save
+            
+            start_quiz(df_exam, num_questions, exam_duration, use_final_key, sheet_name)
+            st.session_state.current_screen = "quiz"
+            st.rerun()
 
 # =============================
-# FIXED: Professional Test Interface with Working Color Coding
+# Professional Test Interface
 # =============================
-
 def initialize_question_status():
     """Initialize question status for all questions."""
     total_questions = len(st.session_state.quiz_questions)
@@ -260,10 +652,11 @@ def initialize_question_status():
     
     for i in range(total_questions):
         st.session_state.question_status[i] = {
-            'status': 'not_visited',  # not_visited, not_answered, answered, marked_review, answered_marked
+            'status': 'not_visited',
             'marked': False,
             'answer': None,
-            'time_spent': 0
+            'time_spent': 0,
+            'visited_at': None
         }
     
     st.session_state.current_idx = 0
@@ -275,6 +668,8 @@ def update_question_status(question_idx, status, answer=None):
         st.session_state.question_status[question_idx]['status'] = status
         if answer is not None:
             st.session_state.question_status[question_idx]['answer'] = answer
+        if status != 'not_visited':
+            st.session_state.question_status[question_idx]['visited_at'] = datetime.now()
 
 def toggle_mark_review(question_idx):
     """Toggle mark for review status."""
@@ -282,14 +677,13 @@ def toggle_mark_review(question_idx):
         current_marked = st.session_state.question_status[question_idx]['marked']
         st.session_state.question_status[question_idx]['marked'] = not current_marked
         
-        # Update status based on marking and answer
         current_answer = st.session_state.question_status[question_idx]['answer']
-        if not current_marked:  # Just marked
+        if not current_marked:
             if current_answer is not None:
                 st.session_state.question_status[question_idx]['status'] = 'answered_marked'
             else:
                 st.session_state.question_status[question_idx]['status'] = 'marked_review'
-        else:  # Just unmarked
+        else:
             if current_answer is not None:
                 st.session_state.question_status[question_idx]['status'] = 'answered'
             else:
@@ -298,31 +692,30 @@ def toggle_mark_review(question_idx):
 def get_question_display_info(q_num):
     """Get display information for a question in the palette."""
     if q_num not in st.session_state.question_status:
-        return "#ffffff", str(q_num + 1), "Not visited"  # White
+        return LITMUSQ_THEME['background'], str(q_num + 1), "Not visited"
     
     status_info = st.session_state.question_status[q_num]
     has_answer = status_info['answer'] is not None
     is_marked = status_info['marked']
     
-    # Determine color and text based on answer and mark status
     if has_answer and is_marked:
-        color = "#ffff44"  # Yellow - Answered and marked
+        color = "#FFD700"  # Gold for answered and marked
         text = "✓★"
         tooltip = "Answered & Marked"
     elif has_answer:
-        color = "#44ff44"  # Green - Answered
+        color = LITMUSQ_THEME['success']  # Green for answered
         text = "✓"
         tooltip = "Answered"
     elif is_marked:
-        color = "#4444ff"  # Blue - Marked for review but not answered
+        color = LITMUSQ_THEME['primary']  # Blue for marked
         text = "★"
         tooltip = "Marked for Review"
     elif status_info['status'] == 'not_answered':
-        color = "#ff4444"  # Red - Not answered but visited
+        color = LITMUSQ_THEME['secondary']  # Red for not answered
         text = "✗"
         tooltip = "Not Answered"
-    else:  # not_visited
-        color = "#ffffff"  # White - Not visited
+    else:
+        color = LITMUSQ_THEME['background']  # White for not visited
         text = str(q_num + 1)
         tooltip = "Not Visited"
     
@@ -331,9 +724,9 @@ def get_question_display_info(q_num):
 def show_question_palette():
     """Display the question palette with working color coding."""
     st.sidebar.markdown("---")
-    st.sidebar.subheader("📊 Question Palette")
+    st.sidebar.subheader("🎯 Question Palette")
     
-    # Legend
+    # Enhanced Legend with theme colors
     st.sidebar.markdown("""
     <style>
     .legend-item {
@@ -352,23 +745,23 @@ def show_question_palette():
     </style>
     
     <div class="legend-item">
-        <div class="color-box" style="background-color: #ffffff;"></div>
+        <div class="color-box" style="background-color: #F8FAFC;"></div>
         <span>Not Visited</span>
     </div>
     <div class="legend-item">
-        <div class="color-box" style="background-color: #ff4444;"></div>
+        <div class="color-box" style="background-color: #DC2626;"></div>
         <span>Not Answered</span>
     </div>
     <div class="legend-item">
-        <div class="color-box" style="background-color: #44ff44;"></div>
+        <div class="color-box" style="background-color: #059669;"></div>
         <span>Answered</span>
     </div>
     <div class="legend-item">
-        <div class="color-box" style="background-color: #4444ff;"></div>
+        <div class="color-box" style="background-color: #1E3A8A;"></div>
         <span>Marked for Review</span>
     </div>
     <div class="legend-item">
-        <div class="color-box" style="background-color: #ffff44;"></div>
+        <div class="color-box" style="background-color: #FFD700;"></div>
         <span>Answered & Marked</span>
     </div>
     """, unsafe_allow_html=True)
@@ -392,10 +785,8 @@ def show_question_palette():
                 with columns[col_idx]:
                     color, text, tooltip = get_question_display_info(q_num)
                     
-                    # Highlight current question with red border
-                    border_color = "#ff0000" if q_num == st.session_state.current_idx else "#cccccc"
+                    border_color = LITMUSQ_THEME['secondary'] if q_num == st.session_state.current_idx else "#cccccc"
                     
-                    # Create custom CSS for the button
                     button_style = f"""
                     <style>
                     .qbtn-{q_num} {{
@@ -416,7 +807,6 @@ def show_question_palette():
                         help=f"Q{q_num + 1}: {tooltip}"
                     ):
                         st.session_state.current_idx = q_num
-                        # Update status to visited if not already
                         if st.session_state.question_status[q_num]['status'] == 'not_visited':
                             update_question_status(q_num, 'not_answered')
                         st.rerun()
@@ -426,11 +816,10 @@ def show_test_header():
     col1, col2, col3 = st.columns([2, 1, 1])
     
     with col1:
-        st.subheader(f"📝 Test: {st.session_state.exam_name}")
+        st.subheader(f"📝 {st.session_state.exam_name}")
         st.write(f"**Question {st.session_state.current_idx + 1} of {len(st.session_state.quiz_questions)}**")
     
     with col2:
-        # Timer
         if st.session_state.end_time:
             time_left = st.session_state.end_time - datetime.now()
             if time_left.total_seconds() <= 0:
@@ -440,13 +829,12 @@ def show_test_header():
             hours, remainder = divmod(int(time_left.total_seconds()), 3600)
             minutes, seconds = divmod(remainder, 60)
             
-            # Color code based on time left
-            if time_left.total_seconds() < 300:  # Less than 5 minutes
-                time_color = "red"
-            elif time_left.total_seconds() < 900:  # Less than 15 minutes
-                time_color = "orange"
+            if time_left.total_seconds() < 300:
+                time_color = LITMUSQ_THEME['secondary']  # Red
+            elif time_left.total_seconds() < 900:
+                time_color = LITMUSQ_THEME['warning']    # Amber
             else:
-                time_color = "green"
+                time_color = LITMUSQ_THEME['success']    # Green
                 
             st.markdown(f"<h3 style='color: {time_color};'>⏰ {hours:02d}:{minutes:02d}:{seconds:02d}</h3>", 
                        unsafe_allow_html=True)
@@ -454,7 +842,6 @@ def show_test_header():
             st.metric("⏰ Time Left", "No Limit")
     
     with col3:
-        # Stats
         if 'question_status' in st.session_state:
             total = len(st.session_state.quiz_questions)
             answered = sum(1 for status in st.session_state.question_status.values() 
@@ -469,22 +856,19 @@ def show_test_header():
 
 def show_calculator():
     """Display a simple calculator."""
-    if st.sidebar.button("🧮 Calculator"):
-        st.session_state.show_calculator = not st.session_state.get('show_calculator', False)
+    if st.sidebar.button("🧮 Calculator", key="calc_toggle"):
+        st.session_state.calculator_visible = not st.session_state.get('calculator_visible', False)
         st.rerun()
     
-    if st.session_state.get('show_calculator', False):
+    if st.session_state.get('calculator_visible', False):
         st.sidebar.markdown("---")
         st.sidebar.subheader("Calculator")
         
-        # Initialize calculator display
         if 'calc_display' not in st.session_state:
             st.session_state.calc_display = "0"
         
-        # Display
         st.sidebar.text_input("Result", st.session_state.calc_display, key="calc_output", disabled=True)
         
-        # Calculator buttons
         buttons = [
             ['7', '8', '9', '/'],
             ['4', '5', '6', '*'],
@@ -510,7 +894,6 @@ def handle_calculator_input(button):
         st.session_state.calc_display = display[:-1] if len(display) > 1 else "0"
     elif button == '=':
         try:
-            # Safety check for evaluation
             if any(word in display.lower() for word in ['import', 'exec', 'eval', 'open', 'file']):
                 st.session_state.calc_display = "Error"
             else:
@@ -535,15 +918,17 @@ def show_question_interface():
         
     row = df.iloc[current_idx]
     
-    # Update status to visited if not already
     if st.session_state.question_status[current_idx]['status'] == 'not_visited':
         update_question_status(current_idx, 'not_answered')
     
-    # Display question
-    st.markdown(f"### ❓ Question {current_idx + 1}")
-    st.markdown(f"**{row['Question']}**")
+    # Enhanced question card
+    st.markdown(f"""
+    <div class="question-card">
+        <h3>❓ Question {current_idx + 1}</h3>
+        <p style="font-size: 1.1rem; line-height: 1.6;">{row['Question']}</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Display options (without colors in the options)
     options = {
         "A": row.get("Option A", ""),
         "B": row.get("Option B", ""),
@@ -553,7 +938,6 @@ def show_question_interface():
     
     current_answer = st.session_state.question_status[current_idx]['answer']
     
-    # Create radio buttons for options - NO DEFAULT SELECTION
     choice = st.radio(
         "**Select your answer:**",
         options=[
@@ -562,16 +946,14 @@ def show_question_interface():
             f"C) {options['C']}",
             f"D) {options['D']}"
         ],
-        index=None,  # No default selection
+        index=None,
         key=f"question_{current_idx}"
     )
     
-    # Extract selected option
     selected_option = None
     if choice and ")" in choice:
         selected_option = choice.split(")", 1)[0].strip()
     
-    # Update answer and status
     if selected_option and selected_option != current_answer:
         update_question_status(current_idx, 'answered', selected_option)
         st.session_state.answers[current_idx] = selected_option
@@ -579,40 +961,41 @@ def show_question_interface():
     
     st.markdown("---")
     
-    # Action buttons
+    # Enhanced action buttons
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        if st.button("◀ Previous", use_container_width=True, disabled=current_idx == 0):
-            st.session_state.current_idx = current_idx - 1
-            st.rerun()
+        st.button("◀ Previous", use_container_width=True, disabled=current_idx == 0,
+                 key=f"prev_{current_idx}",
+                 on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1))
     
     with col2:
-        if st.button("Next ▶", use_container_width=True, disabled=current_idx == len(df) - 1):
-            st.session_state.current_idx = current_idx + 1
-            st.rerun()
+        st.button("Next ▶", use_container_width=True, disabled=current_idx == len(df) - 1,
+                 key=f"next_{current_idx}",
+                 on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
     
     with col3:
         button_text = "⭐ Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "❌ Unmark Review"
-        if st.button(button_text, use_container_width=True):
-            toggle_mark_review(current_idx)
-            st.rerun()
+        st.button(button_text, use_container_width=True,
+                 key=f"mark_{current_idx}",
+                 on_click=lambda: toggle_mark_review(current_idx))
     
     with col4:
-        if st.button("🗑️ Clear Response", use_container_width=True):
-            # Clear the answer from session state
-            update_question_status(current_idx, 'not_answered', None)
-            if current_idx in st.session_state.answers:
-                del st.session_state.answers[current_idx]
-            
-            # Clear the radio button selection by forcing a rerun with cleared state
-            st.session_state[f"question_{current_idx}_cleared"] = True
-            st.rerun()
+        st.button("🗑️ Clear Response", use_container_width=True,
+                 key=f"clear_{current_idx}",
+                 on_click=lambda: clear_response(current_idx))
     
     with col5:
-        if st.button("📤 Submit Test", type="primary", use_container_width=True):
-            st.session_state.submitted = True
-            st.rerun()
+        st.button("📤 Submit Test", type="primary", use_container_width=True,
+                 key=f"submit_{current_idx}",
+                 on_click=lambda: setattr(st.session_state, 'submitted', True))
+
+def clear_response(question_idx):
+    """Clear response for a question."""
+    update_question_status(question_idx, 'not_answered', None)
+    if question_idx in st.session_state.answers:
+        del st.session_state.answers[question_idx]
+    st.rerun()
 
 def show_quiz_screen():
     """Main quiz interface with professional layout."""
@@ -622,15 +1005,39 @@ def show_quiz_screen():
         st.rerun()
         return
     
-    # Initialize question status if not done
     if 'question_status' not in st.session_state or not st.session_state.question_status:
         initialize_question_status()
     
-    # Display sidebar components
-    show_question_palette()
-    show_calculator()
+    # Add Home button in sidebar during quiz
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🏠 Home", use_container_width=True, key="quiz_home"):
+        if st.session_state.submitted:
+            st.session_state.current_screen = "home"
+            st.rerun()
+        else:
+            # Show confirmation for leaving ongoing test
+            st.session_state.show_leave_confirmation = True
+            st.rerun()
     
-    # Display main content
+    if st.session_state.get('show_leave_confirmation', False):
+        st.sidebar.warning("Leave test? Progress will be lost.")
+        col1, col2 = st.sidebar.columns(2)
+        with col1:
+            if st.button("Yes, Leave", use_container_width=True, key="confirm_leave"):
+                st.session_state.current_screen = "home"
+                st.session_state.show_leave_confirmation = False
+                st.rerun()
+        with col2:
+            if st.button("Cancel", use_container_width=True, key="cancel_leave"):
+                st.session_state.show_leave_confirmation = False
+                st.rerun()
+    
+    show_question_palette()
+    
+    # Use the correct session state variable name for calculator
+    if st.session_state.get('calculator_enabled', True):
+        show_calculator()
+    
     show_test_header()
     
     if not st.session_state.submitted:
@@ -639,9 +1046,178 @@ def show_quiz_screen():
         show_results_screen()
 
 # =============================
-# Existing Helper Functions
+# Enhanced Results Screen
 # =============================
+def compute_results():
+    """Compute results."""
+    df = st.session_state.quiz_questions.copy()
+    use_final = st.session_state.use_final_key
+    user_ans = st.session_state.answers
 
+    df["Correct Option Used"] = df.apply(lambda r: get_correct_option(r, use_final), axis=1)
+    df["Your Answer"] = [user_ans.get(i, None) for i in range(len(df))]
+    df["Is Correct"] = df["Your Answer"] == df["Correct Option Used"]
+
+    if "Marks" in df.columns:
+        df["Marks"] = pd.to_numeric(df["Marks"], errors="coerce").fillna(0)
+        df["Score"] = np.where(df["Is Correct"], df["Marks"], 0)
+    else:
+        df["Marks"] = 1
+        df["Score"] = np.where(df["Is Correct"], 1, 0)
+
+    total = int(df["Marks"].sum())
+    obtained = int(df["Score"].sum())
+    
+    attempted = sum(1 for status in st.session_state.question_status.values() 
+                   if status['answer'] is not None)
+    correct = int(df["Is Correct"].sum())
+
+    summary = {
+        "Exam Name": st.session_state.exam_name,
+        "Total Questions": len(df),
+        "Attempted": attempted,
+        "Correct": correct,
+        "Total Marks": total,
+        "Marks Obtained": obtained,
+        "Answer Key Used": "Final" if use_final else "Provisional",
+        "Username": st.session_state.username,
+        "Percentage": (obtained / total * 100) if total > 0 else 0
+    }
+    return df, summary
+
+def show_results_screen():
+    """Display enhanced results after quiz completion."""
+    res_df, summary = compute_results()
+    
+    show_litmusq_header("Test Results")
+    
+    # Update user progress
+    update_user_progress(summary)
+    
+    # Navigation options - Add Home button
+    col1, col2, col3, col4, col5 = st.columns(5)
+    with col1:
+        if st.button("🏠 Home", use_container_width=True, key="results_home"):
+            st.session_state.current_screen = "home"
+            st.rerun()
+    with col2:
+        if st.button("← Back to Config", use_container_width=True, key="results_back"):
+            st.session_state.current_screen = "exam_config"
+            st.rerun()
+    with col3:
+        if st.button("📊 View Analysis", use_container_width=True, key="results_analysis"):
+            st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
+            st.rerun()
+    with col4:
+        if st.button("🔄 Retake Test", use_container_width=True, key="results_retake"):
+            df_exam = st.session_state.quiz_questions
+            start_quiz(
+                df_exam, 
+                len(df_exam),
+                st.session_state.quiz_duration,
+                st.session_state.use_final_key, 
+                st.session_state.exam_name
+            )
+            st.session_state.current_screen = "quiz"
+            st.rerun()
+    with col5:
+        if st.button("📈 Dashboard", use_container_width=True, key="results_dashboard"):
+            st.session_state.current_screen = "dashboard"
+            st.rerun()
+    
+    # Summary cards with enhanced styling
+    st.markdown("---")
+    st.subheader("📊 Performance Summary")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Total Questions", summary["Total Questions"])
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Attempted", summary["Attempted"])
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Correct Answers", summary["Correct"])
+        st.markdown('</div>', unsafe_allow_html=True)
+    with col4:
+        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
+        st.metric("Final Score", f"{summary['Marks Obtained']}/{summary['Total Marks']}")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Score visualization
+    percentage = summary['Percentage']
+    st.subheader(f"Overall Score: {percentage:.1f}%")
+    st.progress(int(percentage))
+    
+    # Performance gauge
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        if percentage >= 80:
+            performance = "Excellent! 🎉"
+            color = LITMUSQ_THEME['success']
+        elif percentage >= 60:
+            performance = "Good! 👍"
+            color = LITMUSQ_THEME['warning']
+        else:
+            performance = "Needs Improvement 📚"
+            color = LITMUSQ_THEME['secondary']
+        
+        st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
+    
+    with col2:
+        st.download_button(
+            label="📥 Download Results",
+            data=res_df.to_csv(index=False),
+            file_name=f"{summary['Exam Name']}_results_{st.session_state.username}.csv",
+            mime="text/csv",
+            use_container_width=True,
+            key="download_results"
+        )
+    
+    # Detailed analysis
+    if st.session_state.get('show_detailed_analysis', False):
+        st.markdown("---")
+        st.subheader("📋 Question-wise Review")
+        
+        for i, row in res_df.iterrows():
+            with st.expander(f"Question {i+1}: {row['Question'][:100]}...", expanded=False):
+                correct = row["Correct Option Used"]
+                chosen = row["Your Answer"]
+                
+                st.markdown(f"**Question:** {row['Question']}")
+                
+                def fmt_option(label, text):
+                    if label == correct and label == chosen:
+                        return f"✅ **{label}) {text}** (Correct - Your Answer)"
+                    elif label == correct:
+                        return f"✅ **{label}) {text}** (Correct Answer)"
+                    elif label == chosen:
+                        return f"❌ **{label}) {text}** (Your Answer)"
+                    else:
+                        return f"{label}) {text}"
+                
+                st.write(fmt_option("A", row.get("Option A", "")))
+                st.write(fmt_option("B", row.get("Option B", "")))
+                st.write(fmt_option("C", row.get("Option C", "")))
+                st.write(fmt_option("D", row.get("Option D", "")))
+                
+                if str(row.get("Explanation", "")).strip():
+                    st.info(f"**Explanation:** {row['Explanation']}")
+                
+                if i in st.session_state.question_status:
+                    status_info = st.session_state.question_status[i]
+                    status_text = status_info['status'].replace('_', ' ').title()
+                    if status_info['marked']:
+                        status_text += " ⭐"
+                    st.write(f"**Status:** {status_text}")
+
+# =============================
+# Helper Functions
+# =============================
 def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     mapping = {c: str(c).strip() for c in df.columns}
     return df.rename(columns=mapping)
@@ -680,136 +1256,6 @@ def get_correct_option(row, use_final_key=True):
     }
     return mapping.get(v, v[:1] if v[:1] in ["A", "B", "C", "D"] else None)
 
-def compute_results():
-    """Compute results."""
-    df = st.session_state.quiz_questions.copy()
-    use_final = st.session_state.use_final_key
-    user_ans = st.session_state.answers
-
-    df["Correct Option Used"] = df.apply(lambda r: get_correct_option(r, use_final), axis=1)
-    df["Your Answer"] = [user_ans.get(i, None) for i in range(len(df))]
-    df["Is Correct"] = df["Your Answer"] == df["Correct Option Used"]
-
-    if "Marks" in df.columns:
-        df["Marks"] = pd.to_numeric(df["Marks"], errors="coerce").fillna(0)
-        df["Score"] = np.where(df["Is Correct"], df["Marks"], 0)
-    else:
-        df["Marks"] = 1
-        df["Score"] = np.where(df["Is Correct"], 1, 0)
-
-    total = int(df["Marks"].sum())
-    obtained = int(df["Score"].sum())
-    
-    # Get attempted count from question_status
-    attempted = sum(1 for status in st.session_state.question_status.values() 
-                   if status['answer'] is not None)
-    correct = int(df["Is Correct"].sum())
-
-    summary = {
-        "Exam Name": st.session_state.exam_name,
-        "Total Questions": len(df),
-        "Attempted": attempted,
-        "Correct": correct,
-        "Total Marks": total,
-        "Marks Obtained": obtained,
-        "Answer Key Used": "Final" if use_final else "Provisional",
-        "Username": st.session_state.username,
-    }
-    return df, summary
-
-def show_results_screen():
-    """Display results after quiz completion."""
-    res_df, summary = compute_results()
-    
-    st.title("🎯 Test Results")
-    
-    # Navigation options
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("← Back to Configuration"):
-            st.session_state.current_screen = "exam_config"
-            st.rerun()
-    with col2:
-        if st.button("📊 View Detailed Analysis"):
-            st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
-            st.rerun()
-    with col3:
-        if st.button("🔄 Retake Same Test"):
-            df_exam = st.session_state.quiz_questions
-            start_quiz(
-                df_exam, 
-                len(df_exam),
-                st.session_state.duration_minutes,
-                st.session_state.use_final_key, 
-                st.session_state.exam_name
-            )
-            st.session_state.current_screen = "quiz"
-            st.rerun()
-    
-    # Summary cards
-    st.markdown("---")
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("📊 Total Questions", summary["Total Questions"])
-    with col2:
-        st.metric("✅ Attempted", summary["Attempted"])
-    with col3:
-        st.metric("🎯 Correct", summary["Correct"])
-    with col4:
-        st.metric("📈 Score", f"{summary['Marks Obtained']}/{summary['Total Marks']}")
-    
-    # Score percentage
-    if summary['Total Marks'] > 0:
-        percentage = (summary['Marks Obtained'] / summary['Total Marks']) * 100
-        st.progress(int(percentage))
-        st.write(f"**Overall Score: {percentage:.1f}%**")
-    
-    # Download button
-    st.download_button(
-        label="📥 Download Detailed Results (CSV)",
-        data=res_df.to_csv(index=False),
-        file_name=f"{summary['Exam Name']}_results_{st.session_state.username}.csv",
-        mime="text/csv",
-    )
-    
-    # Detailed analysis
-    if st.session_state.get('show_detailed_analysis', False):
-        st.markdown("---")
-        st.subheader("📋 Question-wise Review")
-        
-        for i, row in res_df.iterrows():
-            with st.expander(f"Question {i+1}: {row['Question'][:100]}..."):
-                correct = row["Correct Option Used"]
-                chosen = row["Your Answer"]
-                
-                st.markdown(f"**Question:** {row['Question']}")
-                
-                def fmt_option(label, text):
-                    if label == correct and label == chosen:
-                        return f"✅ **{label}) {text}** (Correct - Your Answer)"
-                    elif label == correct:
-                        return f"✅ **{label}) {text}** (Correct Answer)"
-                    elif label == chosen:
-                        return f"❌ **{label}) {text}** (Your Answer)"
-                    else:
-                        return f"{label}) {text}"
-                
-                st.write(fmt_option("A", row.get("Option A", "")))
-                st.write(fmt_option("B", row.get("Option B", "")))
-                st.write(fmt_option("C", row.get("Option C", "")))
-                st.write(fmt_option("D", row.get("Option D", "")))
-                
-                if str(row.get("Explanation", "")).strip():
-                    st.info(f"**Explanation:** {row['Explanation']}")
-                
-                if i in st.session_state.question_status:
-                    status_info = st.session_state.question_status[i]
-                    status_text = status_info['status'].replace('_', ' ').title()
-                    if status_info['marked']:
-                        status_text += " ⭐"
-                    st.write(f"**Status:** {status_text}")
-
 def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
                use_final_key: bool, exam_name: str):
     """Start quiz."""
@@ -829,20 +1275,34 @@ def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
     )
     st.session_state.use_final_key = use_final_key
     st.session_state.exam_name = exam_name
-    st.session_state.duration_minutes = duration_minutes
+    st.session_state.quiz_duration = duration_minutes
     
-    # Clear previous question status
     if 'question_status' in st.session_state:
         del st.session_state.question_status
 
+# =============================
+# Enhanced Home Screen
+# =============================
 def show_home_screen():
     """Display the main folder navigation."""
-    st.title("📚 Professional MCQ Test Platform")
-    st.write("Navigate through the folder structure to find question banks:")
+    show_litmusq_header("Question Bank Navigator")
     
-    if st.button("🔄 Refresh Folder Structure"):
-        st.session_state.folder_structure = scan_folder_structure()
-        st.rerun()
+    # Quick actions
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🔄 Refresh Structure", use_container_width=True, key="home_refresh"):
+            st.session_state.folder_structure = scan_folder_structure()
+            st.rerun()
+    with col2:
+        if st.button("📊 My Dashboard", use_container_width=True, key="home_dashboard"):
+            st.session_state.current_screen = "dashboard"
+            st.rerun()
+    with col3:
+        if st.button("ℹ️ Platform Guide", use_container_width=True, key="home_guide"):
+            st.session_state.current_screen = "guide"
+            st.rerun()
+    
+    st.write("Pick Your Test")
     
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
@@ -850,10 +1310,73 @@ def show_home_screen():
     else:
         st.info("No folder structure found. Make sure 'Question_Data_Folder' exists with proper structure.")
 
-# =============================
-# Modified Initialization and Main App
-# =============================
+def show_platform_guide():
+    """Show platform usage guide."""
+    show_litmusq_header("Platform Guide")
+    
+    # Home button
+    if st.button("🏠 Home", use_container_width=False, key="guide_home"):
+        st.session_state.current_screen = "home"
+        st.rerun()
+    
+    st.markdown("""
+    ## 🧪 Welcome to LitmusQ!
+    
+    ### 🚀 Getting Started
+    1. **Navigate** through the folder structure to find question banks
+    2. **Select** a question bank with the 📁 icon
+    3. **Configure** your test settings
+    4. **Start** the test and track your progress
+    
+    ### 🎯 Key Features
+    - **Professional Testing Interface** with real-time progress tracking
+    - **Advanced Analytics** with performance dashboard
+    - **Question Palette** with color-coded status
+    - **Built-in Calculator** for complex calculations
+    - **Detailed Results** with explanations
+    
+    ### 🎨 Color Coding
+    - 🟢 **Green**: Answered questions
+    - 🔴 **Red**: Not answered
+    - 🔵 **Blue**: Marked for review
+    - 🟡 **Yellow**: Answered & marked
+    - ⚪ **White**: Not visited
+    
+    ### ⚡ Quick Tips
+    - Use the question palette to jump between questions
+    - Mark questions for review if you're unsure
+    - Monitor your time using the countdown timer
+    - Review detailed explanations after the test
+    """)
 
+# =============================
+# Quick Actions Panel
+# =============================
+def quick_actions_panel():
+    """Display quick actions in sidebar."""
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("⚡ Quick Actions")
+    
+    # Home Button - Always available
+    if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
+        st.session_state.current_screen = "home"
+        st.rerun()
+    
+    if st.sidebar.button("📊 Performance Dashboard", use_container_width=True, key="sidebar_dashboard"):
+        st.session_state.current_screen = "dashboard"
+        st.rerun()
+        
+    if st.sidebar.button("🔄 Resume Last Test", use_container_width=True, key="sidebar_resume"):
+        st.info("Resume feature coming soon!")
+        
+    if st.sidebar.button("📚 Study Recommendations", use_container_width=True, key="sidebar_recommendations"):
+        st.info("AI-powered recommendations coming soon!")
+    
+    st.sidebar.markdown("---")
+
+# =============================
+# Enhanced Initialization
+# =============================
 def initialize_state():
     defaults = {
         "quiz_started": False,
@@ -874,11 +1397,15 @@ def initialize_state():
         "current_qb_path": None,
         "current_qb_data": {},
         "folder_structure": {},
-        "duration_minutes": 0,
+        "quiz_duration": 0,
         "question_status": {},
-        "show_calculator": False,
+        "calculator_enabled": True,
+        "live_progress_enabled": True,
+        "auto_save_enabled": True,
         "show_detailed_analysis": False,
         "calc_display": "0",
+        "calculator_visible": False,
+        "show_leave_confirmation": False,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -887,35 +1414,54 @@ def initialize_state():
 # =============================
 # Main App
 # =============================
+def main():
+    st.set_page_config(
+        page_title="LitmusQ - Professional MCQ Platform",
+        page_icon="🧪",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
+    
+    # Inject custom CSS
+    inject_custom_css()
+    
+    # Initialize session state
+    initialize_state()
+    
+    # Check authentication
+    if not st.session_state.logged_in:
+        show_login_screen()
+        st.stop()
+    
+    # User is logged in - show main app
+    st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
+    
+    # Quick actions panel
+    quick_actions_panel()
+    
+    # Logout button
+    if st.sidebar.button("🚪 Logout", use_container_width=True, key="sidebar_logout"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
+    
+    # Scan folder structure on first load
+    if not st.session_state.folder_structure:
+        st.session_state.folder_structure = scan_folder_structure()
+    
+    # Route to appropriate screen
+    if st.session_state.current_screen == "home":
+        show_home_screen()
+    elif st.session_state.current_screen == "dashboard":
+        show_student_dashboard()
+    elif st.session_state.current_screen == "guide":
+        show_platform_guide()
+    elif st.session_state.current_screen == "folder_view":
+        show_folder_view_screen()
+    elif st.session_state.current_screen == "exam_config":
+        show_exam_config_screen()
+    elif st.session_state.current_screen == "quiz":
+        show_quiz_screen()
 
-st.set_page_config(page_title="Professional MCQ Test Platform", layout="wide")
-
-# Initialize session state
-initialize_state()
-
-# Check authentication
-if not st.session_state.logged_in:
-    show_login_screen()
-    st.stop()
-
-# User is logged in - show main app
-st.sidebar.write(f"Logged in as: **{st.session_state.username}**")
-
-if st.sidebar.button("Logout"):
-    for key in list(st.session_state.keys()):
-        del st.session_state[key]
-    st.rerun()
-
-# Scan folder structure on first load
-if not st.session_state.folder_structure:
-    st.session_state.folder_structure = scan_folder_structure()
-
-# Route to appropriate screen
-if st.session_state.current_screen == "home":
-    show_home_screen()
-elif st.session_state.current_screen == "folder_view":
-    show_folder_view_screen()
-elif st.session_state.current_screen == "exam_config":
-    show_exam_config_screen()
-elif st.session_state.current_screen == "quiz":
-    show_quiz_screen()
+if __name__ == "__main__":
+    main()
