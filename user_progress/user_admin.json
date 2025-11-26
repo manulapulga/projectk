@@ -1,1 +1,69 @@
-
+{
+  "username": "admin",
+  "tests_taken": 6,
+  "total_score": 0,
+  "average_score": 0.0,
+  "test_history": [
+    {
+      "exam_name": "UPSC",
+      "date": "2025-11-26T13:17:21.639748",
+      "score": 0,
+      "total_marks": 40,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 20
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-11-26T13:17:32.121516",
+      "score": 0,
+      "total_marks": 40,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 20
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-11-26T13:17:32.244499",
+      "score": 0,
+      "total_marks": 40,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 20
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-11-26T13:17:47.022475",
+      "score": 0,
+      "total_marks": 40,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 20
+    },
+    {
+      "exam_name": "Kerala PSC",
+      "date": "2025-11-26T15:20:57.632104",
+      "score": 0,
+      "total_marks": 20,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 20
+    },
+    {
+      "exam_name": "Kerala PSC",
+      "date": "2025-11-26T15:21:02.852089",
+      "score": 0,
+      "total_marks": 20,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 20
+    }
+  ],
+  "achievements": [
+    "first_test",
+    "speed_demon"
+  ],
+  "weak_areas": [],
+  "strong_areas": [],
+  "join_date": "2025-11-26T11:32:47.260554"
+}
