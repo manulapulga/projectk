@@ -1013,12 +1013,12 @@ def show_test_header():
             
             # Display timer
             st.markdown(
-                f"<h3 style='color: {time_color}; text-align: center; margin: 0;'>⏰ {hours:02d}:{minutes:02d}:{seconds:02d}</h3>", 
+                f"<h3 style='color: {time_color}; text-align: center; margin: 0;'>⏰ {hours:02d}:{minutes:02d}</h3>", 
                 unsafe_allow_html=True
             )
             
             # Auto-refresh every second
-            st_autorefresh(interval=10000, limit=100, key="timer_refresh")
+            st_autorefresh(interval=60000, limit=100, key="timer_refresh")
             
         else:
             st.metric("⏰ Time Left", "No Limit")
