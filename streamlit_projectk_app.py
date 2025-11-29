@@ -565,7 +565,7 @@ def show_folder_view_screen():
     current_path = st.session_state.get('current_path', [])
     
     # Home and Navigation buttons
-    col1, col2 = st.columns([1, 4])
+    col1, col2 = st.columns([1, 1])
     with col1:
         if st.button("🏠 Home", use_container_width=True, key="folder_home"):
             st.session_state.current_screen = "home"
