@@ -1,125 +1,26 @@
 {
   "username": "admin",
-  "tests_taken": 13,
-  "total_score": 4,
-  "average_score": 0.3076923076923077,
+  "tests_taken": 2,
+  "total_score": 0,
+  "average_score": 0.0,
   "test_history": [
     {
       "exam_name": "UPSC",
-      "date": "2025-11-26T13:17:21.639748",
+      "date": "2025-11-29T15:11:06.538169",
       "score": 0,
-      "total_marks": 40,
+      "total_marks": 120,
       "percentage": 0.0,
       "correct_answers": 0,
-      "total_questions": 20
+      "total_questions": 60
     },
     {
       "exam_name": "UPSC",
-      "date": "2025-11-26T13:17:32.121516",
+      "date": "2025-11-29T15:11:10.382669",
       "score": 0,
-      "total_marks": 40,
+      "total_marks": 120,
       "percentage": 0.0,
       "correct_answers": 0,
-      "total_questions": 20
-    },
-    {
-      "exam_name": "UPSC",
-      "date": "2025-11-26T13:17:32.244499",
-      "score": 0,
-      "total_marks": 40,
-      "percentage": 0.0,
-      "correct_answers": 0,
-      "total_questions": 20
-    },
-    {
-      "exam_name": "UPSC",
-      "date": "2025-11-26T13:17:47.022475",
-      "score": 0,
-      "total_marks": 40,
-      "percentage": 0.0,
-      "correct_answers": 0,
-      "total_questions": 20
-    },
-    {
-      "exam_name": "Kerala PSC",
-      "date": "2025-11-26T15:20:57.632104",
-      "score": 0,
-      "total_marks": 20,
-      "percentage": 0.0,
-      "correct_answers": 0,
-      "total_questions": 20
-    },
-    {
-      "exam_name": "Kerala PSC",
-      "date": "2025-11-26T15:21:02.852089",
-      "score": 0,
-      "total_marks": 20,
-      "percentage": 0.0,
-      "correct_answers": 0,
-      "total_questions": 20
-    },
-    {
-      "exam_name": "UPSC",
-      "date": "2025-11-26T15:28:04.046579",
-      "score": 0,
-      "total_marks": 40,
-      "percentage": 0.0,
-      "correct_answers": 0,
-      "total_questions": 20
-    },
-    {
-      "exam_name": "UPSC",
-      "date": "2025-11-26T15:28:09.820570",
-      "score": 0,
-      "total_marks": 40,
-      "percentage": 0.0,
-      "correct_answers": 0,
-      "total_questions": 20
-    },
-    {
-      "exam_name": "UPSC",
-      "date": "2025-11-26T15:28:19.337319",
-      "score": 2,
-      "total_marks": 40,
-      "percentage": 5.0,
-      "correct_answers": 1,
-      "total_questions": 20
-    },
-    {
-      "exam_name": "UPSC",
-      "date": "2025-11-26T15:28:23.212904",
-      "score": 2,
-      "total_marks": 40,
-      "percentage": 5.0,
-      "correct_answers": 1,
-      "total_questions": 20
-    },
-    {
-      "exam_name": "UPSC",
-      "date": "2025-11-26T16:25:38.268428",
-      "score": 0,
-      "total_marks": 40,
-      "percentage": 0.0,
-      "correct_answers": 0,
-      "total_questions": 20
-    },
-    {
-      "exam_name": "UPSC",
-      "date": "2025-11-26T17:08:42.172468",
-      "score": 0,
-      "total_marks": 200,
-      "percentage": 0.0,
-      "correct_answers": 0,
-      "total_questions": 100
-    },
-    {
-      "exam_name": "UPSC",
-      "date": "2025-11-26T17:08:51.003455",
-      "score": 0,
-      "total_marks": 200,
-      "percentage": 0.0,
-      "correct_answers": 0,
-      "total_questions": 100
+      "total_questions": 60
     }
   ],
   "achievements": [
@@ -128,5 +29,5 @@
   ],
   "weak_areas": [],
   "strong_areas": [],
-  "join_date": "2025-11-26T11:32:47.260554"
+  "join_date": "2025-11-29T12:12:23.379022"
 }

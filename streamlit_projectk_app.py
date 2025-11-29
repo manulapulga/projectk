@@ -53,6 +53,28 @@ def inject_custom_css():
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }}
     
+    /* Enhanced Expander Styling */
+    .streamlit-expanderHeader {{
+        background-color: {LITMUSQ_THEME['light_bg']};
+        border: 1px solid {LITMUSQ_THEME['primary']};
+        border-radius: 8px;
+        padding: 1rem;
+        font-weight: 600;
+        color: {LITMUSQ_THEME['primary']};
+        margin-bottom: 0.5rem;
+    }}
+    .streamlit-expanderHeader:hover {{
+        background-color: {LITMUSQ_THEME['accent']}15;
+        border-color: {LITMUSQ_THEME['accent']};
+    }}
+    .streamlit-expanderContent {{
+        background-color: {LITMUSQ_THEME['background']};
+        border: 1px solid #E2E8F0;
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        padding: 1rem;
+    }}
+    
     /* Secondary Buttons */
     .secondary-button>button {{
         background-color: {LITMUSQ_THEME['light_bg']};
@@ -127,6 +149,20 @@ def inject_custom_css():
         border-left: 4px solid {LITMUSQ_THEME['primary']};
         margin-bottom: 1rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }}
+    
+    /* Danger Button */
+    .danger-button>button {{
+        background-color: {LITMUSQ_THEME['secondary']};
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+    }}
+    .danger-button>button:hover {{
+        background-color: #B91C1C;
+        color: white;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -270,6 +306,23 @@ def load_user_progress(username):
         st.error(f"Error loading progress: {e}")
     return None
 
+def clear_user_progress(username):
+    """Clear all performance data for the user."""
+    try:
+        progress_file = get_user_progress_file(username)
+        if os.path.exists(progress_file):
+            os.remove(progress_file)
+            st.success("✅ All your performance data has been cleared successfully!")
+            # Reinitialize with default progress
+            initialize_user_progress(username)
+            return True
+        else:
+            st.info("ℹ️ No performance data found to clear.")
+            return False
+    except Exception as e:
+        st.error(f"❌ Error clearing performance data: {e}")
+        return False
+
 def update_user_progress(test_results):
     """Update user progress with new test results."""
     username = st.session_state.username
@@ -321,6 +374,36 @@ def update_achievements(progress, test_results):
     
     progress["achievements"] = achievements
 
+def show_clear_data_section():
+    """Show section to clear performance data."""
+    st.markdown("---")
+    st.subheader("🗑️ Data Management")
+    
+    st.warning("⚠️ **Clear Performance Data**")
+    st.write("This will permanently delete all your test history, achievements, and performance statistics. This action cannot be undone.")
+    
+    # Confirmation workflow
+    if not st.session_state.get('show_clear_confirmation', False):
+        if st.button("🚮 Clear All My Performance Data", type="secondary", key="clear_data_init"):
+            st.session_state.show_clear_confirmation = True
+            st.rerun()
+    else:
+        st.error("Are you sure you want to delete ALL your performance data? This action cannot be undone!")
+        
+        col1, col2, col3 = st.columns([1, 1, 2])
+        with col1:
+            if st.button("✅ Yes, Delete Everything", type="primary", key="confirm_clear"):
+                success = clear_user_progress(st.session_state.username)
+                st.session_state.show_clear_confirmation = False
+                if success:
+                    st.rerun()
+        with col2:
+            if st.button("❌ Cancel", key="cancel_clear"):
+                st.session_state.show_clear_confirmation = False
+                st.rerun()
+        
+        st.info("Note: Your login credentials will remain unchanged. Only your performance data will be deleted.")
+
 def show_student_dashboard():
     """Display student dashboard with progress analytics."""
     show_litmusq_header("Your Learning Dashboard")
@@ -335,6 +418,8 @@ def show_student_dashboard():
     
     if not progress:
         st.info("📊 Start taking tests to see your progress analytics!")
+        # Show clear data section even if no data exists
+        show_clear_data_section()
         return
     
     # Key Metrics
@@ -409,6 +494,9 @@ def show_student_dashboard():
                         <p style="font-size: 0.8rem; color: #64748B;">{data['desc']}</p>
                     </div>
                     """, unsafe_allow_html=True)
+    
+    # Clear Data Section
+    show_clear_data_section()
 
 # =============================
 # Enhanced Folder Navigation
@@ -483,16 +571,14 @@ def show_folder_view_screen():
             st.session_state.current_screen = "home"
             st.rerun()
     with col2:
-        breadcrumb = " > ".join(current_path) if current_path else ""
-        st.write(f"**📍:** `{breadcrumb}`")
-    
-    if st.button("← Back", use_container_width=False, key="folder_back"):
-        if len(current_path) > 0:
-            st.session_state.current_path = current_path[:-1]
-        else:
-            st.session_state.current_screen = "home"
-        st.rerun()
-    
+        if st.button("← Back", use_container_width=False, key="folder_back"):
+            if len(current_path) > 0:
+                st.session_state.current_path = current_path[:-1]
+            else:
+                st.session_state.current_screen = "home"
+            st.rerun()
+    breadcrumb = " > ".join(current_path) if current_path else ""
+    st.write(f"**📍:** `{breadcrumb}`")
     folder_structure = st.session_state.folder_structure
     current_level = folder_structure
     for folder in current_path:
@@ -501,8 +587,7 @@ def show_folder_view_screen():
     has_qb = '_files' in current_level and 'QB.xlsx' in current_level['_files']
     
     if has_qb:
-        st.success("🎯 **Question bank found!** You can start a test from this folder.")
-        
+
         qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
         try:
             questions_data = load_questions(qb_path)
@@ -512,7 +597,7 @@ def show_folder_view_screen():
                 
                 sheet_names = list(questions_data.keys())
                 if sheet_names:
-                    st.subheader("📑 Available Exams:")
+                    st.subheader("Choose a test to continue:")
                 
                     # 🔹 Column titles row
                     header1, header2, header3, header4 = st.columns([3, 1, 1, 1])
@@ -586,30 +671,68 @@ def show_exam_config_screen():
             st.session_state.current_screen = "home"
             st.rerun()
     with col2:
-        if st.button("← Back to Folder", use_container_width=True, key="config_back"):
+        if st.button("← Return to Test List", use_container_width=True, key="config_back"):
             st.session_state.current_screen = "folder_view"
             st.rerun()
     
     show_litmusq_header(f"Configure Test: {sheet_name}")
     st.write(f"**📍:** `{' > '.join(current_path)}`")
     
-    # Enhanced metrics
-    col1, col2, col3 = st.columns(3)
+    st.metric("Total No. of Questions", len(df_exam))
+    # Enhanced metrics with expandable cards
+    col1, col2 = st.columns(2)
     with col1:
-        st.metric("Total No. of Questions", len(df_exam))
-    with col2:
+        
         if "Subject" in df_exam.columns:
-            subjects = df_exam["Subject"].dropna().unique()
-            st.metric("No. of Subjects Covered", len(subjects))
-    with col3:
+            # Get unique subjects (case-insensitive and strip whitespace)
+            subjects = df_exam["Subject"].dropna().apply(lambda x: str(x).strip().title()).unique()
+            unique_subjects = sorted(subjects)
+            
+            with st.expander(f"📚 Subjects Covered: **{len(unique_subjects)}**", expanded=False):
+                for i, subject in enumerate(unique_subjects, 1):
+                    st.write(f"• {subject}")
+                st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.metric("No. of Subjects Covered", "N/A")
+    
+    with col2:
         if "Exam Year" in df_exam.columns:
-            years = df_exam["Exam Year"].dropna().unique()
-            st.metric("Years Covered", len(years))
+            # Get unique years (handle different formats)
+            years = df_exam["Exam Year"].dropna().apply(lambda x: str(x).strip()).unique()
+            
+            # Convert to numeric for proper sorting and remove duplicates
+            unique_years = []
+            for year in years:
+                try:
+                    # Try to convert to integer for proper sorting
+                    numeric_year = int(year)
+                    if numeric_year not in unique_years:
+                        unique_years.append(numeric_year)
+                except ValueError:
+                    # If not numeric, keep as string and ensure uniqueness
+                    if year not in unique_years:
+                        unique_years.append(year)
+            
+            # Sort years properly
+            try:
+                # Sort numeric years in descending order (most recent first)
+                numeric_years = [y for y in unique_years if isinstance(y, int)]
+                string_years = [y for y in unique_years if isinstance(y, str)]
+                sorted_years = sorted(numeric_years, reverse=True) + sorted(string_years)
+            except:
+                # Fallback: sort everything as strings
+                sorted_years = sorted(unique_years, key=str, reverse=True)
+            
+            with st.expander(f"📅 Years Covered: **{len(sorted_years)}**", expanded=False):
+                for year in sorted_years:
+                    st.write(f"• {year}")
+                st.markdown("</div>", unsafe_allow_html=True)
+        else:
+            st.metric("Years Covered", "N/A")
     
     st.markdown("---")
     
     # Configuration options
-
     st.subheader("⚙️ Test Configuration")
     use_final_key = True
     col1, col2 = st.columns(2)
@@ -618,7 +741,7 @@ def show_exam_config_screen():
             "❓ Number of Questions", 
             min_value=1, 
             max_value=len(df_exam),
-            value=min(20, len(df_exam)), 
+            value=min(60, len(df_exam)), 
             step=1,
             key="num_questions"
         )
@@ -637,7 +760,7 @@ def show_exam_config_screen():
             shuffle_questions = st.checkbox("🔀 Shuffle Questions", value=True, key="shuffle_questions")
             show_live_progress = st.checkbox("📊 Show Live Progress", value=True, key="show_live_progress")
             enable_auto_save = st.checkbox("💾 Auto-save Progress", value=True, key="enable_auto_save")
-            full_screen_mode = st.checkbox("🖥️ Full Screen Mode", value=False, key="full_screen_mode")
+            full_screen_mode = st.checkbox("🖥️ Full Screen Mode", value=True, key="full_screen_mode")
     
     # Start test button
     st.markdown("---")
@@ -733,7 +856,6 @@ def get_question_display_info(q_num):
 
 def show_question_palette():
     """Display the question palette with working color coding."""
-    st.sidebar.markdown("---")
     st.sidebar.subheader("🎯 Question Palette")
     
     # Enhanced Legend with theme colors
@@ -844,7 +966,7 @@ def get_time_color(seconds_left):
 
 def show_test_header():
     """Display test header with timer and instructions."""
-    col1, col2, col3 = st.columns([2, 1, 1])
+    col1, col2, col3, col4 = st.columns([1, 1, 1,1])
     
     with col1:
         st.subheader(f"📝 {st.session_state.exam_name}")
@@ -881,10 +1003,10 @@ def show_test_header():
             total = len(st.session_state.quiz_questions)
             answered = sum(1 for status in st.session_state.question_status.values() 
                           if status['answer'] is not None)
+            st.metric("✅ Answered", f"{answered}/{total}")              
+    with col4:        
             marked = sum(1 for status in st.session_state.question_status.values() 
                         if status['marked'])
-            
-            st.metric("✅ Answered", f"{answered}/{total}")
             st.metric("🟨 Marked", marked)
     
     st.markdown("---")
@@ -989,17 +1111,6 @@ def show_quiz_screen():
     
     if 'question_status' not in st.session_state or not st.session_state.question_status:
         initialize_question_status()
-    
-    # Add Home button in sidebar during quiz
-    st.sidebar.markdown("---")
-    if st.sidebar.button("🏠 Home", use_container_width=True, key="quiz_home"):
-        if st.session_state.submitted:
-            st.session_state.current_screen = "home"
-            st.rerun()
-        else:
-            # Show confirmation for leaving ongoing test
-            st.session_state.show_leave_confirmation = True
-            st.rerun()
     
     if st.session_state.get('show_leave_confirmation', False):
         st.sidebar.warning("Leave test? Progress will be lost.")
@@ -1266,20 +1377,10 @@ def show_home_screen():
     show_litmusq_header("Question Bank Navigator")
     
     # Quick actions
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("🔄 Refresh Structure", use_container_width=True, key="home_refresh"):
-            st.session_state.folder_structure = scan_folder_structure()
-            st.rerun()
-    with col2:
-        if st.button("📊 My Dashboard", use_container_width=True, key="home_dashboard"):
-            st.session_state.current_screen = "dashboard"
-            st.rerun()
-    with col3:
-        if st.button("ℹ️ Platform Guide", use_container_width=True, key="home_guide"):
-            st.session_state.current_screen = "guide"
-            st.rerun()
-    
+    if st.button("🔄 Refresh", use_container_width=True, key="home_refresh"):
+        st.session_state.folder_structure = scan_folder_structure()
+        st.rerun()
+
     st.write("Pick Your Test")
     
     folder_structure = st.session_state.get('folder_structure', {})
@@ -1290,7 +1391,7 @@ def show_home_screen():
 
 def show_platform_guide():
     """Show platform usage guide."""
-    show_litmusq_header("Platform Guide")
+    show_litmusq_header("About LitmusQ")
     
     # Home button
     if st.button("🏠 Home", use_container_width=False, key="guide_home"):
@@ -1311,6 +1412,7 @@ def show_platform_guide():
     - **Advanced Analytics** with performance dashboard
     - **Question Palette** with color-coded status
     - **Detailed Results** with explanations
+    - **Data Management** - Clear your performance data anytime
     
     ### Legends
     - ✅: Answered questions
@@ -1324,6 +1426,7 @@ def show_platform_guide():
     - Mark questions for review if you're unsure
     - Monitor your time using the countdown timer
     - Review detailed explanations after the test
+    - Clear your performance data from the Dashboard if needed
     """)
 
 # =============================
@@ -1331,10 +1434,13 @@ def show_platform_guide():
 # =============================
 def quick_actions_panel():
     """Display quick actions in sidebar."""
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("⚡ Quick Actions")
+    # Don't show quick actions panel during quiz
+    if st.session_state.current_screen == "quiz":
+        return
     
-    # Home Button - Always available
+    st.sidebar.markdown("---")
+
+    # Home Button - Always available (except during quiz)
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
         st.session_state.current_screen = "home"
         st.rerun()
@@ -1343,12 +1449,10 @@ def quick_actions_panel():
         st.session_state.current_screen = "dashboard"
         st.rerun()
         
-    if st.sidebar.button("🔄 Resume Last Test", use_container_width=True, key="sidebar_resume"):
-        st.info("Resume feature coming soon!")
+    if st.sidebar.button("ℹ️ About LitmusQ", use_container_width=True, key="home_guide"):
+        st.session_state.current_screen = "guide"
+        st.rerun()
         
-    if st.sidebar.button("📚 Study Recommendations", use_container_width=True, key="sidebar_recommendations"):
-        st.info("AI-powered recommendations coming soon!")
-    
     st.sidebar.markdown("---")
 
 # =============================
@@ -1381,6 +1485,7 @@ def initialize_state():
         "show_detailed_analysis": False,
         "calc_display": "0",
         "show_leave_confirmation": False,
+        "show_clear_confirmation": False,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -1409,16 +1514,18 @@ def main():
         st.stop()
     
     # User is logged in - show main app
-    st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
+    if st.session_state.current_screen != "quiz":
+        st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
     
     # Quick actions panel
     quick_actions_panel()
     
     # Logout button
-    if st.sidebar.button("🚪 Logout", use_container_width=True, key="sidebar_logout"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        st.rerun()
+    if st.session_state.current_screen != "quiz":  
+        if st.sidebar.button("🚪 Logout", use_container_width=True, key="sidebar_logout"):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.rerun()
     
     # Scan folder structure on first load
     if not st.session_state.folder_structure:
