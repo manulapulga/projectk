@@ -235,7 +235,6 @@ def show_login_screen():
                     if authenticate_user(username, password, credentials):
                         st.session_state.logged_in = True
                         st.session_state.username = username
-                        st.session_state.sidebar_collapsed = True  # Add this line
                         st.success(f"🎉 Welcome back, {username}!")
                         # Initialize user progress
                         initialize_user_progress(username)
@@ -1563,17 +1562,7 @@ def main():
         show_login_screen()
         st.stop()
     
-    # User is logged in - ensure sidebar is collapsed
-    if st.session_state.logged_in:
-        # Force sidebar collapsed state using CSS
-        st.markdown("""
-        <style>
-            section[data-testid="stSidebar"] {
-                min-width: 0px !important;
-                max-width: 0px !important;
-            }
-        </style>
-        """, unsafe_allow_html=True)
+    # User is logged in - show main app
     if st.session_state.current_screen != "quiz":
         st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
     
