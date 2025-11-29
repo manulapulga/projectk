@@ -571,7 +571,7 @@ def show_folder_view_screen():
             st.session_state.current_screen = "home"
             st.rerun()
     with col2:
-        if st.button("← Back", use_container_width=False, key="folder_back"):
+        if st.button("← Back", use_container_width=True, key="folder_back"):
             if len(current_path) > 0:
                 st.session_state.current_path = current_path[:-1]
             else:
