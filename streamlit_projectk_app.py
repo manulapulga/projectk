@@ -1480,7 +1480,7 @@ def quick_actions_panel():
         st.session_state.current_screen = "home"
         st.rerun()
     
-    if st.sidebar.button("📊 Performance Dashboard", use_container_width=True, key="sidebar_dashboard"):
+    if st.sidebar.button("📊 Performance", use_container_width=True, key="sidebar_dashboard"):
         st.session_state.current_screen = "dashboard"
         st.rerun()
         
