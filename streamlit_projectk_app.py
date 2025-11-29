@@ -597,7 +597,11 @@ def show_folder_view_screen():
                 
                 sheet_names = list(questions_data.keys())
                 if sheet_names:
-                    st.subheader("Choose a test to continue:")
+                    st.markdown("""
+                    <h3 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    Choose a test to continue:
+                    </h3>
+                    """, unsafe_allow_html=True)
 
                     # Mobile-friendly card layout for each test
                     # Mobile-friendly card layout for each test
