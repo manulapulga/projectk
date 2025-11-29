@@ -598,41 +598,45 @@ def show_folder_view_screen():
                 sheet_names = list(questions_data.keys())
                 if sheet_names:
                     st.subheader("Choose a test to continue:")
-                
-                    # 🔹 Column titles row
-                    header1, header2, header3, header4 = st.columns([3, 1, 1, 1])
-                    with header1:
-                        st.markdown("**Exam Name**")
-                    with header2:
-                        st.markdown("**Questions**")
-                    with header3:
-                        st.markdown("**Difficulty**")
-                    with header4:
-                        st.markdown("**Action**")
-                
-                    # 🔹 Actual data rows
-                    for sheet_name in sheet_names:
+
+                    # Mobile-friendly card layout for each test
+                    for idx, sheet_name in enumerate(sheet_names):
                         df = questions_data[sheet_name]
-                        col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
-                
-                        with col1:
-                            st.write(f"**{sheet_name}**")
-                
-                        with col2:
-                            st.write(f"❓ {len(df)} Qs")
-                
-                        with col3:
-                            if "Difficulty Level" in df.columns:
-                                difficulties = df["Difficulty Level"].value_counts()
-                                st.write(f"📊 {len(difficulties)} levels")
-                            else:
-                                st.write("-")
-                
-                        with col4:
-                            if st.button(f"Select", key=f"select_{sheet_name}"):
-                                st.session_state.selected_sheet = sheet_name
-                                st.session_state.current_screen = "exam_config"
-                                st.rerun()
+                        
+                        # Create a card container
+                        with st.container():
+                            col1, col2 = st.columns([3, 1])
+                            
+                            with col1:
+                                # Exam name as main heading
+                                st.write(f"**{sheet_name}**")
+                                
+                                # Compact stats in a single row
+                                stats_col1, stats_col2 = st.columns(2)
+                                with stats_col1:
+                                    st.caption(f"❓ {len(df)} Questions")
+                                with stats_col2:
+                                    if "Difficulty Level" in df.columns:
+                                        difficulties = df["Difficulty Level"].value_counts()
+                                        st.caption(f"📊 {len(difficulties)} Levels")
+                                    else:
+                                        st.caption("📊 -")
+                            
+                            with col2:
+                                # Create unique key using current path, sheet name, and index
+                                current_path_str = '_'.join(current_path) if current_path else 'root'
+                                unique_key = f"select_{current_path_str}_{sheet_name}_{idx}"
+                                
+                                if st.button("Select", 
+                                            key=unique_key,
+                                            use_container_width=True,
+                                            type="primary"):
+                                    st.session_state.selected_sheet = sheet_name
+                                    st.session_state.current_screen = "exam_config"
+                                    st.rerun()
+                            
+                            # Divider between cards
+                            st.markdown("---")
                 
                 else:
                     st.error("No sheets found in the question bank file.")
@@ -801,8 +805,14 @@ def update_question_status(question_idx, status, answer=None):
         st.session_state.question_status[question_idx]['status'] = status
         if answer is not None:
             st.session_state.question_status[question_idx]['answer'] = answer
-        if status != 'not_visited':
+        else:
+            st.session_state.question_status[question_idx]['answer'] = None
+            
+        if status != 'not_visited' and status != 'cleared':
             st.session_state.question_status[question_idx]['visited_at'] = datetime.now()
+        else:
+            # Reset visited_at when going back to not visited or cleared
+            st.session_state.question_status[question_idx]['visited_at'] = None
 
 def toggle_mark_review(question_idx):
     """Toggle mark for review status."""
@@ -810,17 +820,25 @@ def toggle_mark_review(question_idx):
         current_marked = st.session_state.question_status[question_idx]['marked']
         st.session_state.question_status[question_idx]['marked'] = not current_marked
         
+        current_status = st.session_state.question_status[question_idx]['status']
         current_answer = st.session_state.question_status[question_idx]['answer']
+        
         if not current_marked:
             if current_answer is not None:
                 st.session_state.question_status[question_idx]['status'] = 'answered_marked'
             else:
-                st.session_state.question_status[question_idx]['status'] = 'marked_review'
+                if current_status == 'cleared':
+                    st.session_state.question_status[question_idx]['status'] = 'cleared_marked'
+                else:
+                    st.session_state.question_status[question_idx]['status'] = 'marked_review'
         else:
             if current_answer is not None:
                 st.session_state.question_status[question_idx]['status'] = 'answered'
             else:
-                st.session_state.question_status[question_idx]['status'] = 'not_answered'
+                if current_status == 'cleared_marked':
+                    st.session_state.question_status[question_idx]['status'] = 'cleared'
+                else:
+                    st.session_state.question_status[question_idx]['status'] = 'not_answered'
 
 def get_question_display_info(q_num):
     """Get display information for a question in the palette."""
@@ -830,11 +848,17 @@ def get_question_display_info(q_num):
     status_info = st.session_state.question_status[q_num]
     has_answer = status_info['answer'] is not None
     is_marked = status_info['marked']
+    status = status_info['status']
     
-    if has_answer and is_marked:
+    # Handle cleared responses with white square
+    if status == 'cleared':
+        color = LITMUSQ_THEME['background']  # White background
+        text = "⛔"  # White square emoji
+        tooltip = "Response cleared"
+    elif has_answer and is_marked:
         color = "#FFD700"  # Gold for answered and marked
         text = "🟩"
-        tooltip = "Answered & Marked"
+        tooltip = "Answered & marked for review"
     elif has_answer:
         color = LITMUSQ_THEME['success']  # Green for answered
         text = "✅"
@@ -843,13 +867,13 @@ def get_question_display_info(q_num):
         color = LITMUSQ_THEME['primary']  # Blue for marked
         text = "🟨"
         tooltip = "Marked for Review"
-    elif status_info['status'] == 'not_answered':
+    elif status == 'not_answered':
         color = LITMUSQ_THEME['secondary']  # Red for not answered
         text = "❌"
         tooltip = "Not Answered"
-    else:
+    else:  # not_visited
         color = LITMUSQ_THEME['background']  # White for not visited
-        text = str(q_num + 1)
+        text = str(q_num + 1)  # Show question number
         tooltip = "Not Visited"
     
     return color, text, tooltip
@@ -877,26 +901,25 @@ def show_question_palette():
     </style>
     
     <div class="legend-item">
+        <span>⛔: Response cleared</span>
     </div>
+    <div class="legend-item">
         <span>❌: Not Answered</span>
     </div>
     <div class="legend-item">
-    </div>
         <span>✅: Answered</span>
     </div>
     <div class="legend-item">
-    </div>
         <span>🟨: Marked for Review</span>
     </div>
     <div class="legend-item">
-   </div>
-        <span>🟩: Answered & Marked</span>
+        <span>🟩: Answered & marked for review</span>
     </div>
     """, unsafe_allow_html=True)
     
     st.sidebar.markdown("---")
     
-    # Question grid
+    # Rest of the function remains the same...
     total_questions = len(st.session_state.quiz_questions)
     if total_questions == 0:
         st.sidebar.warning("No questions loaded")
@@ -1085,9 +1108,9 @@ def show_question_interface():
                  on_click=lambda: toggle_mark_review(current_idx))
     
     with col4:
-        st.button("🗑️ Clear Response", use_container_width=True,
-                 key=f"clear_{current_idx}",
-                 on_click=lambda: clear_response(current_idx))
+        if st.button("🗑️ Clear Response", use_container_width=True,
+                     key=f"clear_{current_idx}"):
+            clear_response(current_idx)
     
     with col5:
         st.button("📤 Submit Test", type="primary", use_container_width=True,
@@ -1096,9 +1119,19 @@ def show_question_interface():
 
 def clear_response(question_idx):
     """Clear response for a question."""
-    update_question_status(question_idx, 'not_answered', None)
+    # Set a special status for cleared responses
+    st.session_state.question_status[question_idx]['status'] = 'cleared'
+    st.session_state.question_status[question_idx]['answer'] = None
+    st.session_state.question_status[question_idx]['marked'] = False
+    
+    # Also clear from answers dictionary
     if question_idx in st.session_state.answers:
         del st.session_state.answers[question_idx]
+    
+    # Clear the radio button selection
+    if f"question_{question_idx}" in st.session_state:
+        del st.session_state[f"question_{question_idx}"]
+    
     st.rerun()
 
 def show_quiz_screen():
@@ -1418,8 +1451,8 @@ def show_platform_guide():
     - ✅: Answered questions
     - ❌: Not answered
     - 🟨: Marked for review
-    - 🟩 Answered & marked
-    - ⚪ **White**: Not visited
+    - 🟩 Answered & marked for review
+    - ⛔: Response cleared
     
     ### ⚡ Quick Tips
     - Use the question palette to jump between questions
