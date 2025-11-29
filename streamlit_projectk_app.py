@@ -125,7 +125,7 @@ def inject_custom_css():
         color: white;
         padding: 0rem;
         text-align: center;
-        margin-bottom: 0rem;
+        margin-bottom: 2rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }}
     
