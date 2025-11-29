@@ -600,34 +600,53 @@ def show_folder_view_screen():
                     st.subheader("Choose a test to continue:")
 
                     # Mobile-friendly card layout for each test
+                    # Mobile-friendly card layout for each test
                     for idx, sheet_name in enumerate(sheet_names):
                         df = questions_data[sheet_name]
                         
-                        # Create a card container
+                        # Create a card container with better styling
                         with st.container():
+                            st.markdown(
+                                f"""
+                                <div style="
+                                    background: {LITMUSQ_THEME['light_bg']};
+                                    border-radius: 10px;
+                                    border-left: 4px solid {LITMUSQ_THEME['primary']};
+                                    padding: 1rem;
+                                    margin: 0.5rem 0;
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                                ">
+                                """,
+                                unsafe_allow_html=True
+                            )
+                            
                             col1, col2 = st.columns([3, 1])
                             
                             with col1:
-                                # Exam name as main heading
-                                st.write(f"**{sheet_name}**")
+                                # Exam name in primary color
+                                st.markdown(f"<h4 style='color: {LITMUSQ_THEME['primary']}; margin: 0;'>{sheet_name}</h4>", 
+                                           unsafe_allow_html=True)
                                 
-                                # Compact stats in a single row
+                                # Compact stats with attractive colors
                                 stats_col1, stats_col2 = st.columns(2)
                                 with stats_col1:
-                                    st.caption(f"❓ {len(df)} Questions")
+                                    st.markdown(f"<p style='color: {LITMUSQ_THEME['success']}; font-weight: 600; margin: 0.5rem 0;'>❓ {len(df)} Questions</p>", 
+                                               unsafe_allow_html=True)
                                 with stats_col2:
                                     if "Difficulty Level" in df.columns:
                                         difficulties = df["Difficulty Level"].value_counts()
-                                        st.caption(f"📊 {len(difficulties)} Levels")
+                                        st.markdown(f"<p style='color: {LITMUSQ_THEME['warning']}; font-weight: 600; margin: 0.5rem 0;'>📊 {len(difficulties)} Levels</p>", 
+                                                   unsafe_allow_html=True)
                                     else:
-                                        st.caption("📊 -")
+                                        st.markdown(f"<p style='color: #64748B; font-weight: 600; margin: 0.5rem 0;'>📊 -</p>", 
+                                                   unsafe_allow_html=True)
                             
                             with col2:
                                 # Create unique key using current path, sheet name, and index
                                 current_path_str = '_'.join(current_path) if current_path else 'root'
                                 unique_key = f"select_{current_path_str}_{sheet_name}_{idx}"
                                 
-                                if st.button("Select", 
+                                if st.button("**Start Test**", 
                                             key=unique_key,
                                             use_container_width=True,
                                             type="primary"):
@@ -635,8 +654,7 @@ def show_folder_view_screen():
                                     st.session_state.current_screen = "exam_config"
                                     st.rerun()
                             
-                            # Divider between cards
-                            st.markdown("---")
+                            st.markdown("</div>", unsafe_allow_html=True)
                 
                 else:
                     st.error("No sheets found in the question bank file.")
