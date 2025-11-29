@@ -123,9 +123,9 @@ def inject_custom_css():
         background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
         border-radius: 10px;
         color: white;
-        padding: 2rem;
+        padding: 0rem;
         text-align: center;
-        margin-bottom: 2rem;
+        margin-bottom: 0rem;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }}
     
