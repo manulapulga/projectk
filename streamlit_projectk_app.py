@@ -1548,7 +1548,7 @@ def main():
         page_title="LitmusQ - Professional MCQ Platform",
         page_icon="🧪",
         layout="wide",
-        initial_sidebar_state="collapsed"
+        initial_sidebar_state="expanded"
     )
     
     # Inject custom CSS
