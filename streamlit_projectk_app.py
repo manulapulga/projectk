@@ -626,7 +626,7 @@ def show_folder_view_screen():
                                        unsafe_allow_html=True)
                             
                             # Compact stats with attractive colors
-                            stats_col1, stats_col2 = st.columns(2)
+                            stats_col1, stats_col2, col3 = st.columns(3)
                             with stats_col1:
                                 st.markdown(f"<p style='color: {LITMUSQ_THEME['success']}; font-weight: 600; margin: 0.5rem 0;'>❓ {len(df)} Questions</p>", 
                                            unsafe_allow_html=True)
@@ -638,19 +638,18 @@ def show_folder_view_screen():
                                 else:
                                     st.markdown(f"<p style='color: #64748B; font-weight: 600; margin: 0.5rem 0;'>📊 -</p>", 
                                                unsafe_allow_html=True)
-                        
-                        with col2:
-                            # Create unique key using current path, sheet name, and index
-                            current_path_str = '_'.join(current_path) if current_path else 'root'
-                            unique_key = f"select_{current_path_str}_{sheet_name}_{idx}"
-                            
-                            if st.button("**Start Test**", 
-                                        key=unique_key,
-                                        use_container_width=True,
-                                        type="primary"):
-                                st.session_state.selected_sheet = sheet_name
-                                st.session_state.current_screen = "exam_config"
-                                st.rerun()
+                            with col3:
+                                # Create unique key using current path, sheet name, and index
+                                current_path_str = '_'.join(current_path) if current_path else 'root'
+                                unique_key = f"select_{current_path_str}_{sheet_name}_{idx}"
+                                
+                                if st.button("**Start Test**", 
+                                            key=unique_key,
+                                            use_container_width=True,
+                                            type="primary"):
+                                    st.session_state.selected_sheet = sheet_name
+                                    st.session_state.current_screen = "exam_config"
+                                    st.rerun()
                         
                         st.markdown("</div>", unsafe_allow_html=True)
                 
