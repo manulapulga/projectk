@@ -112,6 +112,7 @@ def inject_custom_css():
         padding: 1rem;
         border-radius: 8px;
         border: 1px solid #E2E8F0;
+        use_container_width: True;
     }}
     
     /* Sidebar */
