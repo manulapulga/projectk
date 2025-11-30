@@ -1131,6 +1131,8 @@ def show_question_interface():
         st.button("📤 Submit Test", type="primary", use_container_width=True,
                  key=f"submit_{current_idx}",
                  on_click=lambda: setattr(st.session_state, 'submitted', True))
+    
+    # Removed the show_test_header() call from here
 
 def clear_response(question_idx):
     """Clear response for a question."""
@@ -1175,10 +1177,10 @@ def show_quiz_screen():
     
     show_question_palette()
     
-    show_test_header()
-    
+    # Show question first, then header at the bottom
     if not st.session_state.submitted:
         show_question_interface()
+        show_test_header()  # Moved to bottom
     else:
         show_results_screen()
 
