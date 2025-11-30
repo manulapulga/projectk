@@ -1241,9 +1241,10 @@ def show_enhanced_question_interface():
     col1, col2 = st.columns(2)
     
     with col1:
-        # Option A
+        # Option A - Add green tick if selected
+        option_a_text = f"✅ **A)** {formatted_a}" if current_answer == "A" else f"**A)** {formatted_a}"
         button_style = "primary" if current_answer == "A" else "secondary"
-        if st.button(f"**A)** {formatted_a}", 
+        if st.button(option_a_text, 
                     use_container_width=True, 
                     type=button_style,
                     key=f"option_a_{current_idx}"):
@@ -1251,9 +1252,10 @@ def show_enhanced_question_interface():
             st.session_state.answers[current_idx] = "A"
             st.rerun()
         
-        # Option B
+        # Option B - Add green tick if selected
+        option_b_text = f"✅ **B)** {formatted_b}" if current_answer == "B" else f"**B)** {formatted_b}"
         button_style = "primary" if current_answer == "B" else "secondary"
-        if st.button(f"**B)** {formatted_b}", 
+        if st.button(option_b_text, 
                     use_container_width=True, 
                     type=button_style,
                     key=f"option_b_{current_idx}"):
@@ -1262,9 +1264,10 @@ def show_enhanced_question_interface():
             st.rerun()
     
     with col2:
-        # Option C
+        # Option C - Add green tick if selected
+        option_c_text = f"✅ **C)** {formatted_c}" if current_answer == "C" else f"**C)** {formatted_c}"
         button_style = "primary" if current_answer == "C" else "secondary"
-        if st.button(f"**C)** {formatted_c}", 
+        if st.button(option_c_text, 
                     use_container_width=True, 
                     type=button_style,
                     key=f"option_c_{current_idx}"):
@@ -1272,9 +1275,10 @@ def show_enhanced_question_interface():
             st.session_state.answers[current_idx] = "C"
             st.rerun()
         
-        # Option D
+        # Option D - Add green tick if selected
+        option_d_text = f"✅ **D)** {formatted_d}" if current_answer == "D" else f"**D)** {formatted_d}"
         button_style = "primary" if current_answer == "D" else "secondary"
-        if st.button(f"**D)** {formatted_d}", 
+        if st.button(option_d_text, 
                     use_container_width=True, 
                     type=button_style,
                     key=f"option_d_{current_idx}"):
@@ -1298,7 +1302,7 @@ def show_enhanced_question_interface():
                  on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
     
     with col3:
-        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "⭕ Unmark Review"
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "❌ Unmark Review"
         st.button(button_text, use_container_width=True,
                  key=f"mark_{current_idx}",
                  on_click=lambda: toggle_mark_review(current_idx))
