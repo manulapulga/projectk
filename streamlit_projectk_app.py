@@ -366,7 +366,7 @@ def show_question_editor():
     show_litmusq_header("📝 Question Formatting Editor")
     
     # Home button
-    if st.button("🏠 Home", use_container_width=False, key="editor_home"):
+    if st.button("🏠 Home", use_container_width=True, key="editor_home"):
         st.session_state.current_screen = "home"
         st.rerun()
     
@@ -394,7 +394,7 @@ def show_question_editor():
         st.write(f"**Current Location:** `{breadcrumb}`")
         
         # Add back navigation
-        col1, col2 = st.columns([1, 4])
+        col1, col2 = st.columns([1, 1])
         with col1:
             if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
                 if len(current_path) > 0:
