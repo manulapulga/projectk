@@ -165,17 +165,6 @@ def inject_custom_css():
         color: white;
     }}
     </style>
-    <script>
-    // Auto-scroll to top on page load
-    window.addEventListener('load', function() {{
-        window.scrollTo(0, 0);
-    }});
-    
-    // Also scroll to top when navigating (for Streamlit's dynamic updates)
-    window.addEventListener('DOMContentLoaded', function() {{
-        window.scrollTo(0, 0);
-    }});
-    </script>
     """, unsafe_allow_html=True)
 
 # =============================
@@ -188,24 +177,7 @@ def show_litmusq_header(subtitle="Professional MCQ Assessment Platform"):
         <p style="margin: 0; opacity: 0.9; font-size: 1.2rem;">{subtitle}</p>
     </div>
     """, unsafe_allow_html=True)
-    
-# =============================
-# Auto-scroll Helpers
-# =============================
-def scroll_to_top():
-    """Scroll the page to the top using JavaScript"""
-    st.markdown("""
-    <script>
-        function scrollToTop() {
-            window.scrollTo(0, 0);
-            document.body.scrollTop = 0;
-            document.documentElement.scrollTop = 0;
-        }
-        scrollToTop();
-        setTimeout(scrollToTop, 100);
-    </script>
-    """, unsafe_allow_html=True)
-    
+
 # =============================
 # Authentication Helpers
 # =============================
@@ -434,7 +406,6 @@ def show_clear_data_section():
 
 def show_student_dashboard():
     """Display student dashboard with progress analytics."""
-    scroll_to_top()  # Add this line
     show_litmusq_header("Your Learning Dashboard")
     
     # Home button
@@ -591,7 +562,6 @@ def display_folder_navigation(folder_structure, current_path=None, level=0):
 
 def show_folder_view_screen():
     """Show contents of the currently selected folder."""
-    scroll_to_top()  # Add this line
     current_path = st.session_state.get('current_path', [])
     
     # Home and Navigation buttons
@@ -701,7 +671,6 @@ def show_folder_view_screen():
 # =============================
 def show_exam_config_screen():
     """Configure exam settings before starting."""
-    scroll_to_top()  # Add this line
     current_path = st.session_state.get('current_path', [])
     sheet_name = st.session_state.get('selected_sheet')
     qb_data = st.session_state.get('current_qb_data', {})
@@ -1189,7 +1158,6 @@ def clear_response(question_idx):
 
 def show_quiz_screen():
     """Main quiz interface with professional layout."""
-    scroll_to_top()  # Add this line
     if not st.session_state.quiz_started:
         st.error("Quiz not properly initialized. Returning to home.")
         st.session_state.current_screen = "home"
@@ -1263,7 +1231,6 @@ def compute_results():
 
 def show_results_screen():
     """Display enhanced results after quiz completion."""
-    scroll_to_top()  # Add this line
     res_df, summary = compute_results()
     
     show_litmusq_header("Test Results")
@@ -1462,7 +1429,6 @@ def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
 # =============================
 def show_home_screen():
     """Display the main folder navigation."""
-    scroll_to_top()  # Add this line
     show_litmusq_header("Question Bank Navigator")
     
     # Quick actions
@@ -1480,7 +1446,6 @@ def show_home_screen():
 
 def show_platform_guide():
     """Show platform usage guide."""
-    scroll_to_top()  # Add this line
     show_litmusq_header("About LitmusQ")
     
     # Home button
