@@ -6,28 +6,14 @@ import os
 from pathlib import Path
 import json
 from streamlit_autorefresh import st_autorefresh
-import psutil
-import os
-from functools import lru_cache
 
 # =============================
-# Configuration & Performance Settings
+# Configuration & Theme
 # =============================
 QUESTION_DATA_FOLDER = "Question_Data_Folder"
 LOGIN_FILE_PATH = "data/login_details.xlsx"
 USER_PROGRESS_FOLDER = "user_progress"
 FORMATTED_QUESTIONS_FILE = "formatted_questions.json"
-
-# Performance configuration
-class Config:
-    MAX_MEMORY_MB = 500
-    CLEANUP_INTERVAL_SECONDS = 300  # 5 minutes
-    MAX_QUESTIONS_PER_LOAD = 200
-    ENABLE_CACHING = True
-    CACHE_SIZE = 10
-    AUTO_RECOVERY = True
-    SAVE_POINT_INTERVAL = 2  # minutes
-    MAX_SAVE_POINTS = 3
 
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
@@ -40,103 +26,6 @@ LITMUSQ_THEME = {
     "warning": "#D97706",      # Amber for warnings
     "light_bg": "#EFF6FF"      # Light blue background
 }
-
-# =============================
-# Performance & Stability Functions
-# =============================
-def optimize_session_state():
-    """Clean up and optimize session state to prevent bloat"""
-    essential_keys = {
-        'logged_in', 'username', 'current_screen', 'current_path',
-        'selected_sheet', 'current_qb_path', 'folder_structure',
-        'quiz_started', 'quiz_questions', 'current_idx', 'answers',
-        'submitted', 'exam_name', 'question_status', 'quiz_duration',
-        'last_cleanup', 'save_points', 'editor_current_path'
-    }
-    
-    # Remove non-essential keys
-    keys_to_remove = [key for key in st.session_state.keys() if key not in essential_keys]
-    for key in keys_to_remove:
-        if key in st.session_state:
-            del st.session_state[key]
-
-def periodic_cleanup():
-    """Perform periodic cleanup"""
-    if 'last_cleanup' not in st.session_state:
-        st.session_state.last_cleanup = datetime.now()
-    
-    # Clean up every 5 minutes
-    if (datetime.now() - st.session_state.last_cleanup).seconds > Config.CLEANUP_INTERVAL_SECONDS:
-        optimize_session_state()
-        st.session_state.last_cleanup = datetime.now()
-
-def check_memory_usage():
-    """Check memory usage and trigger cleanup if needed"""
-    try:
-        process = psutil.Process(os.getpid())
-        memory_usage = process.memory_info().rss / 1024 / 1024  # MB
-        
-        if memory_usage > Config.MAX_MEMORY_MB:
-            st.sidebar.error(f"High memory usage: {memory_usage:.1f}MB - Cleaning up...")
-            optimize_session_state()
-            return memory_usage
-        
-        # Show memory usage in sidebar for monitoring
-        if memory_usage > Config.MAX_MEMORY_MB * 0.8:  # 80% of max
-            st.sidebar.warning(f"Memory: {memory_usage:.1f}MB")
-        elif memory_usage > Config.MAX_MEMORY_MB * 0.6:  # 60% of max
-            st.sidebar.info(f"Memory: {memory_usage:.1f}MB")
-            
-        return memory_usage
-    except Exception:
-        return 0  # psutil not available
-
-def safe_execute(func, *args, **kwargs):
-    """Execute function with error handling and recovery"""
-    try:
-        return func(*args, **kwargs)
-    except Exception as e:
-        st.error(f"An error occurred in {func.__name__}: {str(e)}")
-        
-        if Config.AUTO_RECOVERY:
-            st.info("🔄 Attempting to recover...")
-            # Basic recovery - return to home
-            if st.session_state.get('logged_in'):
-                st.session_state.current_screen = "home"
-                optimize_session_state()
-                st.rerun()
-        return None
-
-def create_save_point():
-    """Create a lightweight save point of current progress"""
-    if not st.session_state.get('quiz_started', False):
-        return
-    
-    # Only save every 2 minutes
-    if 'last_save_point' in st.session_state:
-        time_since_last_save = (datetime.now() - st.session_state.last_save_point).seconds
-        if time_since_last_save < Config.SAVE_POINT_INTERVAL * 60:
-            return
-    
-    save_data = {
-        'current_idx': st.session_state.current_idx,
-        'answers': st.session_state.answers.copy(),
-        'question_status': {
-            k: {**v} for k, v in st.session_state.question_status.items()  # Shallow copy
-        },
-        'timestamp': datetime.now().isoformat()
-    }
-    
-    # Store in session state (limited size)
-    if 'save_points' not in st.session_state:
-        st.session_state.save_points = []
-    
-    st.session_state.save_points.append(save_data)
-    st.session_state.last_save_point = datetime.now()
-    
-    # Keep only last few save points
-    if len(st.session_state.save_points) > Config.MAX_SAVE_POINTS:
-        st.session_state.save_points = st.session_state.save_points[-Config.MAX_SAVE_POINTS:]
 
 # =============================
 # Custom CSS Injection
@@ -474,14 +363,10 @@ def is_admin_user():
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
-    return safe_execute(_show_question_editor)
-
-def _show_question_editor():
-    """Actual question editor implementation."""
     show_litmusq_header("📝 Question Formatting Editor")
     
     # Home button
-    if st.button("🏠 Home", use_container_width=True, key="editor_home"):
+    if st.button("🏠 Home", use_container_width=False, key="editor_home"):
         st.session_state.current_screen = "home"
         st.rerun()
     
@@ -495,7 +380,7 @@ def _show_question_editor():
     formatted_questions = load_formatted_questions()
     
     # Folder selection
-    st.subheader("Select Question Bank")
+    st.subheader("📁 Select Question Bank")
     folder_structure = st.session_state.get('folder_structure', {})
     
     if not folder_structure:
@@ -509,7 +394,7 @@ def _show_question_editor():
         st.write(f"**Current Location:** `{breadcrumb}`")
         
         # Add back navigation
-        col1, col2 = st.columns([1, 1])
+        col1, col2 = st.columns([1, 4])
         with col1:
             if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
                 if len(current_path) > 0:
@@ -551,16 +436,27 @@ def _show_question_editor():
         is_folder = any(k != '_files' for k in item_content.keys())
         has_qb = '_files' in item_content and 'QB.xlsx' in item_content['_files']
         
-        button_label = f"{item_name}"
-        if st.button(
-            button_label, 
-            key=f"editor_nav_{len(current_path)}_{item_name}",
-            use_container_width=True,
-            help=f"Click to {'open question bank' if has_qb else 'explore folder'}"
-        ):
-            st.session_state.editor_current_path = current_path + [item_name]
-            st.rerun()
-    items_displayed += 1
+        col1, col2, col3 = st.columns([1, 3, 1])
+        with col1:
+            icon = "📄" if has_qb else "📁"
+            st.write(icon)
+        with col2:
+            button_label = f"{item_name}"
+            if st.button(
+                button_label, 
+                key=f"editor_nav_{len(current_path)}_{item_name}",
+                use_container_width=True,
+                help=f"Click to {'open question bank' if has_qb else 'explore folder'}"
+            ):
+                st.session_state.editor_current_path = current_path + [item_name]
+                st.rerun()
+        with col3:
+            if has_qb:
+                st.markdown("<span style='color: green;'>📊 QB</span>", unsafe_allow_html=True)
+            elif is_folder:
+                st.markdown("<span style='color: blue;'>📁</span>", unsafe_allow_html=True)
+        
+        items_displayed += 1
     
     # Show content if current path has a QB
     if current_path:
@@ -572,7 +468,7 @@ def _show_question_editor():
             
             qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
             if os.path.exists(qb_path):
-                questions_data = load_questions_optimized(qb_path)
+                questions_data = load_questions(qb_path)
                 
                 if questions_data:
                     # Sheet selection
@@ -713,7 +609,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         with col1:
             save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True)
         with col2:
-            reset_btn = st.form_submit_button("🔁 Reset to Original", use_container_width=True)
+            reset_btn = st.form_submit_button("🔄 Reset to Original", use_container_width=True)
         with col3:
             clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True)
         
@@ -910,10 +806,6 @@ def show_clear_data_section():
 
 def show_student_dashboard():
     """Display student dashboard with progress analytics."""
-    return safe_execute(_show_student_dashboard)
-
-def _show_student_dashboard():
-    """Actual dashboard implementation."""
     show_litmusq_header("Your Learning Dashboard")
     
     # Home button
@@ -1070,10 +962,6 @@ def display_folder_navigation(folder_structure, current_path=None, level=0):
 
 def show_folder_view_screen():
     """Show contents of the currently selected folder."""
-    return safe_execute(_show_folder_view_screen)
-
-def _show_folder_view_screen():
-    """Actual folder view implementation."""
     current_path = st.session_state.get('current_path', [])
     
     # Home and Navigation buttons
@@ -1102,7 +990,7 @@ def _show_folder_view_screen():
 
         qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
         try:
-            questions_data = load_questions_optimized(qb_path)
+            questions_data = load_questions(qb_path)
             if questions_data:
                 st.session_state.current_qb_path = qb_path
                 st.session_state.current_qb_data = questions_data
@@ -1182,10 +1070,6 @@ def _show_folder_view_screen():
 # =============================
 def show_exam_config_screen():
     """Configure exam settings before starting."""
-    return safe_execute(_show_exam_config_screen)
-
-def _show_exam_config_screen():
-    """Actual exam config implementation."""
     current_path = st.session_state.get('current_path', [])
     sheet_name = st.session_state.get('selected_sheet')
     qb_data = st.session_state.get('current_qb_data', {})
@@ -1274,7 +1158,7 @@ def _show_exam_config_screen():
         num_questions = st.number_input(
             "❓ Number of Questions", 
             min_value=1, 
-            max_value=min(len(df_exam), Config.MAX_QUESTIONS_PER_LOAD),
+            max_value=len(df_exam),
             value=min(60, len(df_exam)), 
             step=1,
             key="num_questions"
@@ -1432,7 +1316,6 @@ def show_enhanced_question_interface():
         st.button("📤 Submit Test", type="primary", use_container_width=True,
                  key=f"submit_{current_idx}",
                  on_click=lambda: setattr(st.session_state, 'submitted', True))
-
 # =============================
 # Professional Test Interface
 # =============================
@@ -1712,10 +1595,6 @@ def clear_response(question_idx):
 
 def show_quiz_screen():
     """Main quiz interface with professional layout."""
-    return safe_execute(_show_quiz_screen)
-
-def _show_quiz_screen():
-    """Actual quiz screen implementation."""
     if not st.session_state.quiz_started:
         st.error("Quiz not properly initialized. Returning to home.")
         st.session_state.current_screen = "home"
@@ -1744,9 +1623,6 @@ def _show_quiz_screen():
     if not st.session_state.submitted:
         show_enhanced_question_interface()
         show_test_header()  # Moved to bottom
-        
-        # Create save point during quiz
-        create_save_point()
     else:
         show_results_screen()
 
@@ -1836,10 +1712,6 @@ def show_enhanced_detailed_analysis(res_df):
 
 def show_results_screen():
     """Display enhanced results after quiz completion."""
-    return safe_execute(_show_results_screen)
-
-def _show_results_screen():
-    """Actual results screen implementation."""
     res_df, summary = compute_results()
     
     show_litmusq_header("Test Results")
@@ -1862,7 +1734,7 @@ def _show_results_screen():
             st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
             st.rerun()
     with col4:
-        if st.button("🔃 Retake Test", use_container_width=True, key="results_retake"):
+        if st.button("🔄 Retake Test", use_container_width=True, key="results_retake"):
             df_exam = st.session_state.quiz_questions
             start_quiz(
                 df_exam, 
@@ -1938,47 +1810,23 @@ def _show_results_screen():
         show_enhanced_detailed_analysis(res_df)
 
 # =============================
-# Optimized Helper Functions
+# Helper Functions
 # =============================
 def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     mapping = {c: str(c).strip() for c in df.columns}
     return df.rename(columns=mapping)
 
-def load_questions_optimized(file_path):
-    """Load questions from Excel file with memory optimization."""
+def load_questions(file_path):
+    """Load questions from Excel file."""
     try:
-        # Read only essential columns
-        essential_columns = [
-            'Question', 'Option A', 'Option B', 'Option C', 'Option D',
-            'Explanation', 'Correct Option (Final Answer Key)',
-            'Correct option (Provisional Answer Key)', 'Marks', 'Subject', 'Exam Year'
-        ]
-        
-        df_dict = pd.read_excel(
-            file_path, 
-            sheet_name=None, 
-            engine="openpyxl",
-            usecols=lambda x: x in [col.strip() for col in essential_columns]
-        )
-        
+        df_dict = pd.read_excel(file_path, sheet_name=None, engine="openpyxl")
         clean_dict = {}
         for sheet, df in df_dict.items():
             df = _normalize_columns(df)
-            
-            # Optimize data types
-            for col in df.columns:
-                if df[col].dtype == 'object':
-                    # Use string dtype for better memory efficiency
-                    df[col] = df[col].astype('string')
-            
-            # Fill NA values efficiently
-            text_columns = ["Question", "Option A", "Option B", "Option C", "Option D", "Explanation"]
-            for col in text_columns:
+            for col in ["Question", "Option A", "Option B", "Option C", "Option D", "Explanation"]:
                 if col in df.columns:
-                    df[col] = df[col].fillna("")
-            
+                    df[col] = df[col].astype(str).fillna("").replace("nan", "", regex=False)
             clean_dict[sheet] = df
-            
         return clean_dict
     except Exception as e:
         st.error(f"Error loading questions from {file_path}: {e}")
@@ -2031,14 +1879,10 @@ def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
 # =============================
 def show_home_screen():
     """Display the main folder navigation."""
-    return safe_execute(_show_home_screen)
-
-def _show_home_screen():
-    """Actual home screen implementation."""
     show_litmusq_header("Question Bank Navigator")
     
     # Quick actions
-    if st.button("🔁 Refresh", use_container_width=True, key="home_refresh"):
+    if st.button("🔄 Refresh", use_container_width=True, key="home_refresh"):
         st.session_state.folder_structure = scan_folder_structure()
         st.rerun()
 
@@ -2052,63 +1896,44 @@ def _show_home_screen():
 
 def show_platform_guide():
     """Show platform usage guide."""
-    return safe_execute(_show_platform_guide)
-
-def _show_platform_guide():
-    """Actual platform guide implementation."""
     show_litmusq_header("About LitmusQ")
-
+    
     # Home button
-    if st.button("🏠 Home", use_container_width=True, key="guide_home"):
+    if st.button("🏠 Home", use_container_width=False, key="guide_home"):
         st.session_state.current_screen = "home"
         st.rerun()
+    
+    st.markdown("""
+    ## 🧪 Welcome to LitmusQ!
 
-    st.markdown("## 🧪 Welcome to LitmusQ!")
+    ### 🚀 Getting Started
+    1. **Navigate** through the folder structure to find question banks
+    2. **Select** a question bank with the 📁 icon
+    3. **Configure** your test settings
+    4. **Start** the test and track your progress
 
-    # Create 4 columns
-    col1, col2, col3, col4 = st.columns(4)
+    ### 🎯 Key Features
+    - **Professional Testing Interface** with real-time progress tracking
+    - **Advanced Analytics** with performance dashboard
+    - **Question Palette** with color-coded status
+    - **Detailed Results** with explanations
+    - **Data Management** - Clear your performance data anytime
+    - **Rich Text Formatting** - Admins can format questions with HTML
 
-    with col1:
-        st.markdown("### 🚀 Getting Started")
-        st.markdown("""
-        1. **Navigate** through the folder structure to find question banks  
-        2. **Select** a question bank  
-        3. **Configure** your test settings  
-        4. **Start** the test and track your progress  
-        """)
+    ### Legends
+    - ✅: Answered questions
+    - ❌: Not answered
+    - 🟨: Marked for review
+    - 🟩 Answered & marked for review
+    - ⛔: Response cleared
 
-    with col2:
-        st.markdown("### 🎯 Key Features")
-        st.markdown("""
-        - **Professional Testing Interface**  
-        - **Advanced Analytics & Dashboard**  
-        - **Color-coded Question Palette**  
-        - **Detailed Results with Explanations**  
-        - **Clear Performance Data Anytime**  
-        - **HTML-Rich Question Formatting**  
-        """)
-
-    with col3:
-        st.markdown("### 🧭 Legends")
-        st.markdown("""
-        - ✅ **Answered**  
-        - ❌ **Not Answered**  
-        - 🟨 **Marked for Review**  
-        - 🟩 **Answered + Review**  
-        - ⛔ **Response Cleared**  
-        """)
-
-    with col4:
-        st.markdown("### ⚡ Quick Tips")
-        st.markdown("""
-        - Use the **Question Palette** to navigate  
-        - Mark questions if unsure  
-        - Watch the **countdown timer**  
-        - Review explanations after the test  
-        - Clear your performance history anytime  
-        """)
-
-
+    ### ⚡ Quick Tips
+    - Use the question palette to jump between questions
+    - Mark questions for review if you're unsure
+    - Monitor your time using the countdown timer
+    - Review detailed explanations after the test
+    - Clear your performance data from the Dashboard if needed
+    """)
 
 # =============================
 # Quick Actions Panel
@@ -2173,17 +1998,13 @@ def initialize_state():
         "calc_display": "0",
         "show_leave_confirmation": False,
         "show_clear_confirmation": False,
-        "editor_current_path": [],
-        "last_cleanup": datetime.now(),
-        "save_points": [],
-        "last_save_point": None,
+        "editor_current_path": [],  # Initialize editor path
     }
     for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
-
 # =============================
-# Main App with Stability Features
+# Main App
 # =============================
 def main():
     st.set_page_config(
@@ -2199,86 +2020,44 @@ def main():
     # Initialize session state
     initialize_state()
     
-    # Add stability monitoring
-    periodic_cleanup()
-    
-    # Check memory usage
-    memory_used = check_memory_usage()
-    
     # Check authentication
     if not st.session_state.logged_in:
-        try:
-            show_login_screen()
-        except Exception as e:
-            st.error(f"Login error: {e}")
-            st.stop()
+        show_login_screen()
         st.stop()
     
-    # Main application with error boundaries
-    try:
-        # User is logged in - show main app
-        if st.session_state.current_screen != "quiz":
-            st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
-            
-            # Show memory usage in sidebar for monitoring (only when not in quiz)
-            if memory_used > 0:
-                memory_color = (
-                    "red" if memory_used > Config.MAX_MEMORY_MB * 0.8 
-                    else "orange" if memory_used > Config.MAX_MEMORY_MB * 0.6 
-                    else "green"
-                )
-                st.sidebar.markdown(
-                    f"<small style='color: {memory_color};'>Memory: {memory_used:.1f}MB</small>", 
-                    unsafe_allow_html=True
-                )
-        
-        # Quick actions panel
-        quick_actions_panel()
-        
-        # Logout button
-        if st.session_state.current_screen != "quiz":  
-            if st.sidebar.button("🚪 Logout", use_container_width=True, key="sidebar_logout"):
-                optimize_session_state()  # Clean up before logout
-                for key in list(st.session_state.keys()):
-                    del st.session_state[key]
-                st.rerun()
-        
-        # Scan folder structure with caching
-        if not st.session_state.folder_structure:
-            with st.spinner("Loading question banks..."):
-                st.session_state.folder_structure = scan_folder_structure()
-        
-        # Route to appropriate screen with error handling
-        screen_handlers = {
-            "home": show_home_screen,
-            "dashboard": show_student_dashboard,
-            "guide": show_platform_guide,
-            "folder_view": show_folder_view_screen,
-            "exam_config": show_exam_config_screen,
-            "quiz": show_quiz_screen,
-            "question_editor": show_question_editor
-        }
-        
-        current_screen = st.session_state.current_screen
-        handler = screen_handlers.get(current_screen, show_home_screen)
-        handler()
-        
-        # Create save point every 2 minutes during quiz
-        if (current_screen == "quiz" and 
-            st.session_state.get('quiz_started') and 
-            not st.session_state.get('submitted')):
-            create_save_point()
-            
-    except Exception as e:
-        st.error("🚨 A critical error occurred. The app will attempt to recover.")
-        st.error(f"Error details: {str(e)}")
-        
-        if Config.AUTO_RECOVERY:
-            # Attempt recovery
-            st.info("🔄 Attempting to recover...")
-            optimize_session_state()
-            st.session_state.current_screen = "home"
+    # User is logged in - show main app
+    if st.session_state.current_screen != "quiz":
+        st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
+    
+    # Quick actions panel
+    quick_actions_panel()
+    
+    # Logout button
+    if st.session_state.current_screen != "quiz":  
+        if st.sidebar.button("🚪 Logout", use_container_width=True, key="sidebar_logout"):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
             st.rerun()
+    
+    # Scan folder structure on first load
+    if not st.session_state.folder_structure:
+        st.session_state.folder_structure = scan_folder_structure()
+    
+    # Route to appropriate screen
+    if st.session_state.current_screen == "home":
+        show_home_screen()
+    elif st.session_state.current_screen == "dashboard":
+        show_student_dashboard()
+    elif st.session_state.current_screen == "guide":
+        show_platform_guide()
+    elif st.session_state.current_screen == "folder_view":
+        show_folder_view_screen()
+    elif st.session_state.current_screen == "exam_config":
+        show_exam_config_screen()
+    elif st.session_state.current_screen == "quiz":
+        show_quiz_screen()
+    elif st.session_state.current_screen == "question_editor":
+        show_question_editor()
 
 if __name__ == "__main__":
     main()
