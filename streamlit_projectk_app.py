@@ -1153,7 +1153,7 @@ def show_exam_config_screen():
 # Enhanced Question Display in Quiz
 # =============================
 def show_enhanced_question_interface():
-    """Display the current question with formatted content."""
+    """Display the current question with formatted content and integrated radio buttons."""
     df = st.session_state.quiz_questions
     current_idx = st.session_state.current_idx
     
@@ -1173,10 +1173,12 @@ def show_enhanced_question_interface():
     formatted_question = get_formatted_content(
         file_path, sheet_name, current_idx, "question", row['Question']
     )
-    formatted_a = get_formatted_content(file_path, sheet_name, current_idx, "option_a", row.get('Option A', ''))
-    formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get('Option B', ''))
-    formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
-    formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
+    
+    # Use original content for radio buttons (since HTML won't render in radio labels)
+    option_a = row.get('Option A', '')
+    option_b = row.get('Option B', '')
+    option_c = row.get('Option C', '')
+    option_d = row.get('Option D', '')
     
     # Enhanced question card with formatted content
     st.markdown(f"""
@@ -1188,42 +1190,33 @@ def show_enhanced_question_interface():
     # Render formatted question
     render_formatted_content(formatted_question)
     
-    options = {
-        "A": formatted_a,
-        "B": formatted_b,
-        "C": formatted_c,
-        "D": formatted_d,
-    }
+    st.markdown("---")
+    st.markdown("**Select your answer:**")
     
     current_answer = st.session_state.question_status[current_idx]['answer']
     
-    # Create custom radio buttons with formatted content
-    st.markdown("**Select your answer:**")
+    # Create radio buttons with options inline
+    options = [
+        f"A) {option_a}",
+        f"B) {option_b}", 
+        f"C) {option_c}",
+        f"D) {option_d}"
+    ]
     
     choice = st.radio(
         "",
-        options=list(options.keys()),
-        format_func=lambda x: f" {x})",
-        index=None if current_answer is None else list(options.keys()).index(current_answer),
+        options=options,
+        index=None if current_answer is None else ord(current_answer) - ord('A'),
         key=f"question_{current_idx}"
     )
     
-    # Display formatted options
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("**A)**")
-        render_formatted_content(options['A'])
-        st.markdown("**B)**")
-        render_formatted_content(options['B'])
-    with col2:
-        st.markdown("**C)**")
-        render_formatted_content(options['C'])
-        st.markdown("**D)**")
-        render_formatted_content(options['D'])
+    selected_option = None
+    if choice:
+        selected_option = choice[0]  # Get 'A', 'B', 'C', or 'D'
     
-    if choice and choice != current_answer:
-        update_question_status(current_idx, 'answered', choice)
-        st.session_state.answers[current_idx] = choice
+    if selected_option and selected_option != current_answer:
+        update_question_status(current_idx, 'answered', selected_option)
+        st.session_state.answers[current_idx] = selected_option
         st.rerun()
     
     st.markdown("---")
@@ -1256,7 +1249,6 @@ def show_enhanced_question_interface():
         st.button("📤 Submit Test", type="primary", use_container_width=True,
                  key=f"submit_{current_idx}",
                  on_click=lambda: setattr(st.session_state, 'submitted', True))
-
 # =============================
 # Professional Test Interface
 # =============================
