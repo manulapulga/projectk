@@ -808,7 +808,7 @@ def show_student_dashboard():
     show_litmusq_header("Your Learning Dashboard")
     
     # Home button
-    if st.button("🏠 Home", use_container_width=False, key="dashboard_home"):
+    if st.button("🏠 Home", use_container_width=True, key="dashboard_home"):
         st.session_state.current_screen = "home"
         st.rerun()
     
