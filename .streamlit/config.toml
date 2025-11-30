@@ -1,6 +1,44 @@
 [theme]
-base="light"
-primaryColor="#0E5A8A"
-backgroundColor="#FFFFFF"
-secondaryBackgroundColor="#F0F2F6"
-textColor="#000000"
+base = "light"
+primaryColor = "#0E5A8A"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#000000"
+font = "sans serif"
+
+[server]
+# Streamlit Cloud optimized settings
+maxUploadSize = 200
+maxMessageSize = 200
+enableCORS = false
+enableXsrfProtection = true
+
+# Critical for Cloud stability
+maxMessageQueueSize = 100  # Lower for Cloud
+enableStaticServing = true
+
+# Cloud-specific optimizations
+headless = true
+
+[browser]
+gatherUsageStats = false
+serverAddress = "localhost"
+
+[client]
+# Essential for Cloud performance
+caching = true
+showErrorDetails = true  # Keep true for debugging
+
+[runner]
+# Cloud stability settings
+magicEnabled = false
+installTracer = false
+fixMatplotlib = true
+
+[deprecation]
+showfileUploaderEncoding = false
+showImageFormat = false
+
+# Streamlit Cloud specific
+[global]
+developmentMode = false
