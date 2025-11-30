@@ -894,35 +894,53 @@ def get_question_display_info(q_num):
     return color, text, tooltip
 
 def show_question_palette():
-    """Display mobile-optimized question palette."""
-    st.sidebar.subheader("🎯 Questions")
+    """Display the question palette with working color coding."""
+    st.sidebar.subheader("🎯 Question Palette")
     
-    # Compact legend for mobile
+    # Enhanced Legend with theme colors
     st.sidebar.markdown("""
     <style>
-    .mobile-legend {
-        font-size: 11px;
-        line-height: 1.2;
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin: 5px 0;
+        font-size: 12px;
+    }
+    .color-box {
+        width: 15px;
+        height: 15px;
+        margin-right: 8px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
     }
     </style>
-    <div class="mobile-legend">
-    ⛔ Cleared<br>
-    ❌ Not answered<br>
-    ✅ Answered<br>
-    🟨 Marked<br>
-    🟩 Answered+Marked
+    
+    <div class="legend-item">
+        <span>⛔: Response cleared</span>
+    </div>
+    <div class="legend-item">
+        <span>❌: Not Answered</span>
+    </div>
+    <div class="legend-item">
+        <span>✅: Answered</span>
+    </div>
+    <div class="legend-item">
+        <span>🟨: Marked for Review</span>
+    </div>
+    <div class="legend-item">
+        <span>🟩: Answered & marked for review</span>
     </div>
     """, unsafe_allow_html=True)
     
     st.sidebar.markdown("---")
     
+    # Rest of the function remains the same...
     total_questions = len(st.session_state.quiz_questions)
     if total_questions == 0:
-        st.sidebar.warning("No questions")
+        st.sidebar.warning("No questions loaded")
         return
     
-    # More columns for mobile to make buttons smaller
-    cols = 6  # Increased from 5 for smaller buttons
+    cols = 5
     rows = (total_questions + cols - 1) // cols
     
     for row in range(rows):
@@ -939,12 +957,10 @@ def show_question_palette():
                     <style>
                     .qbtn-{q_num} {{
                         background-color: {color} !important;
-                        border: 1px solid {border_color} !important;
-                        border-radius: 4px !important;
+                        border: 2px solid {border_color} !important;
+                        border-radius: 5px !important;
                         color: #000000 !important;
                         font-weight: bold !important;
-                        font-size: 10px !important;
-                        padding: 2px 4px !important;
                     }}
                     </style>
                     """
@@ -954,7 +970,7 @@ def show_question_palette():
                         text, 
                         key=f"palette_{q_num}", 
                         use_container_width=True,
-                        help=f"Q{q_num + 1}"
+                        help=f"Q{q_num + 1}: {tooltip}"
                     ):
                         st.session_state.current_idx = q_num
                         if st.session_state.question_status[q_num]['status'] == 'not_visited':
@@ -987,16 +1003,16 @@ def get_time_color(seconds_left):
         return LITMUSQ_THEME['success']    # Green
 
 def show_test_header():
-    """Display test header with timer and instructions - Mobile optimized."""
-    # Mobile: Stack columns vertically or use fewer columns
-    col1, col2 = st.columns(2)
+    """Display test header with timer and instructions."""
+    col1, col2, col3, col4 = st.columns([1, 1, 1,1])
     
     with col1:
         st.subheader(f"📝 {st.session_state.exam_name}")
-        st.write(f"**Q:{st.session_state.current_idx + 1}/{len(st.session_state.quiz_questions)}**")
+        st.write(f"**Question {st.session_state.current_idx + 1} of {len(st.session_state.quiz_questions)}**")
     
     with col2:
         if st.session_state.end_time and not st.session_state.submitted:
+            # Calculate time left
             time_left = st.session_state.end_time - datetime.now()
             seconds_left = time_left.total_seconds()
             
@@ -1008,40 +1024,33 @@ def show_test_header():
             minutes, seconds = divmod(remainder, 60)
             time_color = get_time_color(seconds_left)
             
-            # Compact timer for mobile
-            if hours > 0:
-                timer_text = f"⏰ {hours:01d}h{minutes:02d}m"
-            else:
-                timer_text = f"⏰ {minutes:01d}m{seconds:02d}s"
-            
+            # Display timer
             st.markdown(
-                f"<h4 style='color: {time_color}; text-align: center; margin: 0;'>{timer_text}</h4>", 
+                f"<h3 style='color: {time_color}; text-align: center; margin: 0;'>⏰ {hours:02d}:{minutes:02d}</h3>", 
                 unsafe_allow_html=True
             )
             
+            # Auto-refresh every second
             st_autorefresh(interval=60000, limit=100, key="timer_refresh")
+            
         else:
-            st.metric("⏰ Time", "No Limit")
-    
-    # Second row for progress stats
-    col3, col4 = st.columns(2)
+            st.metric("⏰ Time Left", "No Limit")
     
     with col3:
         if 'question_status' in st.session_state:
             total = len(st.session_state.quiz_questions)
             answered = sum(1 for status in st.session_state.question_status.values() 
                           if status['answer'] is not None)
-            st.metric("✅ Done", f"{answered}/{total}")
-    
+            st.metric("✅ Answered", f"{answered}/{total}")              
     with col4:        
-        marked = sum(1 for status in st.session_state.question_status.values() 
-                    if status['marked'])
-        st.metric("🟨 Marked", marked)
+            marked = sum(1 for status in st.session_state.question_status.values() 
+                        if status['marked'])
+            st.metric("🟨 Marked", marked)
     
     st.markdown("---")
 
 def show_question_interface():
-    """Display the current question with mobile-optimized interface."""
+    """Display the current question with professional interface."""
     df = st.session_state.quiz_questions
     current_idx = st.session_state.current_idx
     
@@ -1054,11 +1063,11 @@ def show_question_interface():
     if st.session_state.question_status[current_idx]['status'] == 'not_visited':
         update_question_status(current_idx, 'not_answered')
     
-    # Mobile-optimized question card
+    # Enhanced question card
     st.markdown(f"""
     <div class="question-card">
-        <h4>❓ Question {current_idx + 1}</h4>
-        <p style="font-size: 1rem; line-height: 1.5;">{row['Question']}</p>
+        <h3>❓ Question {current_idx + 1}</h3>
+        <p style="font-size: 1.1rem; line-height: 1.6;">{row['Question']}</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1071,22 +1080,21 @@ def show_question_interface():
     
     current_answer = st.session_state.question_status[current_idx]['answer']
     
-    # Mobile-friendly radio buttons with compact labels
     choice = st.radio(
-        "**Select answer:**",
+        "**Select your answer:**",
         options=[
-            f"A: {options['A'][:50]}{'...' if len(options['A']) > 50 else ''}",
-            f"B: {options['B'][:50]}{'...' if len(options['B']) > 50 else ''}",
-            f"C: {options['C'][:50]}{'...' if len(options['C']) > 50 else ''}",
-            f"D: {options['D'][:50]}{'...' if len(options['D']) > 50 else ''}"
+            f"A) {options['A']}",
+            f"B) {options['B']}",
+            f"C) {options['C']}",
+            f"D) {options['D']}"
         ],
         index=None,
         key=f"question_{current_idx}"
     )
     
     selected_option = None
-    if choice and ":" in choice:
-        selected_option = choice.split(":", 1)[0].strip()
+    if choice and ")" in choice:
+        selected_option = choice.split(")", 1)[0].strip()
     
     if selected_option and selected_option != current_answer:
         update_question_status(current_idx, 'answered', selected_option)
@@ -1095,12 +1103,11 @@ def show_question_interface():
     
     st.markdown("---")
     
-    # Mobile-optimized action buttons - Stack in 2 rows
-    # First row: Navigation
-    col1, col2, col3 = st.columns(3)
+    # Enhanced action buttons
+    col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        st.button("◀ Prev", use_container_width=True, disabled=current_idx == 0,
+        st.button("◀ Previous", use_container_width=True, disabled=current_idx == 0,
                  key=f"prev_{current_idx}",
                  on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1))
     
@@ -1110,24 +1117,21 @@ def show_question_interface():
                  on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
     
     with col3:
-        button_text = "🟨 Mark" if not st.session_state.question_status[current_idx]['marked'] else "✅ Unmark"
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "❌ Unmark Review"
         st.button(button_text, use_container_width=True,
                  key=f"mark_{current_idx}",
                  on_click=lambda: toggle_mark_review(current_idx))
     
-    # Second row: Actions
-    col4, col5 = st.columns(2)
-    
     with col4:
-        if st.button("🗑️ Clear", use_container_width=True,
+        if st.button("🗑️ Clear Response", use_container_width=True,
                      key=f"clear_{current_idx}"):
             clear_response(current_idx)
     
     with col5:
-        st.button("📤 Submit", type="primary", use_container_width=True,
+        st.button("📤 Submit Test", type="primary", use_container_width=True,
                  key=f"submit_{current_idx}",
                  on_click=lambda: setattr(st.session_state, 'submitted', True))
-
+    
     # Removed the show_test_header() call from here
 
 def clear_response(question_idx):
