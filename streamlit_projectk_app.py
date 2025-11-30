@@ -380,7 +380,7 @@ def show_question_editor():
     formatted_questions = load_formatted_questions()
     
     # Folder selection
-    st.subheader("📁 Select Question Bank")
+    st.subheader("Select Question Bank")
     folder_structure = st.session_state.get('folder_structure', {})
     
     if not folder_structure:
@@ -436,26 +436,15 @@ def show_question_editor():
         is_folder = any(k != '_files' for k in item_content.keys())
         has_qb = '_files' in item_content and 'QB.xlsx' in item_content['_files']
         
-        col1, col2, col3 = st.columns([1, 3, 1])
-        with col1:
-            icon = "📄" if has_qb else "📁"
-            st.write(icon)
-        with col2:
-            button_label = f"{item_name}"
-            if st.button(
-                button_label, 
-                key=f"editor_nav_{len(current_path)}_{item_name}",
-                use_container_width=True,
-                help=f"Click to {'open question bank' if has_qb else 'explore folder'}"
-            ):
-                st.session_state.editor_current_path = current_path + [item_name]
-                st.rerun()
-        with col3:
-            if has_qb:
-                st.markdown("<span style='color: green;'>📊 QB</span>", unsafe_allow_html=True)
-            elif is_folder:
-                st.markdown("<span style='color: blue;'>📁</span>", unsafe_allow_html=True)
-        
+        button_label = f"{item_name}"
+        if st.button(
+            button_label, 
+            key=f"editor_nav_{len(current_path)}_{item_name}",
+            use_container_width=True,
+            help=f"Click to {'open question bank' if has_qb else 'explore folder'}"
+        ):
+            st.session_state.editor_current_path = current_path + [item_name]
+            st.rerun()
         items_displayed += 1
     
     # Show content if current path has a QB
@@ -1908,7 +1897,7 @@ def show_platform_guide():
 
     ### 🚀 Getting Started
     1. **Navigate** through the folder structure to find question banks
-    2. **Select** a question bank with the 📁 icon
+    2. **Select** a question bank
     3. **Configure** your test settings
     4. **Start** the test and track your progress
 
