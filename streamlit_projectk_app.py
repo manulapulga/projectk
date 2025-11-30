@@ -1004,7 +1004,7 @@ def get_time_color(seconds_left):
 
 def show_test_header():
     """Display test header with timer and instructions."""
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1,4])
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 4])
     
     with col1:
         st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
