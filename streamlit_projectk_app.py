@@ -13,6 +13,7 @@ from streamlit_autorefresh import st_autorefresh
 QUESTION_DATA_FOLDER = "Question_Data_Folder"
 LOGIN_FILE_PATH = "data/login_details.xlsx"
 USER_PROGRESS_FOLDER = "user_progress"
+FORMATTED_QUESTIONS_FILE = "formatted_questions.json"
 
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
@@ -164,6 +165,22 @@ def inject_custom_css():
         background-color: #B91C1C;
         color: white;
     }}
+
+    /* Formatted Content Styles */
+    .formatted-content {{
+        line-height: 1.6;
+        margin: 0.5rem 0;
+    }}
+    .formatted-content b, .formatted-content strong {{
+        color: {LITMUSQ_THEME['primary']};
+    }}
+    .formatted-content i, .formatted-content em {{
+        color: {LITMUSQ_THEME['secondary']};
+    }}
+    .formatted-content u {{
+        text-decoration: underline;
+        color: {LITMUSQ_THEME['accent']};
+    }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -255,6 +272,345 @@ def show_login_screen():
         )
     
     return False
+
+# =============================
+# Rich Text Formatting System
+# =============================
+def load_formatted_questions():
+    """Load formatted questions from JSON file."""
+    try:
+        if os.path.exists(FORMATTED_QUESTIONS_FILE):
+            with open(FORMATTED_QUESTIONS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except Exception as e:
+        st.error(f"Error loading formatted questions: {e}")
+    return {}
+
+def save_formatted_questions(formatted_data):
+    """Save formatted questions to JSON file."""
+    try:
+        with open(FORMATTED_QUESTIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(formatted_data, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        st.error(f"Error saving formatted questions: {e}")
+        return False
+
+def get_question_key(file_path, sheet_name, question_index, field="question"):
+    """Generate a unique key for each question/option."""
+    return f"{file_path}::{sheet_name}::{question_index}::{field}"
+
+def render_formatted_content(content):
+    """Render formatted content with HTML/CSS styling."""
+    if not content or not isinstance(content, str):
+        return content or ""
+    
+    # If content contains HTML tags, render as HTML
+    if any(tag in content for tag in ['<b>', '<strong>', '<i>', '<em>', '<u>', '<br>', '<span', '<div', '<p>']):
+        return st.markdown(f'<div class="formatted-content">{content}</div>', unsafe_allow_html=True)
+    else:
+        return st.write(content)
+
+def is_admin_user():
+    """Check if current user is admin."""
+    # You can define admin users in your login file or hardcode them
+    admin_users = ["admin", "administrator"]  # Add admin usernames here
+    return st.session_state.username.lower() in [admin.lower() for admin in admin_users]
+
+def show_question_editor():
+    """Admin interface for editing question formatting."""
+    show_litmusq_header("📝 Question Formatting Editor")
+    
+    # Home button
+    if st.button("🏠 Home", use_container_width=False, key="editor_home"):
+        st.session_state.current_screen = "home"
+        st.rerun()
+    
+    # Check if user is admin
+    if not is_admin_user():
+        st.error("❌ Access Denied. This section is only available for administrators.")
+        st.info("Please contact your system administrator if you need access.")
+        return
+    
+    # Load existing formatted questions
+    formatted_questions = load_formatted_questions()
+    
+    # Folder selection
+    st.subheader("📁 Select Question Bank")
+    folder_structure = st.session_state.get('folder_structure', {})
+    
+    if not folder_structure:
+        st.error("No question banks found. Please ensure Question_Data_Folder exists.")
+        return
+    
+    # Display current location breadcrumb
+    current_path = st.session_state.get('editor_current_path', [])
+    if current_path:
+        breadcrumb = " > ".join(current_path)
+        st.write(f"**Current Location:** `{breadcrumb}`")
+        
+        # Add back navigation
+        col1, col2 = st.columns([1, 4])
+        with col1:
+            if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
+                if len(current_path) > 0:
+                    st.session_state.editor_current_path = current_path[:-1]
+                    st.rerun()
+        with col2:
+            if st.button("🏠 Back to Root", use_container_width=True, key="back_to_root"):
+                st.session_state.editor_current_path = []
+                st.rerun()
+    
+    # Display folder navigation for editor
+    def get_current_level(structure, path):
+        """Get the current level in folder structure based on path."""
+        current_level = structure
+        for folder in path:
+            if folder in current_level:
+                current_level = current_level[folder]
+            else:
+                return None
+        return current_level
+    
+    current_level = get_current_level(folder_structure, current_path)
+    
+    if current_level is None:
+        st.error("Invalid path in folder structure")
+        st.session_state.editor_current_path = []
+        st.rerun()
+        return
+    
+    # Display items at current level
+    items_displayed = 0
+    
+    # Display folders first
+    for item_name, item_content in current_level.items():
+        if item_name == '_files':
+            continue
+            
+        # Check if it's a folder (has sub-items that aren't _files)
+        is_folder = any(k != '_files' for k in item_content.keys())
+        has_qb = '_files' in item_content and 'QB.xlsx' in item_content['_files']
+        
+        col1, col2, col3 = st.columns([1, 3, 1])
+        with col1:
+            icon = "📄" if has_qb else "📁"
+            st.write(icon)
+        with col2:
+            button_label = f"{item_name}"
+            if st.button(
+                button_label, 
+                key=f"editor_nav_{len(current_path)}_{item_name}",
+                use_container_width=True,
+                help=f"Click to {'open question bank' if has_qb else 'explore folder'}"
+            ):
+                st.session_state.editor_current_path = current_path + [item_name]
+                st.rerun()
+        with col3:
+            if has_qb:
+                st.markdown("<span style='color: green;'>📊 QB</span>", unsafe_allow_html=True)
+            elif is_folder:
+                st.markdown("<span style='color: blue;'>📁</span>", unsafe_allow_html=True)
+        
+        items_displayed += 1
+    
+    # Show content if current path has a QB
+    if current_path:
+        has_qb = '_files' in current_level and 'QB.xlsx' in current_level['_files']
+        
+        if has_qb:
+            st.markdown("---")
+            st.subheader("📝 Question Bank Editor")
+            
+            qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
+            if os.path.exists(qb_path):
+                questions_data = load_questions(qb_path)
+                
+                if questions_data:
+                    # Sheet selection
+                    sheet_names = list(questions_data.keys())
+                    selected_sheet = st.selectbox("Select Sheet", sheet_names, key="editor_sheet")
+                    
+                    if selected_sheet:
+                        df = questions_data[selected_sheet]
+                        
+                        if len(df) > 0:
+                            # Question selection
+                            question_indices = list(range(len(df)))
+                            selected_index = st.selectbox(
+                                "Select Question", 
+                                question_indices,
+                                format_func=lambda x: f"Question {x+1}: {df.iloc[x]['Question'][:100]}..."
+                            )
+                            
+                            if selected_index is not None:
+                                show_question_editing_interface(
+                                    df.iloc[selected_index], 
+                                    selected_index,
+                                    qb_path,
+                                    selected_sheet,
+                                    formatted_questions
+                                )
+                        else:
+                            st.warning("No questions found in this sheet.")
+                else:
+                    st.error("Failed to load question bank data.")
+            else:
+                st.error(f"Question bank file not found: {qb_path}")
+        elif items_displayed == 0:
+            st.info("This folder is empty.")
+    else:
+        if items_displayed == 0:
+            st.info("No question banks or folders found in the root directory.")
+        
+def show_question_editing_interface(question_row, question_index, file_path, sheet_name, formatted_questions):
+    """Show editing interface for a specific question."""
+    st.markdown("---")
+    st.subheader(f"✏️ Editing Question {question_index + 1}")
+    
+    # Display original question for reference
+    with st.expander("👀 Original Question (Read-only)", expanded=False):
+        st.write(f"**Question:** {question_row['Question']}")
+        st.write(f"**Option A:** {question_row.get('Option A', '')}")
+        st.write(f"**Option B:** {question_row.get('Option B', '')}")
+        st.write(f"**Option C:** {question_row.get('Option C', '')}")
+        st.write(f"**Option D:** {question_row.get('Option D', '')}")
+        if 'Explanation' in question_row:
+            st.write(f"**Explanation:** {question_row.get('Explanation', '')}")
+    
+    # Generate keys for this question
+    question_key = get_question_key(file_path, sheet_name, question_index, "question")
+    option_a_key = get_question_key(file_path, sheet_name, question_index, "option_a")
+    option_b_key = get_question_key(file_path, sheet_name, question_index, "option_b")
+    option_c_key = get_question_key(file_path, sheet_name, question_index, "option_c")
+    option_d_key = get_question_key(file_path, sheet_name, question_index, "option_d")
+    explanation_key = get_question_key(file_path, sheet_name, question_index, "explanation")
+    
+    # Load existing formatted content
+    default_question = formatted_questions.get(question_key, question_row['Question'])
+    default_a = formatted_questions.get(option_a_key, question_row.get('Option A', ''))
+    default_b = formatted_questions.get(option_b_key, question_row.get('Option B', ''))
+    default_c = formatted_questions.get(option_c_key, question_row.get('Option C', ''))
+    default_d = formatted_questions.get(option_d_key, question_row.get('Option D', ''))
+    default_explanation = formatted_questions.get(explanation_key, question_row.get('Explanation', ''))
+    
+    # Formatting guide
+    with st.expander("📋 Formatting Guide", expanded=False):
+        st.markdown("""
+        **Supported Formatting:**
+        - **Bold:** `<b>text</b>` or `<strong>text</strong>`
+        - *Italic:* `<i>text</i>` or `<em>text</em>`
+        - <u>Underline:</u> `<u>text</u>`
+        - Line breaks: `<br>`
+        - Colors: `<span style='color: red;'>text</span>`
+        - Font size: `<span style='font-size: 20px;'>text</span>`
+        
+        **Examples:**
+        - `This is <b>bold</b> and <i>italic</i>`
+        - `First line<br>Second line`
+        - `<span style='color: blue;'>Blue text</span>`
+        - `<span style='font-size: 18px; color: red;'>Large red text</span>`
+        """)
+    
+    # Editing form
+    with st.form(f"edit_question_{question_index}"):
+        st.subheader("Edit Content")
+        
+        edited_question = st.text_area(
+            "**Question Text**",
+            value=default_question,
+            height=150,
+            key=f"q_{question_index}"
+        )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            edited_a = st.text_area("Option A", value=default_a, height=100, key=f"a_{question_index}")
+            edited_b = st.text_area("Option B", value=default_b, height=100, key=f"b_{question_index}")
+        with col2:
+            edited_c = st.text_area("Option C", value=default_c, height=100, key=f"c_{question_index}")
+            edited_d = st.text_area("Option D", value=default_d, height=100, key=f"d_{question_index}")
+        
+        edited_explanation = st.text_area(
+            "Explanation", 
+            value=default_explanation, 
+            height=150,
+            key=f"exp_{question_index}"
+        )
+        
+        # Preview
+        st.subheader("👁️ Live Preview")
+        st.markdown("**Question:**")
+        render_formatted_content(edited_question)
+        
+        st.markdown("**Options:**")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("A)")
+            render_formatted_content(edited_a)
+            st.markdown("B)")
+            render_formatted_content(edited_b)
+        with col2:
+            st.markdown("C)")
+            render_formatted_content(edited_c)
+            st.markdown("D)")
+            render_formatted_content(edited_d)
+        
+        if edited_explanation:
+            st.markdown("**Explanation:**")
+            render_formatted_content(edited_explanation)
+        
+        # Form actions
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True)
+        with col2:
+            reset_btn = st.form_submit_button("🔄 Reset to Original", use_container_width=True)
+        with col3:
+            clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True)
+        
+        if save_btn:
+            # Save formatted content
+            formatted_questions[question_key] = edited_question
+            formatted_questions[option_a_key] = edited_a
+            formatted_questions[option_b_key] = edited_b
+            formatted_questions[option_c_key] = edited_c
+            formatted_questions[option_d_key] = edited_d
+            formatted_questions[explanation_key] = edited_explanation
+            
+            if save_formatted_questions(formatted_questions):
+                st.success("✅ Changes saved successfully!")
+            else:
+                st.error("❌ Failed to save changes.")
+        
+        if reset_btn:
+            # Reset to original content
+            formatted_questions[question_key] = question_row['Question']
+            formatted_questions[option_a_key] = question_row.get('Option A', '')
+            formatted_questions[option_b_key] = question_row.get('Option B', '')
+            formatted_questions[option_c_key] = question_row.get('Option C', '')
+            formatted_questions[option_d_key] = question_row.get('Option D', '')
+            formatted_questions[explanation_key] = question_row.get('Explanation', '')
+            
+            if save_formatted_questions(formatted_questions):
+                st.success("✅ Reset to original content!")
+                st.rerun()
+        
+        if clear_btn:
+            # Remove formatting (use original content)
+            for key in [question_key, option_a_key, option_b_key, option_c_key, option_d_key, explanation_key]:
+                if key in formatted_questions:
+                    del formatted_questions[key]
+            
+            if save_formatted_questions(formatted_questions):
+                st.success("✅ Formatting cleared!")
+                st.rerun()
+
+def get_formatted_content(file_path, sheet_name, question_index, field, original_content):
+    """Get formatted content if available, otherwise return original."""
+    formatted_questions = load_formatted_questions()
+    key = get_question_key(file_path, sheet_name, question_index, field)
+    return formatted_questions.get(key, original_content)
 
 # =============================
 # User Progress & Analytics
@@ -614,7 +970,6 @@ def show_folder_view_screen():
                     """, unsafe_allow_html=True)
 
                     # Mobile-friendly card layout for each test
-                    # Mobile-friendly card layout for each test
                     for idx, sheet_name in enumerate(sheet_names):
                         df = questions_data[sheet_name]
                         
@@ -793,6 +1148,114 @@ def show_exam_config_screen():
             start_quiz(df_exam, num_questions, exam_duration, use_final_key, sheet_name)
             st.session_state.current_screen = "quiz"
             st.rerun()
+
+# =============================
+# Enhanced Question Display in Quiz
+# =============================
+def show_enhanced_question_interface():
+    """Display the current question with formatted content."""
+    df = st.session_state.quiz_questions
+    current_idx = st.session_state.current_idx
+    
+    if current_idx >= len(df):
+        st.error("Invalid question index")
+        return
+        
+    row = df.iloc[current_idx]
+    
+    if st.session_state.question_status[current_idx]['status'] == 'not_visited':
+        update_question_status(current_idx, 'not_answered')
+    
+    # Get formatted content
+    file_path = st.session_state.get('current_qb_path', '')
+    sheet_name = st.session_state.get('selected_sheet', '')
+    
+    formatted_question = get_formatted_content(
+        file_path, sheet_name, current_idx, "question", row['Question']
+    )
+    formatted_a = get_formatted_content(file_path, sheet_name, current_idx, "option_a", row.get('Option A', ''))
+    formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get('Option B', ''))
+    formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
+    formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
+    
+    # Enhanced question card with formatted content
+    st.markdown(f"""
+    <div class="question-card">
+        <h3>❓ Question {current_idx + 1}</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Render formatted question
+    render_formatted_content(formatted_question)
+    
+    options = {
+        "A": formatted_a,
+        "B": formatted_b,
+        "C": formatted_c,
+        "D": formatted_d,
+    }
+    
+    current_answer = st.session_state.question_status[current_idx]['answer']
+    
+    # Create custom radio buttons with formatted content
+    st.markdown("**Select your answer:**")
+    
+    choice = st.radio(
+        "",
+        options=list(options.keys()),
+        format_func=lambda x: f" {x})",
+        index=None if current_answer is None else list(options.keys()).index(current_answer),
+        key=f"question_{current_idx}"
+    )
+    
+    # Display formatted options
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("**A)**")
+        render_formatted_content(options['A'])
+        st.markdown("**B)**")
+        render_formatted_content(options['B'])
+    with col2:
+        st.markdown("**C)**")
+        render_formatted_content(options['C'])
+        st.markdown("**D)**")
+        render_formatted_content(options['D'])
+    
+    if choice and choice != current_answer:
+        update_question_status(current_idx, 'answered', choice)
+        st.session_state.answers[current_idx] = choice
+        st.rerun()
+    
+    st.markdown("---")
+    
+    # Enhanced action buttons
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
+    with col1:
+        st.button("◀ Previous", use_container_width=True, disabled=current_idx == 0,
+                 key=f"prev_{current_idx}",
+                 on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1))
+    
+    with col2:
+        st.button("Next ▶", use_container_width=True, disabled=current_idx == len(df) - 1,
+                 key=f"next_{current_idx}",
+                 on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
+    
+    with col3:
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "❌ Unmark Review"
+        st.button(button_text, use_container_width=True,
+                 key=f"mark_{current_idx}",
+                 on_click=lambda: toggle_mark_review(current_idx))
+    
+    with col4:
+        if st.button("🗑️ Clear Response", use_container_width=True,
+                     key=f"clear_{current_idx}"):
+            clear_response(current_idx)
+    
+    with col5:
+        st.button("📤 Submit Test", type="primary", use_container_width=True,
+                 key=f"submit_{current_idx}",
+                 on_click=lambda: setattr(st.session_state, 'submitted', True))
 
 # =============================
 # Professional Test Interface
@@ -1054,91 +1517,6 @@ def show_test_header():
 
     st.markdown("---")
 
-def show_question_interface():
-    """Display the current question with professional interface."""
-    df = st.session_state.quiz_questions
-    current_idx = st.session_state.current_idx
-    
-    if current_idx >= len(df):
-        st.error("Invalid question index")
-        return
-        
-    row = df.iloc[current_idx]
-    
-    if st.session_state.question_status[current_idx]['status'] == 'not_visited':
-        update_question_status(current_idx, 'not_answered')
-    
-    # Enhanced question card
-    st.markdown(f"""
-    <div class="question-card">
-        <h3>❓ Question {current_idx + 1}</h3>
-        <p style="font-size: 1.1rem; line-height: 1.6;">{row['Question']}</p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    options = {
-        "A": row.get("Option A", ""),
-        "B": row.get("Option B", ""),
-        "C": row.get("Option C", ""),
-        "D": row.get("Option D", ""),
-    }
-    
-    current_answer = st.session_state.question_status[current_idx]['answer']
-    
-    choice = st.radio(
-        "**Select your answer:**",
-        options=[
-            f"A) {options['A']}",
-            f"B) {options['B']}",
-            f"C) {options['C']}",
-            f"D) {options['D']}"
-        ],
-        index=None,
-        key=f"question_{current_idx}"
-    )
-    
-    selected_option = None
-    if choice and ")" in choice:
-        selected_option = choice.split(")", 1)[0].strip()
-    
-    if selected_option and selected_option != current_answer:
-        update_question_status(current_idx, 'answered', selected_option)
-        st.session_state.answers[current_idx] = selected_option
-        st.rerun()
-    
-    st.markdown("---")
-    
-    # Enhanced action buttons
-    col1, col2, col3, col4, col5 = st.columns(5)
-    
-    with col1:
-        st.button("◀ Previous", use_container_width=True, disabled=current_idx == 0,
-                 key=f"prev_{current_idx}",
-                 on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1))
-    
-    with col2:
-        st.button("Next ▶", use_container_width=True, disabled=current_idx == len(df) - 1,
-                 key=f"next_{current_idx}",
-                 on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
-    
-    with col3:
-        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "❌ Unmark Review"
-        st.button(button_text, use_container_width=True,
-                 key=f"mark_{current_idx}",
-                 on_click=lambda: toggle_mark_review(current_idx))
-    
-    with col4:
-        if st.button("🗑️ Clear Response", use_container_width=True,
-                     key=f"clear_{current_idx}"):
-            clear_response(current_idx)
-    
-    with col5:
-        st.button("📤 Submit Test", type="primary", use_container_width=True,
-                 key=f"submit_{current_idx}",
-                 on_click=lambda: setattr(st.session_state, 'submitted', True))
-    
-    # Removed the show_test_header() call from here
-
 def clear_response(question_idx):
     """Clear response for a question."""
     # Set a special status for cleared responses
@@ -1184,7 +1562,7 @@ def show_quiz_screen():
     
     # Show question first, then header at the bottom
     if not st.session_state.submitted:
-        show_question_interface()
+        show_enhanced_question_interface()
         show_test_header()  # Moved to bottom
     else:
         show_results_screen()
@@ -1228,6 +1606,50 @@ def compute_results():
         "Percentage": (obtained / total * 100) if total > 0 else 0
     }
     return df, summary
+
+def show_enhanced_detailed_analysis(res_df):
+    """Show detailed analysis with formatted content."""
+    for i, row in res_df.iterrows():
+        file_path = st.session_state.get('current_qb_path', '')
+        sheet_name = st.session_state.get('selected_sheet', '')
+        
+        # Get formatted content
+        formatted_question = get_formatted_content(file_path, sheet_name, i, "question", row['Question'])
+        formatted_a = get_formatted_content(file_path, sheet_name, i, "option_a", row.get('Option A', ''))
+        formatted_b = get_formatted_content(file_path, sheet_name, i, "option_b", row.get('Option B', ''))
+        formatted_c = get_formatted_content(file_path, sheet_name, i, "option_c", row.get('Option C', ''))
+        formatted_d = get_formatted_content(file_path, sheet_name, i, "option_d", row.get('Option D', ''))
+        formatted_explanation = get_formatted_content(file_path, sheet_name, i, "explanation", row.get('Explanation', ''))
+        
+        with st.expander(f"Question {i+1}", expanded=False):
+            st.markdown("**Question:**")
+            render_formatted_content(formatted_question)
+            
+            correct = row["Correct Option Used"]
+            chosen = row["Your Answer"]
+            
+            def render_formatted_option(label, text, is_correct, is_chosen):
+                if is_correct and is_chosen:
+                    st.markdown(f"**{label})** ✅ Correct - Your Answer")
+                    render_formatted_content(text)
+                elif is_correct:
+                    st.markdown(f"**{label})** ✅ Correct Answer")
+                    render_formatted_content(text)
+                elif is_chosen:
+                    st.markdown(f"**{label})** ❌ Your Answer")
+                    render_formatted_content(text)
+                else:
+                    st.markdown(f"**{label})**")
+                    render_formatted_content(text)
+            
+            render_formatted_option("A", formatted_a, "A" == correct, "A" == chosen)
+            render_formatted_option("B", formatted_b, "B" == correct, "B" == chosen)
+            render_formatted_option("C", formatted_c, "C" == correct, "C" == chosen)
+            render_formatted_option("D", formatted_d, "D" == correct, "D" == chosen)
+            
+            if formatted_explanation:
+                st.markdown("**Explanation:**")
+                render_formatted_content(formatted_explanation)
 
 def show_results_screen():
     """Display enhanced results after quiz completion."""
@@ -1326,38 +1748,7 @@ def show_results_screen():
     if st.session_state.get('show_detailed_analysis', False):
         st.markdown("---")
         st.subheader("📋 Question-wise Review")
-        
-        for i, row in res_df.iterrows():
-            with st.expander(f"Question {i+1}: {row['Question'][:100]}...", expanded=False):
-                correct = row["Correct Option Used"]
-                chosen = row["Your Answer"]
-                
-                st.markdown(f"**Question:** {row['Question']}")
-                
-                def fmt_option(label, text):
-                    if label == correct and label == chosen:
-                        return f"✅ **{label}) {text}** (Correct - Your Answer)"
-                    elif label == correct:
-                        return f"✅ **{label}) {text}** (Correct Answer)"
-                    elif label == chosen:
-                        return f"❌ **{label}) {text}** (Your Answer)"
-                    else:
-                        return f"{label}) {text}"
-                
-                st.write(fmt_option("A", row.get("Option A", "")))
-                st.write(fmt_option("B", row.get("Option B", "")))
-                st.write(fmt_option("C", row.get("Option C", "")))
-                st.write(fmt_option("D", row.get("Option D", "")))
-                
-                if str(row.get("Explanation", "")).strip():
-                    st.info(f"**Explanation:** {row['Explanation']}")
-                
-                if i in st.session_state.question_status:
-                    status_info = st.session_state.question_status[i]
-                    status_text = status_info['status'].replace('_', ' ').title()
-                    if status_info['marked']:
-                        status_text += " 🟨"
-                    st.write(f"**Status:** {status_text}")
+        show_enhanced_detailed_analysis(res_df)
 
 # =============================
 # Helper Functions
@@ -1455,27 +1846,28 @@ def show_platform_guide():
     
     st.markdown("""
     ## 🧪 Welcome to LitmusQ!
-    
+
     ### 🚀 Getting Started
     1. **Navigate** through the folder structure to find question banks
     2. **Select** a question bank with the 📁 icon
     3. **Configure** your test settings
     4. **Start** the test and track your progress
-    
+
     ### 🎯 Key Features
     - **Professional Testing Interface** with real-time progress tracking
     - **Advanced Analytics** with performance dashboard
     - **Question Palette** with color-coded status
     - **Detailed Results** with explanations
     - **Data Management** - Clear your performance data anytime
-    
+    - **Rich Text Formatting** - Admins can format questions with HTML
+
     ### Legends
     - ✅: Answered questions
     - ❌: Not answered
     - 🟨: Marked for review
     - 🟩 Answered & marked for review
     - ⛔: Response cleared
-    
+
     ### ⚡ Quick Tips
     - Use the question palette to jump between questions
     - Mark questions for review if you're unsure
@@ -1499,6 +1891,12 @@ def quick_actions_panel():
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
         st.session_state.current_screen = "home"
         st.rerun()
+    
+    # Admin-only actions
+    if is_admin_user():
+        if st.sidebar.button("📝 Edit Questions", use_container_width=True, key="sidebar_editor"):
+            st.session_state.current_screen = "question_editor"
+            st.rerun()
     
     if st.sidebar.button("📊 Performance", use_container_width=True, key="sidebar_dashboard"):
         st.session_state.current_screen = "dashboard"
@@ -1541,11 +1939,11 @@ def initialize_state():
         "calc_display": "0",
         "show_leave_confirmation": False,
         "show_clear_confirmation": False,
+        "editor_current_path": [],  # Initialize editor path
     }
     for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
-
 # =============================
 # Main App
 # =============================
@@ -1599,6 +1997,8 @@ def main():
         show_exam_config_screen()
     elif st.session_state.current_screen == "quiz":
         show_quiz_screen()
+    elif st.session_state.current_screen == "question_editor":
+        show_question_editor()
 
 if __name__ == "__main__":
     main()

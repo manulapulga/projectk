@@ -1,8 +1,8 @@
 {
   "username": "admin",
-  "tests_taken": 6,
-  "total_score": 0,
-  "average_score": 0.0,
+  "tests_taken": 10,
+  "total_score": 4,
+  "average_score": 0.4,
   "test_history": [
     {
       "exam_name": "UPSC",
@@ -56,6 +56,42 @@
       "total_marks": 120,
       "percentage": 0.0,
       "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-11-30T12:36:29.481263",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-11-30T12:37:26.308343",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-11-30T17:43:41.201181",
+      "score": 2,
+      "total_marks": 120,
+      "percentage": 1.6666666666666667,
+      "correct_answers": 1,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-11-30T17:43:48.382126",
+      "score": 2,
+      "total_marks": 120,
+      "percentage": 1.6666666666666667,
+      "correct_answers": 1,
       "total_questions": 60
     }
   ],
