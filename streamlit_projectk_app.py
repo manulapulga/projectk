@@ -1003,72 +1003,56 @@ def get_time_color(seconds_left):
         return LITMUSQ_THEME['success']    # Green
 
 def show_test_header():
-    st.markdown("""
-        <style>
-        .responsive-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-        @media (max-width: 768px) {
-            .responsive-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    """Display test header with timer and instructions."""
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
+    
+    with col1:
+        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+        st.subheader(f"📝 {st.session_state.exam_name}")
+        st.write(f"**Question {st.session_state.current_idx + 1} of {len(st.session_state.quiz_questions)}**")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    st.markdown("<div class='responsive-grid'>", unsafe_allow_html=True)
+    with col2:
+        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+        if st.session_state.end_time and not st.session_state.submitted:
+            time_left = st.session_state.end_time - datetime.now()
+            seconds_left = time_left.total_seconds()
 
-    # ---- ITEM 1 ----
-    st.markdown("<div>", unsafe_allow_html=True)
-    st.subheader(f"📝 {st.session_state.exam_name}")
-    st.write(f"**Question {st.session_state.current_idx + 1} of {len(st.session_state.quiz_questions)}**")
-    st.markdown("</div>", unsafe_allow_html=True)
+            if seconds_left <= 0:
+                st.session_state.submitted = True
+                st.rerun()
 
-    # ---- ITEM 2 ----
-    st.markdown("<div>", unsafe_allow_html=True)
-    if st.session_state.end_time and not st.session_state.submitted:
-        time_left = st.session_state.end_time - datetime.now()
-        seconds_left = time_left.total_seconds()
+            hours, remainder = divmod(int(seconds_left), 3600)
+            minutes, seconds = divmod(remainder, 60)
+            time_color = get_time_color(seconds_left)
 
-        if seconds_left <= 0:
-            st.session_state.submitted = True
-            st.rerun()
+            st.markdown(
+                f"<h3 style='color: {time_color}; margin: 0;'>⏰ {hours:02d}:{minutes:02d}</h3>", 
+                unsafe_allow_html=True
+            )
 
-        hours, remainder = divmod(int(seconds_left), 3600)
-        minutes, seconds = divmod(remainder, 60)
-        time_color = get_time_color(seconds_left)
+            st_autorefresh(interval=60000, limit=100, key="timer_refresh")
+        else:
+            st.metric("⏰ Time Left", "No Limit")
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown(
-            f"<h3 style='color: {time_color}; text-align: center; margin: 0;'>⏰ {hours:02d}:{minutes:02d}</h3>",
-            unsafe_allow_html=True
-        )
+    with col3:
+        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+        if 'question_status' in st.session_state:
+            total = len(st.session_state.quiz_questions)
+            answered = sum(1 for status in st.session_state.question_status.values() 
+                           if status['answer'] is not None)
+            st.metric("✅ Answered", f"{answered}/{total}") 
+        st.markdown("</div>", unsafe_allow_html=True)
 
-        st_autorefresh(interval=60000, limit=100, key='timer_refresh')
-    else:
-        st.metric("⏰ Time Left", "No Limit")
-    st.markdown("</div>", unsafe_allow_html=True)
+    with col4:
+        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+        marked = sum(1 for status in st.session_state.question_status.values() 
+                     if status['marked'])
+        st.metric("🟨 Marked", marked)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # ---- ITEM 3 ----
-    st.markdown("<div>", unsafe_allow_html=True)
-    if 'question_status' in st.session_state:
-        total = len(st.session_state.quiz_questions)
-        answered = sum(1 for status in st.session_state.question_status.values()
-                       if status['answer'] is not None)
-        st.metric("✅ Answered", f"{answered}/{total}")
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    # ---- ITEM 4 ----
-    st.markdown("<div>", unsafe_allow_html=True)
-    marked = sum(1 for status in st.session_state.question_status.values()
-                 if status['marked'])
-    st.metric("🟨 Marked", marked)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("---")
-
 
 def show_question_interface():
     """Display the current question with professional interface."""
