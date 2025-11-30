@@ -165,6 +165,17 @@ def inject_custom_css():
         color: white;
     }}
     </style>
+    <script>
+    // Auto-scroll to top on page load
+    window.addEventListener('load', function() {{
+        window.scrollTo(0, 0);
+    }});
+    
+    // Also scroll to top when navigating (for Streamlit's dynamic updates)
+    window.addEventListener('DOMContentLoaded', function() {{
+        window.scrollTo(0, 0);
+    }});
+    </script>
     """, unsafe_allow_html=True)
 
 # =============================
