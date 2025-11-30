@@ -1183,6 +1183,10 @@ def show_exam_config_screen():
             start_quiz(df_exam, num_questions, exam_duration, use_final_key, sheet_name)
             st.session_state.current_screen = "quiz"
             st.rerun()
+    st.markdown(
+        "<p style='font-size:16px; color:red; font-weight:600;'>⚠️ Do not minimize or switch apps during the test.</p>",
+        unsafe_allow_html=True
+    )       
 
 # =============================
 # Enhanced Question Display in Quiz
