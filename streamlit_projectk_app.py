@@ -106,13 +106,40 @@ def inject_custom_css():
         background-color: {LITMUSQ_THEME['primary']};
     }}
     
-    /* Radio Buttons */
+    /* Radio Buttons - Full Width */
     .stRadio > div {{
         background-color: {LITMUSQ_THEME['light_bg']};
         padding: 1rem;
         border-radius: 8px;
         border: 1px solid #E2E8F0;
-        use_container_width: True;
+        width: 100% !important;
+    }}
+    
+    /* Make radio button labels full width */
+    .stRadio [data-testid="stMarkdownContainer"] {{
+        width: 100% !important;
+    }}
+    
+    /* Radio option containers */
+    .stRadio > div > label {{
+        width: 100% !important;
+        padding: 12px 16px !important;
+        margin: 4px 0 !important;
+        border-radius: 6px !important;
+        border: 1px solid #E2E8F0 !important;
+        background-color: white !important;
+        transition: all 0.2s ease !important;
+    }}
+    
+    .stRadio > div > label:hover {{
+        background-color: {LITMUSQ_THEME['light_bg']} !important;
+        border-color: {LITMUSQ_THEME['accent']} !important;
+    }}
+    
+    .stRadio > div > label:has(input:checked) {{
+        background-color: {LITMUSQ_THEME['light_bg']} !important;
+        border-color: {LITMUSQ_THEME['primary']} !important;
+        border-width: 2px !important;
     }}
     
     /* Sidebar */
@@ -181,6 +208,22 @@ def inject_custom_css():
     .formatted-content u {{
         text-decoration: underline;
         color: {LITMUSQ_THEME['accent']};
+    }}
+    
+    /* Mobile Responsive */
+    @media (max-width: 768px) {{
+        .stRadio > div {{
+            padding: 0.5rem !important;
+        }}
+        
+        .stRadio > div > label {{
+            padding: 10px 12px !important;
+            margin: 3px 0 !important;
+        }}
+        
+        .question-card {{
+            padding: 1rem !important;
+        }}
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -1154,7 +1197,7 @@ def show_exam_config_screen():
 # Enhanced Question Display in Quiz
 # =============================
 def show_enhanced_question_interface():
-    """Display the current question with formatted content and integrated radio buttons."""
+    """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
     current_idx = st.session_state.current_idx
     
@@ -1174,12 +1217,10 @@ def show_enhanced_question_interface():
     formatted_question = get_formatted_content(
         file_path, sheet_name, current_idx, "question", row['Question']
     )
-    
-    # Use original content for radio buttons (since HTML won't render in radio labels)
-    option_a = row.get('Option A', '')
-    option_b = row.get('Option B', '')
-    option_c = row.get('Option C', '')
-    option_d = row.get('Option D', '')
+    formatted_a = get_formatted_content(file_path, sheet_name, current_idx, "option_a", row.get('Option A', ''))
+    formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get('Option B', ''))
+    formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
+    formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
     
     # Enhanced question card with formatted content
     st.markdown(f"""
@@ -1196,29 +1237,50 @@ def show_enhanced_question_interface():
     
     current_answer = st.session_state.question_status[current_idx]['answer']
     
-    # Create radio buttons with options inline
-    options = [
-        f"A) {option_a}",
-        f"B) {option_b}", 
-        f"C) {option_c}",
-        f"D) {option_d}"
-    ]
+    # Use buttons instead of radio for better mobile experience
+    col1, col2 = st.columns(2)
     
-    choice = st.radio(
-        "",
-        options=options,
-        index=None if current_answer is None else ord(current_answer) - ord('A'),
-        key=f"question_{current_idx}"
-    )
+    with col1:
+        # Option A
+        button_style = "primary" if current_answer == "A" else "secondary"
+        if st.button(f"**A)** {formatted_a}", 
+                    use_container_width=True, 
+                    type=button_style,
+                    key=f"option_a_{current_idx}"):
+            update_question_status(current_idx, 'answered', "A")
+            st.session_state.answers[current_idx] = "A"
+            st.rerun()
+        
+        # Option B
+        button_style = "primary" if current_answer == "B" else "secondary"
+        if st.button(f"**B)** {formatted_b}", 
+                    use_container_width=True, 
+                    type=button_style,
+                    key=f"option_b_{current_idx}"):
+            update_question_status(current_idx, 'answered', "B")
+            st.session_state.answers[current_idx] = "B"
+            st.rerun()
     
-    selected_option = None
-    if choice:
-        selected_option = choice[0]  # Get 'A', 'B', 'C', or 'D'
-    
-    if selected_option and selected_option != current_answer:
-        update_question_status(current_idx, 'answered', selected_option)
-        st.session_state.answers[current_idx] = selected_option
-        st.rerun()
+    with col2:
+        # Option C
+        button_style = "primary" if current_answer == "C" else "secondary"
+        if st.button(f"**C)** {formatted_c}", 
+                    use_container_width=True, 
+                    type=button_style,
+                    key=f"option_c_{current_idx}"):
+            update_question_status(current_idx, 'answered', "C")
+            st.session_state.answers[current_idx] = "C"
+            st.rerun()
+        
+        # Option D
+        button_style = "primary" if current_answer == "D" else "secondary"
+        if st.button(f"**D)** {formatted_d}", 
+                    use_container_width=True, 
+                    type=button_style,
+                    key=f"option_d_{current_idx}"):
+            update_question_status(current_idx, 'answered', "D")
+            st.session_state.answers[current_idx] = "D"
+            st.rerun()
     
     st.markdown("---")
     
@@ -1236,7 +1298,7 @@ def show_enhanced_question_interface():
                  on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
     
     with col3:
-        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "❌ Unmark Review"
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "⭕ Unmark Review"
         st.button(button_text, use_container_width=True,
                  key=f"mark_{current_idx}",
                  on_click=lambda: toggle_mark_review(current_idx))
