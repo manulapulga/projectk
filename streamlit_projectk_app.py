@@ -6,6 +6,8 @@ import os
 from pathlib import Path
 import json
 from streamlit_autorefresh import st_autorefresh
+import psutil
+from functools import lru_cache
 
 # =============================
 # Configuration & Theme
@@ -14,6 +16,14 @@ QUESTION_DATA_FOLDER = "Question_Data_Folder"
 LOGIN_FILE_PATH = "data/login_details.xlsx"
 USER_PROGRESS_FOLDER = "user_progress"
 FORMATTED_QUESTIONS_FILE = "formatted_questions.json"
+
+# =============================
+# Add performance config
+# =============================
+class PerformanceConfig:
+    MAX_MEMORY_MB = 500
+    CLEANUP_INTERVAL_MINUTES = 5
+    MAX_QUESTIONS_PER_LOAD = 200
 
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
@@ -1014,19 +1024,11 @@ def show_folder_view_screen():
                                        unsafe_allow_html=True)
                             
                             # Compact stats with attractive colors
-                            stats_col1, stats_col2, col3 = st.columns(3)
+                            stats_col1, stats_col2 = st.columns(2)
                             with stats_col1:
                                 st.markdown(f"<p style='color: {LITMUSQ_THEME['success']}; font-weight: 600; margin: 0.5rem 0;'>❓ {len(df)} Questions</p>", 
                                            unsafe_allow_html=True)
                             with stats_col2:
-                                if "Difficulty Level" in df.columns:
-                                    difficulties = df["Difficulty Level"].value_counts()
-                                    st.markdown(f"<p style='color: {LITMUSQ_THEME['warning']}; font-weight: 600; margin: 0.5rem 0;'>📊 {len(difficulties)} Levels</p>", 
-                                               unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f"<p style='color: #64748B; font-weight: 600; margin: 0.5rem 0;'>📊 -</p>", 
-                                               unsafe_allow_html=True)
-                            with col3:
                                 # Create unique key using current path, sheet name, and index
                                 current_path_str = '_'.join(current_path) if current_path else 'root'
                                 unique_key = f"select_{current_path_str}_{sheet_name}_{idx}"
@@ -1291,7 +1293,7 @@ def show_enhanced_question_interface():
                  on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
     
     with col3:
-        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "❌ Unmark Review"
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
         st.button(button_text, use_container_width=True,
                  key=f"mark_{current_idx}",
                  on_click=lambda: toggle_mark_review(current_idx))
@@ -1797,7 +1799,67 @@ def show_results_screen():
         st.markdown("---")
         st.subheader("📋 Question-wise Review")
         show_enhanced_detailed_analysis(res_df)
+        
+# =============================
+# Session State Optimization
+# =============================
+def optimize_session_state():
+    """Clean up and optimize session state to prevent bloat."""
+    essential_keys = {
+        'logged_in', 'username', 'current_screen', 'current_path',
+        'selected_sheet', 'current_qb_path', 'folder_structure',
+        'quiz_started', 'quiz_questions', 'current_idx', 'answers',
+        'submitted', 'exam_name', 'question_status', 'quiz_duration',
+        'use_final_key', 'started_at', 'end_time', 'last_cleanup'
+    }
+    
+    # Remove non-essential keys
+    keys_to_remove = [key for key in st.session_state.keys() if key not in essential_keys]
+    for key in keys_to_remove:
+        if key in st.session_state:
+            del st.session_state[key]
 
+def periodic_cleanup():
+    """Perform periodic cleanup every 5 minutes."""
+    if 'last_cleanup' not in st.session_state:
+        st.session_state.last_cleanup = datetime.now()
+        return
+    
+    # Clean up every 5 minutes
+    if (datetime.now() - st.session_state.last_cleanup).seconds > 300:
+        optimize_session_state()
+        st.session_state.last_cleanup = datetime.now()
+
+def check_memory_usage():
+    """Check memory usage and trigger cleanup if needed."""
+    try:
+        process = psutil.Process(os.getpid())
+        memory_usage = process.memory_info().rss / 1024 / 1024  # MB
+        
+        if memory_usage > PerformanceConfig.MAX_MEMORY_MB:
+            st.sidebar.warning("High memory usage detected - optimizing...")
+            optimize_session_state()
+            st.rerun()
+        
+        return memory_usage
+    except:
+        return 0  # Return 0 if psutil not available
+
+def safe_execute(func, *args, **kwargs):
+    """Execute function with error handling and recovery."""
+    try:
+        return func(*args, **kwargs)
+    except Exception as e:
+        st.error(f"An error occurred in {func.__name__}: {str(e)}")
+        st.info("🔄 Attempting to recover...")
+        
+        # Basic recovery - return to home
+        if st.session_state.get('logged_in'):
+            st.session_state.current_screen = "home"
+            optimize_session_state()
+            st.rerun()
+        return None
+        
 # =============================
 # Helper Functions
 # =============================
@@ -1806,16 +1868,41 @@ def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df.rename(columns=mapping)
 
 def load_questions(file_path):
-    """Load questions from Excel file."""
+    """Load questions from Excel file with memory optimization."""
     try:
-        df_dict = pd.read_excel(file_path, sheet_name=None, engine="openpyxl")
+        # Define essential columns to load
+        essential_columns = [
+            'Question', 'Option A', 'Option B', 'Option C', 'Option D',
+            'Explanation', 'Correct Option (Final Answer Key)',
+            'Correct option (Provisional Answer Key)', 'Marks', 'Subject', 'Exam Year'
+        ]
+        
+        # Read only necessary columns
+        df_dict = pd.read_excel(
+            file_path, 
+            sheet_name=None, 
+            engine="openpyxl",
+            usecols=lambda x: any(col in x for col in essential_columns)
+        )
+        
         clean_dict = {}
         for sheet, df in df_dict.items():
             df = _normalize_columns(df)
-            for col in ["Question", "Option A", "Option B", "Option C", "Option D", "Explanation"]:
+            
+            # Optimize memory usage
+            for col in df.columns:
+                if df[col].dtype == 'object':
+                    # Convert to string type for better memory usage
+                    df[col] = df[col].astype('string')
+            
+            # Fill NA values efficiently
+            text_columns = ["Question", "Option A", "Option B", "Option C", "Option D", "Explanation"]
+            for col in text_columns:
                 if col in df.columns:
-                    df[col] = df[col].astype(str).fillna("").replace("nan", "", regex=False)
+                    df[col] = df[col].fillna("")
+            
             clean_dict[sheet] = df
+            
         return clean_dict
     except Exception as e:
         st.error(f"Error loading questions from {file_path}: {e}")
@@ -1884,45 +1971,60 @@ def show_home_screen():
         st.info("No folder structure found. Make sure 'Question_Data_Folder' exists with proper structure.")
 
 def show_platform_guide():
-    """Show platform usage guide."""
+    """Actual platform guide implementation."""
     show_litmusq_header("About LitmusQ")
-    
+
     # Home button
-    if st.button("🏠 Home", use_container_width=False, key="guide_home"):
+    if st.button("🏠 Home", use_container_width=True, key="guide_home"):
         st.session_state.current_screen = "home"
         st.rerun()
-    
-    st.markdown("""
-    ## 🧪 Welcome to LitmusQ!
 
-    ### 🚀 Getting Started
-    1. **Navigate** through the folder structure to find question banks
-    2. **Select** a question bank
-    3. **Configure** your test settings
-    4. **Start** the test and track your progress
+    st.markdown("## 🧪 Welcome to LitmusQ!")
 
-    ### 🎯 Key Features
-    - **Professional Testing Interface** with real-time progress tracking
-    - **Advanced Analytics** with performance dashboard
-    - **Question Palette** with color-coded status
-    - **Detailed Results** with explanations
-    - **Data Management** - Clear your performance data anytime
-    - **Rich Text Formatting** - Admins can format questions with HTML
+    # Create 4 columns
+    col1, col2, col3, col4 = st.columns(4)
 
-    ### Legends
-    - ✅: Answered questions
-    - ❌: Not answered
-    - 🟨: Marked for review
-    - 🟩 Answered & marked for review
-    - ⛔: Response cleared
+    with col1:
+        st.markdown("### 🚀 Getting Started")
+        st.markdown("""
+        1. **Navigate** through the folder structure to find question banks  
+        2. **Select** a question bank  
+        3. **Configure** your test settings  
+        4. **Start** the test and track your progress  
+        """)
 
-    ### ⚡ Quick Tips
-    - Use the question palette to jump between questions
-    - Mark questions for review if you're unsure
-    - Monitor your time using the countdown timer
-    - Review detailed explanations after the test
-    - Clear your performance data from the Dashboard if needed
-    """)
+    with col2:
+        st.markdown("### 🎯 Key Features")
+        st.markdown("""
+        - **Professional Testing Interface**  
+        - **Advanced Analytics & Dashboard**  
+        - **Color-coded Question Palette**  
+        - **Detailed Results with Explanations**  
+        - **Clear Performance Data Anytime**  
+        - **HTML-Rich Question Formatting**  
+        """)
+
+    with col3:
+        st.markdown("### 🧭 Legends")
+        st.markdown("""
+        - ✅ **Answered**  
+        - ❌ **Not Answered**  
+        - 🟨 **Marked for Review**  
+        - 🟩 **Answered + Review**  
+        - ⛔ **Response Cleared**  
+        """)
+
+    with col4:
+        st.markdown("### ⚡ Quick Tips")
+        st.markdown("""
+        - Use the **Question Palette** to navigate  
+        - Mark questions if unsure  
+        - Watch the **countdown timer**  
+        - Review explanations after the test  
+        - Clear your performance history anytime  
+        """)
+
+
 
 # =============================
 # Quick Actions Panel
@@ -1960,6 +2062,7 @@ def quick_actions_panel():
 # Enhanced Initialization
 # =============================
 def initialize_state():
+    """Initialize session state with stability features."""
     defaults = {
         "quiz_started": False,
         "quiz_questions": pd.DataFrame(),
@@ -1987,11 +2090,28 @@ def initialize_state():
         "calc_display": "0",
         "show_leave_confirmation": False,
         "show_clear_confirmation": False,
-        "editor_current_path": [],  # Initialize editor path
+        "editor_current_path": [],
+        "last_cleanup": datetime.now(),  # Add this line
     }
     for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
+
+# =============================
+# Optimized Screen Handlers
+# =============================
+def optimized_show_quiz_screen():
+    """Optimized quiz screen with reduced reruns."""
+    return safe_execute(show_quiz_screen)
+
+def optimized_show_home_screen():
+    """Optimized home screen."""
+    return safe_execute(show_home_screen)
+
+def optimized_show_folder_view():
+    """Optimized folder view."""
+    return safe_execute(show_folder_view_screen)
+    
 # =============================
 # Main App
 # =============================
@@ -2006,12 +2126,21 @@ def main():
     # Inject custom CSS
     inject_custom_css()
     
-    # Initialize session state
+    # Initialize session state with stability features
     initialize_state()
+    
+    # Perform periodic cleanup
+    periodic_cleanup()
+    
+    # Check memory usage (only if psutil is available)
+    if 'psutil' in globals():
+        memory_used = check_memory_usage()
+        if memory_used > 400:  # Warning at 400MB
+            st.sidebar.warning(f"Memory: {memory_used:.1f}MB")
     
     # Check authentication
     if not st.session_state.logged_in:
-        show_login_screen()
+        safe_execute(show_login_screen)
         st.stop()
     
     # User is logged in - show main app
@@ -2024,29 +2153,39 @@ def main():
     # Logout button
     if st.session_state.current_screen != "quiz":  
         if st.sidebar.button("🚪 Logout", use_container_width=True, key="sidebar_logout"):
+            optimize_session_state()  # Clean up before logout
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
             st.rerun()
     
-    # Scan folder structure on first load
+    # Scan folder structure on first load with error handling
     if not st.session_state.folder_structure:
-        st.session_state.folder_structure = scan_folder_structure()
+        with st.spinner("📁 Scanning question banks..."):
+            st.session_state.folder_structure = safe_execute(scan_folder_structure) or {}
     
-    # Route to appropriate screen
-    if st.session_state.current_screen == "home":
-        show_home_screen()
-    elif st.session_state.current_screen == "dashboard":
-        show_student_dashboard()
-    elif st.session_state.current_screen == "guide":
-        show_platform_guide()
-    elif st.session_state.current_screen == "folder_view":
-        show_folder_view_screen()
-    elif st.session_state.current_screen == "exam_config":
-        show_exam_config_screen()
-    elif st.session_state.current_screen == "quiz":
-        show_quiz_screen()
-    elif st.session_state.current_screen == "question_editor":
-        show_question_editor()
+    # Route to appropriate screen with error handling
+    screen_handlers = {
+        "home": optimized_show_home_screen,
+        "dashboard": lambda: safe_execute(show_student_dashboard),
+        "guide": lambda: safe_execute(show_platform_guide),
+        "folder_view": optimized_show_folder_view,
+        "exam_config": lambda: safe_execute(show_exam_config_screen),
+        "quiz": optimized_show_quiz_screen,
+        "question_editor": lambda: safe_execute(show_question_editor)
+    }
+    
+    current_screen = st.session_state.current_screen
+    handler = screen_handlers.get(current_screen, optimized_show_home_screen)
+    
+    # Execute the screen handler with error recovery
+    try:
+        handler()
+    except Exception as e:
+        st.error("💥 A critical error occurred. Returning to home screen.")
+        st.error(f"Error: {str(e)}")
+        st.session_state.current_screen = "home"
+        optimize_session_state()
+        st.rerun()
 
 if __name__ == "__main__":
     main()
