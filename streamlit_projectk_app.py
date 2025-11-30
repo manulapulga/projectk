@@ -1882,7 +1882,7 @@ def show_home_screen():
     show_litmusq_header("Question Bank Navigator")
     
     # Quick actions
-    if st.button("🔄 Refresh", use_container_width=True, key="home_refresh"):
+    if st.button("🔁 Refresh", use_container_width=True, key="home_refresh"):
         st.session_state.folder_structure = scan_folder_structure()
         st.rerun()
 
