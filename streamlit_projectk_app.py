@@ -607,15 +607,11 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             st.markdown("**Explanation:**")
             render_formatted_content(edited_explanation)
         
-        # Single save button in the main form
-        save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True)
-    
     # Create separate forms/buttons for reset and clear actions
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        # Save action is already handled above
-        pass
+        save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True)
     
     with col2:
         # Use a button outside the form for reset
