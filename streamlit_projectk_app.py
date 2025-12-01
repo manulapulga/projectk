@@ -880,18 +880,15 @@ def show_student_dashboard():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
         st.metric("Tests Taken", progress["tests_taken"])
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
         avg_score = progress.get("average_score", 0)
         st.metric("Average Score", f"{avg_score:.1f}")
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col3:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
         total_correct = sum(entry["correct_answers"] for entry in progress["test_history"])
         total_questions = sum(entry["total_questions"] for entry in progress["test_history"])
         accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
@@ -899,7 +896,6 @@ def show_student_dashboard():
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col4:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
         st.metric("Achievements", len(progress.get("achievements", [])))
         st.markdown('</div>', unsafe_allow_html=True)
     
@@ -1198,32 +1194,37 @@ def show_exam_config_screen():
     # Configuration options
     st.subheader("⚙️ Test Configuration")
     use_final_key = True
-    col1, col2 = st.columns(2)
-    with col1:
-        num_questions = st.number_input(
-            "❓ Number of Questions", 
-            min_value=1, 
-            max_value=len(df_exam),
-            value=min(60, len(df_exam)), 
-            step=1,
-            key="num_questions"
-        )
-    with col2:
-        exam_duration = st.number_input(
-            "⏰ Duration (minutes)", 
-            min_value=0, 
-            max_value=600, 
-            value=60, 
-            help="Set to 0 for no time limit",
-            key="exam_duration_input"
-        )
     
-    # Advanced options - Use different variable names to avoid session state conflicts
     with st.expander("🎛️ Advanced Options"):
-            shuffle_questions = st.checkbox("🔀 Shuffle Questions", value=True, key="shuffle_questions")
-            show_live_progress = st.checkbox("📊 Show Live Progress", value=True, key="show_live_progress")
-            enable_auto_save = st.checkbox("💾 Auto-save Progress", value=True, key="enable_auto_save")
-            full_screen_mode = st.checkbox("🖥️ Full Screen Mode", value=True, key="full_screen_mode")
+    
+        # Move both inputs inside the expander
+        col1, col2 = st.columns(2)
+        with col1:
+            num_questions = st.number_input(
+                "❓ Number of Questions", 
+                min_value=1, 
+                max_value=len(df_exam),
+                value=min(60, len(df_exam)), 
+                step=1,
+                key="num_questions"
+            )
+    
+        with col2:
+            exam_duration = st.number_input(
+                "⏰ Duration (minutes)", 
+                min_value=0, 
+                max_value=600, 
+                value=90, 
+                help="Set to 0 for no time limit",
+                key="exam_duration_input"
+            )
+    
+        # Existing advanced options
+        shuffle_questions = st.checkbox("🔀 Shuffle Questions", value=False, key="shuffle_questions")
+        show_live_progress = st.checkbox("📊 Show Live Progress", value=True, key="show_live_progress")
+        enable_auto_save = st.checkbox("💾 Auto-save Progress", value=True, key="enable_auto_save")
+        full_screen_mode = st.checkbox("🖥️ Full Screen Mode", value=True, key="full_screen_mode")
+
     
     # Start test button
     st.markdown("---")
@@ -1238,7 +1239,7 @@ def show_exam_config_screen():
             st.session_state.current_screen = "quiz"
             st.rerun()
     st.markdown(
-        "<p style='font-size:16px; color:red; font-weight:600;'>⚠️ Do not minimize or switch apps during the test.</p>",
+        "<p style='font-size:16px; color:red; font-weight:600; text-align:center;'>⚠️ Do not minimize or switch apps during the test.</p>",
         unsafe_allow_html=True
     )       
 
@@ -1338,33 +1339,113 @@ def show_enhanced_question_interface():
     st.markdown("---")
     
     # Enhanced action buttons
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4, col5, col6 = st.columns(6)
     
     with col1:
-        st.button("◀ Previous", use_container_width=True, disabled=current_idx == 0,
-                 key=f"prev_{current_idx}",
-                 on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1))
+        st.button(
+            "◀ Previous",
+            use_container_width=True,
+            disabled=current_idx == 0,
+            key=f"prev_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
+        )
     
     with col2:
-        st.button("Next ▶", use_container_width=True, disabled=current_idx == len(df) - 1,
-                 key=f"next_{current_idx}",
-                 on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
+        st.button(
+            "Next ▶",
+            use_container_width=True,
+            disabled=current_idx == len(df) - 1,
+            key=f"next_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
+        )
     
     with col3:
         button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
-        st.button(button_text, use_container_width=True,
-                 key=f"mark_{current_idx}",
-                 on_click=lambda: toggle_mark_review(current_idx))
+        st.button(
+            button_text,
+            use_container_width=True,
+            key=f"mark_{current_idx}",
+            type="secondary",
+            on_click=lambda: toggle_mark_review(current_idx)
+        )
     
     with col4:
-        if st.button("🗑️ Clear Response", use_container_width=True,
-                     key=f"clear_{current_idx}"):
+        if st.button(
+            "🗑️ Clear Response",
+            use_container_width=True,
+            key=f"clear_{current_idx}",
+            type="secondary"
+        ):
             clear_response(current_idx)
     
     with col5:
-        st.button("📤 Submit Test", type="primary", use_container_width=True,
-                 key=f"submit_{current_idx}",
-                 on_click=lambda: setattr(st.session_state, 'submitted', True))
+        st.button(
+            "📤 Submit Test",
+            use_container_width=True,
+            key=f"submit_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'submitted', True)
+        )
+        
+    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+    
+    if st.session_state.end_time and not st.session_state.submitted:
+        # Calculate remaining time
+        time_left = st.session_state.end_time - datetime.now()
+        seconds_left = int(time_left.total_seconds())
+        
+        # Auto-submit when time reaches zero
+        if seconds_left <= 0:
+            st.session_state.submitted = True
+            st.rerun()
+            return  # Exit early to prevent further rendering
+        
+        # Create timer with JavaScript
+        html_code = f"""
+        <div id="timer" style="
+            font-size: 24px;
+            font-weight: bold;
+            color: {'red' if seconds_left < 300 else 'green'};
+            text-align: center;
+        "></div>
+
+        <script>
+            let timeLeft = {seconds_left};
+
+            function updateTimer() {{
+                if (timeLeft <= 0) {{
+                    document.getElementById('timer').innerHTML = "⏰ 00:00:00";
+                    // Trigger automatic submission when timer reaches zero
+                    const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
+                    if (submitButton) {{
+                        submitButton.click();
+                    }}
+                    return;
+                }}
+
+                let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                let s = String(timeLeft % 60).padStart(2, '0');
+
+                document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
+
+                timeLeft--;
+                setTimeout(updateTimer, 1000);
+            }}
+
+            updateTimer();
+        </script>
+        """
+        components.html(html_code, height=60)
+    else:
+        st.metric("⏰ Time Left", "No Limit")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
+
 # =============================
 # Professional Test Interface
 # =============================
@@ -1465,10 +1546,29 @@ def get_question_display_info(q_num):
     return color, text, tooltip
 
 def show_question_palette():
-    """Display the question palette with working color coding."""
-    st.sidebar.subheader("🎯 Question Palette")
+    """Display the question palette with exam info above it."""
+    # Show exam info above the palette
+    st.sidebar.markdown(f"### 📝 {st.session_state.exam_name}")
+    st.sidebar.markdown(f"**Question {st.session_state.current_idx + 1} of {len(st.session_state.quiz_questions)}**")
+    st.sidebar.markdown("---")
     
-    # Enhanced Legend with theme colors
+    # Show answered and marked counts
+    if 'question_status' in st.session_state:
+        total = len(st.session_state.quiz_questions)
+        answered = sum(1 for status in st.session_state.question_status.values() 
+                       if status['answer'] is not None)
+        marked = sum(1 for status in st.session_state.question_status.values() 
+                     if status['marked'])
+        
+        col1, col2 = st.sidebar.columns(2)
+        with col1:
+            st.metric("✅ Answered", f"{answered}/{total}") 
+        with col2:
+            st.metric("🟨 Marked", f"{marked}")
+    
+    st.sidebar.markdown("---")
+    
+    # Legend (keeping your existing legend code)
     st.sidebar.markdown("""
     <style>
     .legend-item {
@@ -1505,7 +1605,7 @@ def show_question_palette():
     
     st.sidebar.markdown("---")
     
-    # Rest of the function remains the same...
+    # Question palette grid (keeping your existing palette code)
     total_questions = len(st.session_state.quiz_questions)
     if total_questions == 0:
         st.sidebar.warning("No questions loaded")
@@ -1607,18 +1707,14 @@ def get_time_color(seconds_left):
         return LITMUSQ_THEME['success']    # Green
 
 def show_test_header():
-    """Display test header with timer and instructions."""
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+    """Display test header with timer only. Other items moved to sidebar."""
+    # Create columns for header (only timer now)
+    col1, col2, col3 = st.columns([1, 1, 1])
     
-    with col1:
-        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-        st.subheader(f"📝 {st.session_state.exam_name}")
-        st.write(f"**Question {st.session_state.current_idx + 1} of {len(st.session_state.quiz_questions)}**")
-        st.markdown("</div>", unsafe_allow_html=True)
-
+    # Center column for timer only
     with col2:
         st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-    
+        
         if st.session_state.end_time and not st.session_state.submitted:
             # Calculate remaining time
             time_left = st.session_state.end_time - datetime.now()
@@ -1671,23 +1767,7 @@ def show_test_header():
             st.metric("⏰ Time Left", "No Limit")
     
         st.markdown("</div>", unsafe_allow_html=True)
-
-    with col3:
-        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-        if 'question_status' in st.session_state:
-            total = len(st.session_state.quiz_questions)
-            answered = sum(1 for status in st.session_state.question_status.values() 
-                           if status['answer'] is not None)
-            st.metric("✅ Answered", f"{answered}/{total}") 
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    with col4:
-        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-        marked = sum(1 for status in st.session_state.question_status.values() 
-                     if status['marked'])
-        st.metric("🟨 Marked", marked)
-        st.markdown("</div>", unsafe_allow_html=True)
-
+    
     st.markdown("---")
 
 def auto_submit_on_timeout():
@@ -1798,7 +1878,6 @@ def show_quiz_screen():
     # Show question first, then header at the bottom
     if not st.session_state.submitted:
         
-        show_test_header()  # Moved to bottom
         show_enhanced_question_interface()
     else:
         show_results_screen()
@@ -1852,7 +1931,7 @@ def compute_results():
     return df, summary
 
 def show_enhanced_detailed_analysis(res_df):
-    """Show detailed analysis with formatted content."""
+    """Show detailed analysis with formatted content and question status in headings."""
     for i, row in res_df.iterrows():
         file_path = st.session_state.get('current_qb_path', '')
         sheet_name = st.session_state.get('selected_sheet', '')
@@ -1865,25 +1944,62 @@ def show_enhanced_detailed_analysis(res_df):
         formatted_d = get_formatted_content(file_path, sheet_name, i, "option_d", row.get('Option D', ''))
         formatted_explanation = get_formatted_content(file_path, sheet_name, i, "explanation", row.get('Explanation', ''))
         
-        with st.expander(f"Question {i+1}", expanded=False):
+        # Determine question status for heading
+        correct = row["Correct Option Used"]
+        chosen = row["Your Answer"]
+        
+        # Create status indicator for heading
+        if pd.isna(chosen) or chosen is None:
+            status_indicator = "🟡 Not Answered"
+            status_color = "#94A3B8"  # Gray
+        elif correct == chosen:
+            status_indicator = "✅ Correct"
+            status_color = LITMUSQ_THEME['success']  # Green
+        else:
+            status_indicator = "❌ Wrong"
+            status_color = LITMUSQ_THEME['secondary']  # Red
+        
+        # Create expander with status in heading
+        with st.expander(
+            f"Q{i+1}: {status_indicator}", 
+            expanded=False
+        ):
+            # Add status badge at the top
+            st.markdown(f"""
+            <div style="
+                display: inline-block;
+                padding: 4px 12px;
+                background-color: {status_color}20;
+                color: {status_color};
+                border: 1px solid {status_color};
+                border-radius: 20px;
+                font-weight: 600;
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            ">
+                {status_indicator}
+            </div>
+            """, unsafe_allow_html=True)
+            
+            # Question text
             st.markdown("**Question:**")
             render_formatted_content(formatted_question)
             
-            correct = row["Correct Option Used"]
-            chosen = row["Your Answer"]
-            
+            # Options with status indicators
             def render_formatted_option(label, text, is_correct, is_chosen):
-                if is_correct and is_chosen:
-                    st.markdown(f"**{label})** ✅ Correct - Your Answer")
-                    render_formatted_content(text)
-                elif is_correct:
-                    st.markdown(f"**{label})** ✅ Correct Answer")
-                    render_formatted_content(text)
-                elif is_chosen:
-                    st.markdown(f"**{label})** ❌ Your Answer")
-                    render_formatted_content(text)
-                else:
-                    st.markdown(f"**{label})**")
+                option_col1, option_col2 = st.columns([1, 20])
+                
+                with option_col1:
+                    if is_correct and is_chosen:
+                        st.markdown(f"✅**{label})** ")
+                    elif is_correct:
+                        st.markdown(f"✔️**{label})** ")
+                    elif is_chosen:
+                        st.markdown(f"❌**{label})** ")
+                    else:
+                        st.markdown(f"⬜**{label})**")
+                
+                with option_col2:
                     render_formatted_content(text)
             
             render_formatted_option("A", formatted_a, "A" == correct, "A" == chosen)
@@ -1891,9 +2007,19 @@ def show_enhanced_detailed_analysis(res_df):
             render_formatted_option("C", formatted_c, "C" == correct, "C" == chosen)
             render_formatted_option("D", formatted_d, "D" == correct, "D" == chosen)
             
-            if formatted_explanation:
+            # Show correct answer summary
+            st.markdown(f"**Correct Answer:** **{correct}**")
+            
+            if chosen and not pd.isna(chosen):
+                st.markdown(f"**Your Answer:** **{chosen}**")
+            
+            # Explanation
+            if formatted_explanation and str(formatted_explanation).strip():
                 st.markdown("**Explanation:**")
                 render_formatted_content(formatted_explanation)
+            
+            # Add some spacing
+            st.markdown("")
 
 def show_results_screen():
     """Display enhanced results after quiz completion."""
