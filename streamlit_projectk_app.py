@@ -46,7 +46,6 @@ def inject_custom_css():
     <style>
     
     /* Hide Streamlit footer completely */
-    footer {visibility: hidden !important;}
     footer:empty {display: none !important;}
 
     /* Hide "Hosted with Streamlit" badge */
