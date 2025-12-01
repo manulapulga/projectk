@@ -1744,8 +1744,9 @@ def show_quiz_screen():
     
     # Show question first, then header at the bottom
     if not st.session_state.submitted:
-        show_enhanced_question_interface()
+        
         show_test_header()  # Moved to bottom
+        show_enhanced_question_interface()
     else:
         show_results_screen()
 
