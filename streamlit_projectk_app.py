@@ -1542,13 +1542,13 @@ def show_test_header():
             hours, remainder = divmod(int(seconds_left), 3600)
             minutes, seconds = divmod(remainder, 60)
             time_color = get_time_color(seconds_left)
-
+            
             st.markdown(
-                f"<h3 style='color: {time_color}; margin: 0;'>⏰ {hours:02d}:{minutes:02d}</h3>", 
+                f"<h3 style='color: {time_color}; margin: 0;'>⏰ {hours:02d}:{minutes:02d}:{seconds:02d}</h3>", 
                 unsafe_allow_html=True
             )
 
-            st_autorefresh(interval=60000, limit=100, key="timer_refresh")
+            st_autorefresh(interval=5000, limit=1000, key="timer_refresh")
         else:
             st.metric("⏰ Time Left", "No Limit")
         st.markdown("</div>", unsafe_allow_html=True)
