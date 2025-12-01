@@ -45,36 +45,39 @@ def inject_custom_css():
     st.markdown(f"""
     <style>
     
-    /* Hide Streamlit default UI elements */
+    /* Hide Streamlit's default top menu items (except burger menu) */
     #MainMenu {{visibility: hidden;}}
-    footer {{visibility: hidden;}}
     header {{visibility: hidden;}}
-    
-    /* Hide the GitHub icon and other elements in the header */
     .stDeployButton {{display:none;}}
     
-    /* Hide the "Fork me on GitHub" ribbon */
-    .st-emotion-cache-1dp5vir {{display: none;}}
+    /* Hide GitHub button if present */
+    .stActionButton {{display: none !important;}}
     
-    /* Hide "Created with Streamlit" and "HOSTED WITH" */
+    /* Hide specific buttons in the header */
+    div[data-testid="stToolbar"] {{display:none;}}
+    div[data-testid="stDecoration"] {{display:none;}}
+    div[data-testid="stStatusWidget"] {{display:none;}}
+    
+    /* Hide the bottom footer */
+    footer {{visibility: hidden;}}
+    
+    /* Hide the "Made with Streamlit" text */
     .viewerBadge_container__1QSob {{display: none !important;}}
     
-    /* Alternative selectors for newer Streamlit versions */
-    [data-testid="stToolbar"] {{display:none !important;}}
-    [data-testid="stDecoration"] {{display:none !important;}}
-    [data-testid="stStatusWidget"] {{display:none !important;}}
+    /* Alternative way to hide footer */
+    #root > div:nth-child(1) > div > div > div > div > section > div {{padding-top: 0rem;}}
     
-    /* Hide the "Manage app" menu */
-    [data-testid="stMainMenu"] {{display:none !important;}}
+    /* Hide any other Streamlit branding */
+    .stApp > header {{display: none !important;}}
     
-    /* Hide the entire header area */
-    #root > div:nth-child(1) > div > div > div > div > section > div > div:nth-child(1) > div > div:nth-child(1) > button {{display: none !important;}}
+    /* Keep the burger menu but hide other header elements */
+    .stApp > header + div {{margin-top: -5rem;}}
     
-    /* Hide GitHub corner if present */
-    .github-corner {{display: none !important;}}
-    
-    /* Hide Streamlit branding in sidebar */
-    .css-1d391kg {{display: none !important;}}
+    /* Adjust main content area to account for hidden header */
+    .main .block-container {{
+        padding-top: 0rem !important;
+        margin-top: -2rem !important;
+    }}
     
     .main .block-container {{
         padding-top: 2rem;
