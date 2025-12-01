@@ -45,75 +45,38 @@ def inject_custom_css():
     st.markdown(f"""
     <style>
     
-    /* Hide Streamlit's default header items */
+    /* Hide Streamlit's default top menu items (except burger menu) */
+    #MainMenu {{visibility: hidden;}}
     header {{visibility: hidden;}}
-    
-    /* Hide the deploy button */
     .stDeployButton {{display:none;}}
     
-    /* Hide the GitHub button/ribbon */
+    /* Hide GitHub button if present */
     .stActionButton {{display: none !important;}}
     
-    /* Hide the "view app source" button */
-    .viewerBadge_link__qRIco {{display: none !important;}}
-    
-    /* Hide the "Made with Streamlit" footer */
-    .viewerBadge_container__r5tak {{display: none !important;}}
-    
-    /* Hide Streamlit's default bottom footer */
-    footer {{visibility: hidden;}}
-    
-    /* Hide the hamburger menu header items but keep the menu itself */
-    #MainMenu {{visibility: visible;}}
-    
-    /* Hide specific elements in the header */
+    /* Hide specific buttons in the header */
     div[data-testid="stToolbar"] {{display:none;}}
     div[data-testid="stDecoration"] {{display:none;}}
     div[data-testid="stStatusWidget"] {{display:none;}}
     
-    /* Hide the "running" status */
-    .stStatus {{display: none;}}
+    /* Hide the bottom footer */
+    footer {{visibility: hidden;}}
     
-    /* Adjust content position after hiding header */
+    /* Hide the "Made with Streamlit" text */
+    .viewerBadge_container__1QSob {{display: none !important;}}
+    
+    /* Alternative way to hide footer */
+    #root > div:nth-child(1) > div > div > div > div > section > div {{padding-top: 0rem;}}
+    
+    /* Hide any other Streamlit branding */
+    .stApp > header {{display: none !important;}}
+    
+    /* Keep the burger menu but hide other header elements */
+    .stApp > header + div {{margin-top: -5rem;}}
+    
+    /* Adjust main content area to account for hidden header */
     .main .block-container {{
-        padding-top: 1rem;
-        padding-bottom: 1rem;
-    }}
-    
-    /* Ensure the app starts at the top */
-    .stApp {{
-        margin-top: -50px;
-    }}
-    
-    /* Hide the top padding area */
-    .stApp > header {{
-        display: none !important;
-    }}
-    
-    /* Alternative: Hide the entire top bar except for minimal space */
-    .stApp > div:first-child {{
-        height: 0px;
-        min-height: 0px;
-    }}
-    
-    /* Hide Streamlit branding in bottom right */
-    .stApp > footer {{
-        display: none !important;
-    }}
-    
-    /* Hide the "deploy" button area */
-    div[data-testid="stAppViewContainer"] > div:first-child {{
-        height: 0px !important;
-    }}
-    
-    /* Hide the "manage app" button */
-    button[kind="header"] {{
-        display: none !important;
-    }}
-    
-    /* Hide the fullscreen button */
-    button[title="View fullscreen"] {{
-        display: none !important;
+        padding-top: 0rem !important;
+        margin-top: -2rem !important;
     }}
     
     .main .block-container {{
