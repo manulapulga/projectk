@@ -1567,13 +1567,53 @@ def show_test_header():
         st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
         if st.session_state.end_time and not st.session_state.submitted:
-    
-            seconds_left = int((st.session_state.end_time - datetime.now()).total_seconds())
-            if seconds_left < 0:
-                seconds_left = 0
-    
-            live_timer_component(seconds_left)
-    
+            # Calculate remaining time
+            time_left = st.session_state.end_time - datetime.now()
+            seconds_left = int(time_left.total_seconds())
+            
+            # Auto-submit when time reaches zero
+            if seconds_left <= 0:
+                st.session_state.submitted = True
+                st.rerun()
+                return  # Exit early to prevent further rendering
+            
+            # Create timer with JavaScript
+            html_code = f"""
+            <div id="timer" style="
+                font-size: 28px;
+                font-weight: bold;
+                color: {'red' if seconds_left < 300 else '#FFA500' if seconds_left < 900 else 'green'};
+                text-align: center;
+            "></div>
+
+            <script>
+                let timeLeft = {seconds_left};
+
+                function updateTimer() {{
+                    if (timeLeft <= 0) {{
+                        document.getElementById('timer').innerHTML = "⏰ 00:00:00";
+                        // Trigger automatic submission when timer reaches zero
+                        const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
+                        if (submitButton) {{
+                            submitButton.click();
+                        }}
+                        return;
+                    }}
+
+                    let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                    let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                    let s = String(timeLeft % 60).padStart(2, '0');
+
+                    document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
+
+                    timeLeft--;
+                    setTimeout(updateTimer, 1000);
+                }}
+
+                updateTimer();
+            </script>
+            """
+            components.html(html_code, height=60)
         else:
             st.metric("⏰ Time Left", "No Limit")
     
@@ -1596,6 +1636,43 @@ def show_test_header():
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("---")
+
+def auto_submit_on_timeout():
+    """Auto-submit the test when time is up using JavaScript."""
+    if st.session_state.end_time and not st.session_state.submitted:
+        time_left = st.session_state.end_time - datetime.now()
+        seconds_left = int(time_left.total_seconds())
+        
+        # If time is already up, submit immediately
+        if seconds_left <= 0:
+            st.session_state.submitted = True
+            st.rerun()
+            return
+        
+        # Inject JavaScript to auto-submit when timer reaches zero
+        js_code = f"""
+        <script>
+        // Check every second if time is up
+        function checkTime() {{
+            // Calculate remaining seconds
+            let now = new Date();
+            let endTime = new Date('{st.session_state.end_time.isoformat()}');
+            let secondsLeft = Math.max(0, Math.floor((endTime - now) / 1000));
+            
+            if (secondsLeft <= 0) {{
+                // Time's up! Auto-submit
+                document.body.innerHTML += '<form id="autoSubmitForm" style="display:none;">' +
+                    '<input type="hidden" name="auto_submit" value="true">' +
+                '</form>';
+                document.getElementById('autoSubmitForm').submit();
+            }}
+        }}
+        
+        // Check every second
+        setInterval(checkTime, 1000);
+        </script>
+        """
+        components.html(js_code, height=0)    
 
 def clear_response(question_idx):
     """Clear response for a question."""
@@ -1625,6 +1702,13 @@ def show_quiz_screen():
     if 'question_status' not in st.session_state or not st.session_state.question_status:
         initialize_question_status()
     
+    # Check for auto-submit condition first
+    if st.session_state.end_time and not st.session_state.submitted:
+        time_left = st.session_state.end_time - datetime.now()
+        if time_left.total_seconds() <= 0:
+            st.session_state.submitted = True
+            st.rerun()
+    
     if st.session_state.get('show_leave_confirmation', False):
         st.sidebar.warning("Leave test? Progress will be lost.")
         col1, col2 = st.sidebar.columns(2)
@@ -1642,10 +1726,20 @@ def show_quiz_screen():
     
     # Show question first, then header at the bottom
     if not st.session_state.submitted:
+        # Add auto-submit JavaScript
+        auto_submit_on_timeout()
         show_enhanced_question_interface()
         show_test_header()  # Moved to bottom
     else:
         show_results_screen()
+
+# Add this function to handle auto-submits from JavaScript
+def handle_auto_submit():
+    """Handle auto-submit from JavaScript timer."""
+    # Check if this is an auto-submit request
+    if st.experimental_get_query_params().get('auto_submit'):
+        st.session_state.submitted = True
+        st.rerun()        
 
 # =============================
 # Enhanced Results Screen
@@ -2158,6 +2252,9 @@ def main():
     
     # Initialize session state with stability features
     initialize_state()
+    
+    # Handle auto-submit if triggered
+    handle_auto_submit()
     
     # Perform periodic cleanup
     periodic_cleanup()
