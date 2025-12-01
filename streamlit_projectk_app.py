@@ -47,7 +47,6 @@ def inject_custom_css():
     
     /* Hide Streamlit's default top menu items (except burger menu) */
     #MainMenu {{visibility: hidden;}}
-    header {{visibility: hidden;}}
     .stDeployButton {{display:none;}}
     
     /* Hide GitHub button if present */
