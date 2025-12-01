@@ -44,6 +44,11 @@ LITMUSQ_THEME = {
 def inject_custom_css():
     st.markdown(f"""
     <style>
+    /* Hide "Hosted with Streamlit" badge */
+    .viewerBadge_container__1QSob {display: none !important;}
+    .viewerBadge_link__1S137 {display: none !important;}
+    .viewerBadge_text__1o1mR {display: none !important;}
+    .stDecoration {display: none !important;}
     
     /* Hide Streamlit's default top menu items (except burger menu) */
     #MainMenu {{visibility: hidden;}}
