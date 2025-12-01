@@ -53,9 +53,6 @@ def inject_custom_css():
     /* Hide the GitHub icon and other elements in the header */
     .stDeployButton {{display:none;}}
     
-    /* Hide the burger menu */
-    [data-testid="collapsedControl"] {{display: none;}}
-    
     /* Hide the "Fork me on GitHub" ribbon */
     .st-emotion-cache-1dp5vir {{display: none;}}
     
