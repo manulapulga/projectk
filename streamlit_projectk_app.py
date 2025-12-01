@@ -594,7 +594,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         - `<span style='font-size: 18px; color: red;'>Large red text</span>`
         """)
     
-    # Use separate forms for each action to avoid conflicts
+    # Use a form for the editing interface
     with st.form(f"edit_question_{question_index}"):
         st.subheader("Edit Content")
         
@@ -642,13 +642,19 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             st.markdown("**Explanation:**")
             render_formatted_content(edited_explanation)
         
-        # Single save button in the main form
-        save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True)
+        # Create three columns for action buttons INSIDE THE FORM
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
+        
+        with col2:
+            reset_btn = st.form_submit_button("🔄 Reset to Original", use_container_width=True, type="secondary")
+        
+        with col3:
+            clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True, type="secondary")
     
-    # Create separate columns for the action buttons
-    col1, col2, col3 = st.columns(3)
-    
-    # Save action status message
+    # Handle button actions after the form
     if save_btn:
         # Save formatted content
         formatted_questions[question_key] = edited_question
@@ -660,57 +666,43 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         
         if save_formatted_questions(formatted_questions):
             st.success("✅ Changes saved successfully!")
+            # Clear cache to force reload
+            if 'formatted_questions_cache' in st.session_state:
+                del st.session_state.formatted_questions_cache
+            st.rerun()
     
-    with col2:
-        # Use a button outside the form for reset - with a confirmation
-        if st.button("🔄 Reset to Original", 
-                    use_container_width=True, 
-                    type="secondary",
-                    key=f"reset_{question_index}"):
-            
-            # Show confirmation
-            st.warning("⚠️ This will replace all formatting with the original content from the Excel file.")
-            
-            # Actually reset the content
-            formatted_questions[question_key] = original_content['question']
-            formatted_questions[option_a_key] = original_content['option_a']
-            formatted_questions[option_b_key] = original_content['option_b']
-            formatted_questions[option_c_key] = original_content['option_c']
-            formatted_questions[option_d_key] = original_content['option_d']
-            formatted_questions[explanation_key] = original_content['explanation']
-            
-            if save_formatted_questions(formatted_questions):
-                st.success("✅ Reset to original content!")
-                # Clear the cache to force reload
-                if 'formatted_questions_cache' in st.session_state:
-                    del st.session_state.formatted_questions_cache
-                st.rerun()
+    elif reset_btn:
+        # Reset to original content
+        formatted_questions[question_key] = original_content['question']
+        formatted_questions[option_a_key] = original_content['option_a']
+        formatted_questions[option_b_key] = original_content['option_b']
+        formatted_questions[option_c_key] = original_content['option_c']
+        formatted_questions[option_d_key] = original_content['option_d']
+        formatted_questions[explanation_key] = original_content['explanation']
+        
+        if save_formatted_questions(formatted_questions):
+            st.success("✅ Reset to original content!")
+            # Clear cache to force reload
+            if 'formatted_questions_cache' in st.session_state:
+                del st.session_state.formatted_questions_cache
+            st.rerun()
     
-    with col3:
-        # Use a button outside the form for clear - with a confirmation
-        if st.button("🗑️ Clear Formatting", 
-                    use_container_width=True, 
-                    type="secondary",
-                    key=f"clear_{question_index}"):
-            
-            # Show confirmation
-            st.warning("⚠️ This will remove all saved formatting for this question.")
-            
-            # Remove formatting (delete keys from formatted_questions)
-            keys_to_delete = []
-            for key in [question_key, option_a_key, option_b_key, option_c_key, option_d_key, explanation_key]:
-                if key in formatted_questions:
-                    keys_to_delete.append(key)
-            
-            for key in keys_to_delete:
-                del formatted_questions[key]
-            
-            if save_formatted_questions(formatted_questions):
-                st.success("✅ Formatting cleared!")
-                # Clear the cache to force reload
-                if 'formatted_questions_cache' in st.session_state:
-                    del st.session_state.formatted_questions_cache
-                st.rerun()
+    elif clear_btn:
+        # Remove formatting (delete keys from formatted_questions)
+        keys_to_delete = []
+        for key in [question_key, option_a_key, option_b_key, option_c_key, option_d_key, explanation_key]:
+            if key in formatted_questions:
+                keys_to_delete.append(key)
+        
+        for key in keys_to_delete:
+            del formatted_questions[key]
+        
+        if save_formatted_questions(formatted_questions):
+            st.success("✅ Formatting cleared!")
+            # Clear cache to force reload
+            if 'formatted_questions_cache' in st.session_state:
+                del st.session_state.formatted_questions_cache
+            st.rerun()
 
 def get_formatted_content(file_path, sheet_name, question_index, field, original_content):
     """Get formatted content if available, otherwise return original."""
