@@ -377,10 +377,23 @@ def show_question_editor():
     show_litmusq_header("📝 Question Formatting Editor")
     
     # Home button
-    if st.button("🏠 Home", use_container_width=True, key="editor_home"):
-        st.session_state.current_screen = "home"
-        st.rerun()
     
+    # Add back navigation
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        if st.button("🏠 Home", use_container_width=True, key="editor_home"):
+            st.session_state.current_screen = "home"
+            st.rerun()
+            
+    with col2:    
+        if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
+            if len(current_path) > 0:
+                st.session_state.editor_current_path = current_path[:-1]
+                st.rerun()
+    with col3:
+        if st.button("🏠 Back to Root", use_container_width=True, key="back_to_root"):
+            st.session_state.editor_current_path = []
+            st.rerun()
     # Check if user is admin
     if not is_admin_user():
         st.error("❌ Access Denied. This section is only available for administrators.")
@@ -404,17 +417,7 @@ def show_question_editor():
         breadcrumb = " > ".join(current_path)
         st.write(f"**Current Location:** `{breadcrumb}`")
         
-        # Add back navigation
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
-                if len(current_path) > 0:
-                    st.session_state.editor_current_path = current_path[:-1]
-                    st.rerun()
-        with col2:
-            if st.button("🏠 Back to Root", use_container_width=True, key="back_to_root"):
-                st.session_state.editor_current_path = []
-                st.rerun()
+        
     
     # Display folder navigation for editor
     def get_current_level(structure, path):
