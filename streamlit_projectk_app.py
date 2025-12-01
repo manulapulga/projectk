@@ -1702,12 +1702,30 @@ def show_quiz_screen():
     if 'question_status' not in st.session_state or not st.session_state.question_status:
         initialize_question_status()
     
-    # Check for auto-submit condition first
+    # Auto-check for timeout and auto-submit
     if st.session_state.end_time and not st.session_state.submitted:
         time_left = st.session_state.end_time - datetime.now()
-        if time_left.total_seconds() <= 0:
+        seconds_left = int(time_left.total_seconds())
+        
+        # If time is up, auto-submit
+        if seconds_left <= 0:
             st.session_state.submitted = True
             st.rerun()
+            return
+        
+        # Set up auto-refresh with reduced frequency
+        if seconds_left <= 0:
+            # Time's up - auto-submit immediately
+            st.session_state.submitted = True
+            st.rerun()
+        elif seconds_left < 5:  # Last minute: every 5 seconds
+            st_autorefresh(interval=1000, key="timer_refresh_last_minute")
+        elif seconds_left < 300:  # Last 5 minutes: every 60 seconds
+            st_autorefresh(interval=60000, key="timer_refresh_last_5min")
+        elif seconds_left < 1800:  # Last 30 minutes: every 5 minutes
+            st_autorefresh(interval=300000, key="timer_refresh_last_30min")
+        else:  # More than 30 minutes: every 10 minutes
+            st_autorefresh(interval=1000000, key="timer_refresh_long_exam")
     
     if st.session_state.get('show_leave_confirmation', False):
         st.sidebar.warning("Leave test? Progress will be lost.")
@@ -1726,8 +1744,6 @@ def show_quiz_screen():
     
     # Show question first, then header at the bottom
     if not st.session_state.submitted:
-        # Add auto-submit JavaScript
-        auto_submit_on_timeout()
         show_enhanced_question_interface()
         show_test_header()  # Moved to bottom
     else:
@@ -1872,19 +1888,15 @@ def show_results_screen():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
         st.metric("Total Questions", summary["Total Questions"])
         st.markdown('</div>', unsafe_allow_html=True)
     with col2:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
         st.metric("Attempted", summary["Attempted"])
         st.markdown('</div>', unsafe_allow_html=True)
     with col3:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
         st.metric("Correct Answers", summary["Correct"])
         st.markdown('</div>', unsafe_allow_html=True)
     with col4:
-        st.markdown('<div class="metric-container">', unsafe_allow_html=True)
         st.metric("Final Score", f"{summary['Marks Obtained']}/{summary['Total Marks']}")
         st.markdown('</div>', unsafe_allow_html=True)
     

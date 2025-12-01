@@ -1,8 +1,8 @@
 {
   "username": "admin",
-  "tests_taken": 15,
+  "tests_taken": 45,
   "total_score": 6,
-  "average_score": 0.4,
+  "average_score": 0.13333333333333333,
   "test_history": [
     {
       "exam_name": "UPSC",
@@ -137,6 +137,276 @@
       "total_marks": 120,
       "percentage": 1.6666666666666667,
       "correct_answers": 1,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:31:28.712456",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:31:31.410735",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:31:49.280689",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:31:52.928055",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:34:02.571672",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:34:06.941249",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:36:52.983327",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:36:56.117720",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:39:00.911290",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:39:04.844261",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:44:07.867266",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:44:34.956981",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:44:42.678590",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:46:44.076368",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:46:49.238570",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:46:49.348069",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:46:54.388827",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:46:54.495724",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:47:02.374142",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:47:02.475900",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:47:05.238153",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:47:05.346151",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:47:07.193407",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:47:07.299662",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:47:40.911704",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:48:31.688681",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:48:35.385100",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:48:35.490483",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:48:40.464503",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:48:40.597731",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
       "total_questions": 60
     }
   ],
