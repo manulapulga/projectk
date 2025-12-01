@@ -45,38 +45,22 @@ def inject_custom_css():
     st.markdown(f"""
     <style>
     
-    /* Hide Streamlit's default top menu items (except burger menu) */
-    #MainMenu {{visibility: hidden;}}
-    header {{visibility: hidden;}}
-    .stDeployButton {{display:none;}}
+    /* Hide EVERYTHING Streamlit adds */
+    header, footer, 
+    .stDeployButton,
+    [class*="viewerBadge"],
+    [class*="profileImage"],
+    [class*="_link"],
+    [data-testid*="avatar"],
+    [data-testid*="Avatar"],
+    svg[width="303"][height="165"] {{
+        display: none !important;
+        visibility: hidden !important;
+    }}
     
-    /* Hide GitHub button if present */
-    .stActionButton {{display: none !important;}}
-    
-    /* Hide specific buttons in the header */
-    div[data-testid="stToolbar"] {{display:none;}}
-    div[data-testid="stDecoration"] {{display:none;}}
-    div[data-testid="stStatusWidget"] {{display:none;}}
-    
-    /* Hide the bottom footer */
-    footer {{visibility: hidden;}}
-    
-    /* Hide the "Made with Streamlit" text */
-    .viewerBadge_container__1QSob {{display: none !important;}}
-    
-    /* Alternative way to hide footer */
-    #root > div:nth-child(1) > div > div > div > div > section > div {{padding-top: 0rem;}}
-    
-    /* Hide any other Streamlit branding */
-    .stApp > header {{display: none !important;}}
-    
-    /* Keep the burger menu but hide other header elements */
-    .stApp > header + div {{margin-top: -5rem;}}
-    
-    /* Adjust main content area to account for hidden header */
-    .main .block-container {{
-        padding-top: 0rem !important;
-        margin-top: -2rem !important;
+    /* Adjust layout */
+    .stApp {{
+        margin-top: -50px !important;
     }}
     
     .main .block-container {{
