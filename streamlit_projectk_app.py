@@ -153,73 +153,6 @@ def inject_custom_css():
         border-width: 2px !important;
     }}
     
-    /* Answer Option Buttons - Distinct from action buttons */
-    .answer-option-button>button {{
-        background-color: {LITMUSQ_THEME['light_bg']} !important;
-        color: {LITMUSQ_THEME['primary']} !important;
-        border: 2px solid {LITMUSQ_THEME['primary']} !important;
-        border-radius: 12px !important;
-        padding: 1.2rem 1rem !important;
-        font-weight: 600 !important;
-        font-size: 16px !important;
-        transition: all 0.3s ease !important;
-        margin: 5px 0 !important;
-        text-align: left !important;
-    }}
-    
-    .answer-option-button>button:hover {{
-        background-color: {LITMUSQ_THEME['accent']} !important;
-        color: white !important;
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important;
-        border-color: {LITMUSQ_THEME['accent']} !important;
-    }}
-    
-    .answer-option-button>button:active {{
-        transform: translateY(0) !important;
-    }}
-    
-    /* Selected Answer Option */
-    .answer-option-button>button[kind="primary"] {{
-        background-color: {LITMUSQ_THEME['success']} !important;
-        color: white !important;
-        border-color: {LITMUSQ_THEME['success']} !important;
-        box-shadow: 0 4px 8px rgba(6, 150, 109, 0.3) !important;
-    }}
-    
-    /* Action Buttons (Previous, Next, Mark Review, etc.) */
-    .action-button>button {{
-        background-color: {LITMUSQ_THEME['background']} !important;
-        color: {LITMUSQ_THEME['text']} !important;
-        border: 1px solid #E2E8F0 !important;
-        border-radius: 8px !important;
-        padding: 0.7rem 1rem !important;
-        font-weight: 500 !important;
-        transition: all 0.2s ease !important;
-    }}
-    
-    .action-button>button:hover {{
-        background-color: #F1F5F9 !important;
-        border-color: {LITMUSQ_THEME['accent']} !important;
-        transform: translateY(-1px) !important;
-    }}
-    
-    /* Submit Button - Special styling */
-    .submit-button>button {{
-        background-color: {LITMUSQ_THEME['secondary']} !important;
-        color: white !important;
-        border: none !important;
-        border-radius: 8px !important;
-        padding: 0.7rem 1rem !important;
-        font-weight: 600 !important;
-    }}
-    
-    .submit-button>button:hover {{
-        background-color: #B91C1C !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3) !important;
-    }}
-    
     /* Sidebar */
     .css-1d391kg {{
         background-color: {LITMUSQ_THEME['light_bg']};
@@ -1354,125 +1287,85 @@ def show_enhanced_question_interface():
     
     current_answer = st.session_state.question_status[current_idx]['answer']
     
-    # Use answer option buttons with distinct styling
+    # Use buttons instead of radio for better mobile experience
     col1, col2 = st.columns(2)
     
     with col1:
-        # Option A
-        option_a_text = f"**A)** {formatted_a}"
+        # Option A - Add green tick if selected
+        option_a_text = f"✅ **A)** {formatted_a}" if current_answer == "A" else f"**A)** {formatted_a}"
         button_style = "primary" if current_answer == "A" else "secondary"
+        if st.button(option_a_text, 
+                    use_container_width=True, 
+                    type=button_style,
+                    key=f"option_a_{current_idx}"):
+            update_question_status(current_idx, 'answered', "A")
+            st.session_state.answers[current_idx] = "A"
+            st.rerun()
         
-        # Wrap in container with answer-option-button class
-        with st.container():
-            st.markdown('<div class="answer-option-button">', unsafe_allow_html=True)
-            if st.button(option_a_text, 
-                        use_container_width=True, 
-                        type=button_style,
-                        key=f"option_a_{current_idx}"):
-                update_question_status(current_idx, 'answered', "A")
-                st.session_state.answers[current_idx] = "A"
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Option B
-        option_b_text = f"**B)** {formatted_b}"
+        # Option B - Add green tick if selected
+        option_b_text = f"✅ **B)** {formatted_b}" if current_answer == "B" else f"**B)** {formatted_b}"
         button_style = "primary" if current_answer == "B" else "secondary"
-        
-        with st.container():
-            st.markdown('<div class="answer-option-button">', unsafe_allow_html=True)
-            if st.button(option_b_text, 
-                        use_container_width=True, 
-                        type=button_style,
-                        key=f"option_b_{current_idx}"):
-                update_question_status(current_idx, 'answered', "B")
-                st.session_state.answers[current_idx] = "B"
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+        if st.button(option_b_text, 
+                    use_container_width=True, 
+                    type=button_style,
+                    key=f"option_b_{current_idx}"):
+            update_question_status(current_idx, 'answered', "B")
+            st.session_state.answers[current_idx] = "B"
+            st.rerun()
     
     with col2:
-        # Option C
-        option_c_text = f"**C)** {formatted_c}"
+        # Option C - Add green tick if selected
+        option_c_text = f"✅ **C)** {formatted_c}" if current_answer == "C" else f"**C)** {formatted_c}"
         button_style = "primary" if current_answer == "C" else "secondary"
+        if st.button(option_c_text, 
+                    use_container_width=True, 
+                    type=button_style,
+                    key=f"option_c_{current_idx}"):
+            update_question_status(current_idx, 'answered', "C")
+            st.session_state.answers[current_idx] = "C"
+            st.rerun()
         
-        with st.container():
-            st.markdown('<div class="answer-option-button">', unsafe_allow_html=True)
-            if st.button(option_c_text, 
-                        use_container_width=True, 
-                        type=button_style,
-                        key=f"option_c_{current_idx}"):
-                update_question_status(current_idx, 'answered', "C")
-                st.session_state.answers[current_idx] = "C"
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
-        
-        # Option D
-        option_d_text = f"**D)** {formatted_d}"
+        # Option D - Add green tick if selected
+        option_d_text = f"✅ **D)** {formatted_d}" if current_answer == "D" else f"**D)** {formatted_d}"
         button_style = "primary" if current_answer == "D" else "secondary"
-        
-        with st.container():
-            st.markdown('<div class="answer-option-button">', unsafe_allow_html=True)
-            if st.button(option_d_text, 
-                        use_container_width=True, 
-                        type=button_style,
-                        key=f"option_d_{current_idx}"):
-                update_question_status(current_idx, 'answered', "D")
-                st.session_state.answers[current_idx] = "D"
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+        if st.button(option_d_text, 
+                    use_container_width=True, 
+                    type=button_style,
+                    key=f"option_d_{current_idx}"):
+            update_question_status(current_idx, 'answered', "D")
+            st.session_state.answers[current_idx] = "D"
+            st.rerun()
     
     st.markdown("---")
     
-    # Enhanced action buttons with different styling
+    # Enhanced action buttons
     col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
-        with st.container():
-            st.markdown('<div class="action-button">', unsafe_allow_html=True)
-            st.button("◀ Previous", 
-                     use_container_width=True, 
-                     disabled=current_idx == 0,
-                     key=f"prev_{current_idx}",
-                     on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1))
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.button("◀ Previous", use_container_width=True, disabled=current_idx == 0,
+                 key=f"prev_{current_idx}",
+                 on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1))
     
     with col2:
-        with st.container():
-            st.markdown('<div class="action-button">', unsafe_allow_html=True)
-            st.button("Next ▶", 
-                     use_container_width=True, 
-                     disabled=current_idx == len(df) - 1,
-                     key=f"next_{current_idx}",
-                     on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.button("Next ▶", use_container_width=True, disabled=current_idx == len(df) - 1,
+                 key=f"next_{current_idx}",
+                 on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1))
     
     with col3:
-        with st.container():
-            st.markdown('<div class="action-button">', unsafe_allow_html=True)
-            button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
-            st.button(button_text, 
-                     use_container_width=True,
-                     key=f"mark_{current_idx}",
-                     on_click=lambda: toggle_mark_review(current_idx))
-            st.markdown('</div>', unsafe_allow_html=True)
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
+        st.button(button_text, use_container_width=True,
+                 key=f"mark_{current_idx}",
+                 on_click=lambda: toggle_mark_review(current_idx))
     
     with col4:
-        with st.container():
-            st.markdown('<div class="action-button">', unsafe_allow_html=True)
-            if st.button("🗑️ Clear Response", 
-                        use_container_width=True,
-                        key=f"clear_{current_idx}"):
-                clear_response(current_idx)
-            st.markdown('</div>', unsafe_allow_html=True)
+        if st.button("🗑️ Clear Response", use_container_width=True,
+                     key=f"clear_{current_idx}"):
+            clear_response(current_idx)
     
     with col5:
-        with st.container():
-            st.markdown('<div class="submit-button">', unsafe_allow_html=True)
-            st.button("📤 Submit Test", 
-                     type="primary", 
-                     use_container_width=True,
-                     key=f"submit_{current_idx}",
-                     on_click=lambda: setattr(st.session_state, 'submitted', True))
-            st.markdown('</div>', unsafe_allow_html=True)
+        st.button("📤 Submit Test", type="primary", use_container_width=True,
+                 key=f"submit_{current_idx}",
+                 on_click=lambda: setattr(st.session_state, 'submitted', True))
 # =============================
 # Professional Test Interface
 # =============================
