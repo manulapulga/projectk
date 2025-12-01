@@ -71,11 +71,7 @@ def inject_custom_css():
     
     /* Keep the burger menu but hide other header elements */
     .stApp > header + div {{margin-top: -5rem;}}
-    
-    /* Adjust main content area to account for hidden header */
-    .main .block-container {{
-        padding-top: 0rem !important;
-        margin-top: -2rem !important;
+
     }}
     
     .main .block-container {{
