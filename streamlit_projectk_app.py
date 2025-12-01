@@ -64,6 +64,24 @@ def inject_custom_css():
     /* Hide the "Made with Streamlit" text */
     .viewerBadge_container__1QSob {{display: none !important;}}
     
+    /* Hide "Created by lapulga" link */
+    a[href*="lapulga"] {{display: none !important;}}
+    
+    /* Hide "hoisted in streamlit" branding */
+    div[data-testid="stAppViewContainer"] > div:last-child {{display: none !important;}}
+    
+    /* Alternative selectors for bottom branding */
+    div[class*="stApp"] > div:last-child {{display: none !important;}}
+    div[class*="stAppViewBlockContainer"] > div:last-child {{display: none !important;}}
+    
+    /* Additional selector for Streamlit cloud hosting badge */
+    .stApp > div:last-child {{display: none !important;}}
+    
+    /* Hide any element containing "streamlit" or "lapulga" text */
+    *:contains("streamlit"):not(:has(*)), 
+    *:contains("Streamlit"):not(:has(*)),
+    *:contains("lapulga"):not(:has(*)) {{display: none !important;}}
+    
     /* Alternative way to hide footer */
     #root > div:nth-child(1) > div > div > div > div > section > div {{padding-top: 0rem;}}
     
