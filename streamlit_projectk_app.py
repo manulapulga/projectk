@@ -556,7 +556,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         - `<span style='font-size: 18px; color: red;'>Large red text</span>`
         """)
     
-    # Editing form
+    # Use separate forms for each action to avoid conflicts
     with st.form(f"edit_question_{question_index}"):
         st.subheader("Edit Content")
         
@@ -604,30 +604,19 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             st.markdown("**Explanation:**")
             render_formatted_content(edited_explanation)
         
-        # Form actions
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True)
-        with col2:
-            reset_btn = st.form_submit_button("🔄 Reset to Original", use_container_width=True)
-        with col3:
-            clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True)
-        
-        if save_btn:
-            # Save formatted content
-            formatted_questions[question_key] = edited_question
-            formatted_questions[option_a_key] = edited_a
-            formatted_questions[option_b_key] = edited_b
-            formatted_questions[option_c_key] = edited_c
-            formatted_questions[option_d_key] = edited_d
-            formatted_questions[explanation_key] = edited_explanation
-            
-            if save_formatted_questions(formatted_questions):
-                st.success("✅ Changes saved successfully!")
-            else:
-                st.error("❌ Failed to save changes.")
-        
-        if reset_btn:
+        # Single save button in the main form
+        save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True)
+    
+    # Create separate forms/buttons for reset and clear actions
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        # Save action is already handled above
+        pass
+    
+    with col2:
+        # Use a button outside the form for reset
+        if st.button("🔄 Reset to Original", use_container_width=True, key=f"reset_{question_index}"):
             # Reset to original content
             formatted_questions[question_key] = question_row['Question']
             formatted_questions[option_a_key] = question_row.get('Option A', '')
@@ -639,8 +628,10 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             if save_formatted_questions(formatted_questions):
                 st.success("✅ Reset to original content!")
                 st.rerun()
-        
-        if clear_btn:
+    
+    with col3:
+        # Use a button outside the form for clear
+        if st.button("🗑️ Clear Formatting", use_container_width=True, key=f"clear_{question_index}"):
             # Remove formatting (use original content)
             for key in [question_key, option_a_key, option_b_key, option_c_key, option_d_key, explanation_key]:
                 if key in formatted_questions:
@@ -649,6 +640,19 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             if save_formatted_questions(formatted_questions):
                 st.success("✅ Formatting cleared!")
                 st.rerun()
+    
+    # Handle save action (from the form)
+    if save_btn:
+        # Save formatted content
+        formatted_questions[question_key] = edited_question
+        formatted_questions[option_a_key] = edited_a
+        formatted_questions[option_b_key] = edited_b
+        formatted_questions[option_c_key] = edited_c
+        formatted_questions[option_d_key] = edited_d
+        formatted_questions[explanation_key] = edited_explanation
+        
+        if save_formatted_questions(formatted_questions):
+            st.success("✅ Changes saved successfully!")
 
 def get_formatted_content(file_path, sheet_name, question_index, field, original_content):
     """Get formatted content if available, otherwise return original."""
