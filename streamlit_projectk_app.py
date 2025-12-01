@@ -153,6 +153,52 @@ def inject_custom_css():
         border-width: 2px !important;
     }}
     
+    /* Style answer buttons by targeting their data-testid */
+    div[data-testid="stButton"] > button {
+        /* Default style for all buttons */
+        border-radius: 8px;
+        font-weight: 500;
+    }
+    
+    /* Target answer option buttons specifically by their key pattern */
+    button[data-testid*="option_"] {
+        background-color: #EFF6FF !important;
+        color: #1E3A8A !important;
+        border: 2px solid #1E3A8A !important;
+        border-radius: 12px !important;
+        padding: 1rem !important;
+        font-weight: 600 !important;
+        margin: 8px 0 !important;
+        height: auto !important;
+        min-height: 80px !important;
+    }
+    
+    /* Selected answer option */
+    button[data-testid*="option_"][kind="primary"] {
+        background-color: #059669 !important;
+        color: white !important;
+        border-color: #059669 !important;
+    }
+    
+    /* Target action buttons by their key pattern */
+    button[data-testid*="prev_"],
+    button[data-testid*="next_"],
+    button[data-testid*="mark_"],
+    button[data-testid*="clear_"] {
+        background-color: #F8FAFC !important;
+        color: #1E293B !important;
+        border: 1px solid #E2E8F0 !important;
+        font-weight: 500 !important;
+        height: 40px !important;
+    }
+    
+    /* Submit button special */
+    button[data-testid*="submit_"] {
+        background-color: #DC2626 !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 600 !important;
+    }
     /* Sidebar */
     .css-1d391kg {{
         background-color: {LITMUSQ_THEME['light_bg']};
