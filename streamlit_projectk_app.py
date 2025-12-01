@@ -45,19 +45,6 @@ def inject_custom_css():
     st.markdown(f"""
     <style>
     
-    /* Hide "Made with Streamlit" and creator badge */
-    footer {visibility: hidden !important;}
-    footer:empty {display: none !important;}
-    
-    /* Hide creator name + profile link */
-    .viewerBadge_container__1QSob {display: none !important;}
-    .viewerBadge_link__1S137 {display: none !important;}
-    .viewerBadge_text__1o1mR {display: none !important;}
-    
-    /* Hide entire bottom-right Streamlit badge box */
-    #root div[data-testid="stDecoration"] {display: none !important;}
-    #root div[class*="viewerBadge"] {display: none !important;}
-
     /* Hide Streamlit's default top menu items (except burger menu) */
     #MainMenu {{visibility: hidden;}}
     header {{visibility: hidden;}}
