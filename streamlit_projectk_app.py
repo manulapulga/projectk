@@ -607,13 +607,13 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             st.markdown("**Explanation:**")
             render_formatted_content(edited_explanation)
         
-    # Create separate forms/buttons for reset and clear actions
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
+        # Single save button in the main form
         save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True)
     
-    with col2:
+    # Create separate forms/buttons for reset and clear actions
+    col1, col2 = st.columns(1)
+    
+    with col1:
         # Use a button outside the form for reset
         if st.button("🔄 Reset to Original", use_container_width=True, key=f"reset_{question_index}"):
             # Reset to original content
@@ -629,7 +629,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
                 # Use experimental_rerun for better compatibility
                 st.experimental_rerun()
     
-    with col3:
+    with col2:
         # Use a button outside the form for clear
         if st.button("🗑️ Clear Formatting", use_container_width=True, key=f"clear_{question_index}"):
             # Remove formatting (use original content)
