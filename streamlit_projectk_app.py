@@ -45,15 +45,19 @@ def inject_custom_css():
     st.markdown(f"""
     <style>
     
-    /* Completely hide the header */
+    /* Hide ALL Streamlit UI elements except burger menu */
+    
+    /* 1. Hide the entire header but keep burger menu */
     header {{
-        display: none !important;
+        visibility: hidden;
+        height: 0px !important;
+        min-height: 0px !important;
     }}
     
-    /* But make the burger menu reappear */
+    /* Keep only the burger menu button visible */
     button[kind="header"] {{
-        display: block !important;
         visibility: visible !important;
+        display: block !important;
         position: fixed !important;
         top: 10px !important;
         right: 10px !important;
@@ -65,40 +69,142 @@ def inject_custom_css():
         box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     }}
     
-    /* Ensure the burger menu icon is visible */
+    /* Make sure the burger menu icon is visible */
     button[kind="header"] svg {{
-        display: block !important;
         visibility: visible !important;
+        display: block !important;
+        width: 24px !important;
+        height: 24px !important;
     }}
     
-    /* Hide all other header elements */
-    .stApp > header:first-child > *:not(button[kind="header"]) {{
+    /* 2. Hide the App Creator Avatar (GitHub avatar) */
+    img[alt="App Creator Avatar"] {{
         display: none !important;
     }}
     
-    /* Hide the deploy button */
+    img._profileImage_gzau3_78 {{
+        display: none !important;
+    }}
+    
+    [data-testid="appCreatorAvatar"] {{
+        display: none !important;
+    }}
+    
+    /* 3. Hide the Streamlit logo/link container */
+    ._link_gzau3_10 {{
+        display: none !important;
+    }}
+    
+    div[class*="_link"] svg {{
+        display: none !important;
+    }}
+    
+    /* 4. Hide the deploy button (Fork button) */
     .stDeployButton {{
         display: none !important;
     }}
     
-    /* Hide the footer completely */
-    footer {{
-        display: none !important;
-    }}
-    
-    /* Hide Streamlit badges */
+    /* 5. Hide all viewer badges (Made with Streamlit, View app source, etc.) */
     [class*="viewerBadge"] {{
         display: none !important;
     }}
     
-    /* Adjust main content area */
-    .main .block-container {{
-        padding-top: 20px !important;
+    .viewerBadge_link__qRIco {{
+        display: none !important;
     }}
     
-    /* Move content up */
+    .viewerBadge_container__r5tak {{
+        display: none !important;
+    }}
+    
+    /* 6. Hide the entire footer */
+    footer {{
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+        min-height: 0px !important;
+    }}
+    
+    /* 7. Hide status widgets and toolbars */
+    [data-testid="stStatusWidget"] {{
+        display: none !important;
+    }}
+    
+    [data-testid="stToolbar"] {{
+        display: none !important;
+    }}
+    
+    [data-testid="stDecoration"] {{
+        display: none !important;
+    }}
+    
+    /* 8. Hide running status */
+    .stStatus {{
+        display: none !important;
+    }}
+    
+    /* 9. Hide any elements with GitHub or avatar classes */
+    [class*="profileImage"] {{
+        display: none !important;
+    }}
+    
+    [class*="_avatar"] {{
+        display: none !important;
+    }}
+    
+    [class*="_creator"] {{
+        display: none !important;
+    }}
+    
+    /* 10. Hide fullscreen button if present */
+    button[title="View fullscreen"] {{
+        display: none !important;
+    }}
+    
+    /* 11. Hide any other buttons in header except burger menu */
+    header button:not([kind="header"]) {{
+        display: none !important;
+    }}
+    
+    /* 12. Adjust main content to fill the space */
+    .main .block-container {{
+        padding-top: 0.5rem !important;
+        padding-bottom: 0.5rem !important;
+    }}
+    
+    /* 13. Move content up to occupy the hidden header space */
     .stApp {{
-        margin-top: -60px !important;
+        margin-top: -50px !important;
+    }}
+    
+    /* 14. Hide any remaining Streamlit branding */
+    [class*="stAppViewContainer"] footer {{
+        display: none !important;
+    }}
+    
+    /* 15. Hide any elements containing "streamlit" or "github" in class */
+    [class*="streamlit"]:not(.stApp):not(.stButton):not(.stRadio):not(.stCheckbox):not(.stSelectbox):not(.stTextInput):not(.stTextArea):not(.stNumberInput):not(.stDateInput):not(.stTimeInput):not(.stFileUploader):not(.stColorPicker):not(.stSlider) {{
+        /* This hides Streamlit branding classes but preserves form elements */
+    }}
+    
+    [class*="github"] {{
+        display: none !important;
+    }}
+    
+    /* 16. Nuclear option: Hide any element that looks like branding */
+    svg[width="303"][height="165"] {{  /* Streamlit logo SVG */
+        display: none !important;
+    }}
+    
+    /* 17. Ensure no empty space remains */
+    .stApp > div:first-child {{
+        min-height: 0px !important;
+        height: 0px !important;
+    }}
+    
+    /* 18. Hide the app header container */
+    div[data-testid="stHeader"] {{
+        display: none !important;
     }}
     
     .main .block-container {{
