@@ -8,6 +8,7 @@ import json
 from streamlit_autorefresh import st_autorefresh
 import psutil
 from functools import lru_cache
+import streamlit.components.v1 as components
 
 # =============================
 # Configuration & Theme
@@ -1493,6 +1494,39 @@ def show_question_palette():
                         if st.session_state.question_status[q_num]['status'] == 'not_visited':
                             update_question_status(q_num, 'not_answered')
                         st.rerun()
+                        
+def live_timer_component(seconds_left: int):
+    html_code = f"""
+    <div id="timer" style="
+        font-size: 28px;
+        font-weight: bold;
+        color: red;
+        text-align: center;
+    "></div>
+
+    <script>
+        let timeLeft = {seconds_left};
+
+        function updateTimer() {{
+            if (timeLeft <= 0) {{
+                document.getElementById('timer').innerHTML = "⏰ 00:00:00";
+                return;
+            }}
+
+            let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+            let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+            let s = String(timeLeft % 60).padStart(2, '0');
+
+            document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
+
+            timeLeft--;
+            setTimeout(updateTimer, 1000);
+        }}
+
+        updateTimer();
+    </script>
+    """
+    components.html(html_code, height=60)
 
 def show_live_timer():
     """Display live timer with auto-refresh."""
@@ -1531,26 +1565,18 @@ def show_test_header():
 
     with col2:
         st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+    
         if st.session_state.end_time and not st.session_state.submitted:
-            time_left = st.session_state.end_time - datetime.now()
-            seconds_left = time_left.total_seconds()
-
-            if seconds_left <= 0:
-                st.session_state.submitted = True
-                st.rerun()
-
-            hours, remainder = divmod(int(seconds_left), 3600)
-            minutes, seconds = divmod(remainder, 60)
-            time_color = get_time_color(seconds_left)
-            
-            st.markdown(
-                f"<h3 style='color: {time_color}; margin: 0;'>⏰ {hours:02d}:{minutes:02d}:{seconds:02d}</h3>", 
-                unsafe_allow_html=True
-            )
-
-            st_autorefresh(interval=5000, limit=1000, key="timer_refresh")
+    
+            seconds_left = int((st.session_state.end_time - datetime.now()).total_seconds())
+            if seconds_left < 0:
+                seconds_left = 0
+    
+            live_timer_component(seconds_left)
+    
         else:
             st.metric("⏰ Time Left", "No Limit")
+    
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col3:
