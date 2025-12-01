@@ -325,7 +325,6 @@ def show_login_screen():
                     if authenticate_user(username, password, credentials):
                         st.session_state.logged_in = True
                         st.session_state.username = username
-                        st.success(f"🎉 Welcome back, {username}!")
                         # Initialize user progress
                         initialize_user_progress(username)
                         st.rerun()
