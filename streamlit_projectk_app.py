@@ -630,7 +630,8 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             
             if save_formatted_questions(formatted_questions):
                 st.success("✅ Reset to original content!")
-                st.rerun()
+                # Use experimental_rerun for better compatibility
+                st.experimental_rerun()
     
     with col3:
         # Use a button outside the form for clear
@@ -642,7 +643,8 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             
             if save_formatted_questions(formatted_questions):
                 st.success("✅ Formatting cleared!")
-                st.rerun()
+                # Use experimental_rerun for better compatibility
+                st.experimental_rerun()
     
     # Handle save action (from the form)
     if save_btn:
