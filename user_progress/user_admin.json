@@ -1,8 +1,8 @@
 {
   "username": "admin",
-  "tests_taken": 45,
+  "tests_taken": 46,
   "total_score": 6,
-  "average_score": 0.13333333333333333,
+  "average_score": 0.13043478260869565,
   "test_history": [
     {
       "exam_name": "UPSC",
@@ -403,6 +403,15 @@
     {
       "exam_name": "UPSC",
       "date": "2025-12-01T11:48:40.597731",
+      "score": 0,
+      "total_marks": 120,
+      "percentage": 0.0,
+      "correct_answers": 0,
+      "total_questions": 60
+    },
+    {
+      "exam_name": "UPSC",
+      "date": "2025-12-01T11:49:21.609869",
       "score": 0,
       "total_marks": 120,
       "percentage": 0.0,
