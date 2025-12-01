@@ -238,7 +238,25 @@ def inject_custom_css():
     }}
     </style>
     """, unsafe_allow_html=True)
+    
+# =============================
+# cache formatted questions
+# =============================
+@lru_cache(maxsize=1)
+def load_formatted_questions_cached():
+    """Cached version of load_formatted_questions."""
+    return load_formatted_questions()
 
+def load_formatted_questions():
+    """Load formatted questions from JSON file."""
+    try:
+        if os.path.exists(FORMATTED_QUESTIONS_FILE):
+            with open(FORMATTED_QUESTIONS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except Exception as e:
+        st.error(f"Error loading formatted questions: {e}")
+    return {}
+    
 # =============================
 # Branded Header
 # =============================
@@ -376,24 +394,6 @@ def show_question_editor():
     """Admin interface for editing question formatting."""
     show_litmusq_header("📝 Question Formatting Editor")
     
-    # Home button
-    
-    # Add back navigation
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col1:
-        if st.button("🏠 Home", use_container_width=True, key="editor_home"):
-            st.session_state.current_screen = "home"
-            st.rerun()
-            
-    with col2:    
-        if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
-            if len(current_path) > 0:
-                st.session_state.editor_current_path = current_path[:-1]
-                st.rerun()
-    with col3:
-        if st.button("🏠 Back to Root", use_container_width=True, key="back_to_root"):
-            st.session_state.editor_current_path = []
-            st.rerun()
     # Check if user is admin
     if not is_admin_user():
         st.error("❌ Access Denied. This section is only available for administrators.")
@@ -411,13 +411,34 @@ def show_question_editor():
         st.error("No question banks found. Please ensure Question_Data_Folder exists.")
         return
     
-    # Display current location breadcrumb
+    # Get current path - MUST BE DEFINED BEFORE USING IT
     current_path = st.session_state.get('editor_current_path', [])
+    
+    # Display current location breadcrumb
     if current_path:
         breadcrumb = " > ".join(current_path)
         st.write(f"**Current Location:** `{breadcrumb}`")
-        
-        
+    
+    # Add back navigation - MOVED HERE AFTER current_path is defined
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        if st.button("🏠 Home", use_container_width=True, key="editor_home"):
+            st.session_state.current_screen = "home"
+            st.rerun()
+    
+    # Only show back button if we're in a subfolder
+    with col2:
+        if current_path:  # Only show if we have a path
+            if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
+                st.session_state.editor_current_path = current_path[:-1]
+                st.rerun()
+        else:
+            st.button("⬅️ Back", use_container_width=True, disabled=True, key="editor_back_disabled")
+    
+    with col3:
+        if st.button("🏠 Back to Root", use_container_width=True, key="back_to_root"):
+            st.session_state.editor_current_path = []
+            st.rerun()
     
     # Display folder navigation for editor
     def get_current_level(structure, path):
@@ -515,15 +536,29 @@ def show_question_editing_interface(question_row, question_index, file_path, she
     st.markdown("---")
     st.subheader(f"✏️ Editing Question {question_index + 1}")
     
+    # Store original content in session state for reliable access
+    session_key = f"original_{file_path}_{sheet_name}_{question_index}"
+    if session_key not in st.session_state:
+        st.session_state[session_key] = {
+            "question": question_row['Question'],
+            "option_a": question_row.get('Option A', ''),
+            "option_b": question_row.get('Option B', ''),
+            "option_c": question_row.get('Option C', ''),
+            "option_d": question_row.get('Option D', ''),
+            "explanation": question_row.get('Explanation', '')
+        }
+    
+    original_content = st.session_state[session_key]
+    
     # Display original question for reference
     with st.expander("👀 Original Question (Read-only)", expanded=False):
-        st.write(f"**Question:** {question_row['Question']}")
-        st.write(f"**Option A:** {question_row.get('Option A', '')}")
-        st.write(f"**Option B:** {question_row.get('Option B', '')}")
-        st.write(f"**Option C:** {question_row.get('Option C', '')}")
-        st.write(f"**Option D:** {question_row.get('Option D', '')}")
-        if 'Explanation' in question_row:
-            st.write(f"**Explanation:** {question_row.get('Explanation', '')}")
+        st.write(f"**Question:** {original_content['question']}")
+        st.write(f"**Option A:** {original_content['option_a']}")
+        st.write(f"**Option B:** {original_content['option_b']}")
+        st.write(f"**Option C:** {original_content['option_c']}")
+        st.write(f"**Option D:** {original_content['option_d']}")
+        if original_content['explanation']:
+            st.write(f"**Explanation:** {original_content['explanation']}")
     
     # Generate keys for this question
     question_key = get_question_key(file_path, sheet_name, question_index, "question")
@@ -534,12 +569,12 @@ def show_question_editing_interface(question_row, question_index, file_path, she
     explanation_key = get_question_key(file_path, sheet_name, question_index, "explanation")
     
     # Load existing formatted content
-    default_question = formatted_questions.get(question_key, question_row['Question'])
-    default_a = formatted_questions.get(option_a_key, question_row.get('Option A', ''))
-    default_b = formatted_questions.get(option_b_key, question_row.get('Option B', ''))
-    default_c = formatted_questions.get(option_c_key, question_row.get('Option C', ''))
-    default_d = formatted_questions.get(option_d_key, question_row.get('Option D', ''))
-    default_explanation = formatted_questions.get(explanation_key, question_row.get('Explanation', ''))
+    default_question = formatted_questions.get(question_key, original_content['question'])
+    default_a = formatted_questions.get(option_a_key, original_content['option_a'])
+    default_b = formatted_questions.get(option_b_key, original_content['option_b'])
+    default_c = formatted_questions.get(option_c_key, original_content['option_c'])
+    default_d = formatted_questions.get(option_d_key, original_content['option_d'])
+    default_explanation = formatted_questions.get(explanation_key, original_content['explanation'])
     
     # Formatting guide
     with st.expander("📋 Formatting Guide", expanded=False):
@@ -610,43 +645,10 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         # Single save button in the main form
         save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True)
     
-    # Create separate forms/buttons for reset and clear actions
+    # Create separate columns for the action buttons
     col1, col2, col3 = st.columns(3)
     
-    with col1:
-        # Save action is already handled above
-        pass
-    
-    with col2:
-        # Use a button outside the form for reset
-        if st.button("🔄 Reset to Original", use_container_width=True, key=f"reset_{question_index}"):
-            # Reset to original content
-            formatted_questions[question_key] = question_row['Question']
-            formatted_questions[option_a_key] = question_row.get('Option A', '')
-            formatted_questions[option_b_key] = question_row.get('Option B', '')
-            formatted_questions[option_c_key] = question_row.get('Option C', '')
-            formatted_questions[option_d_key] = question_row.get('Option D', '')
-            formatted_questions[explanation_key] = question_row.get('Explanation', '')
-            
-            if save_formatted_questions(formatted_questions):
-                st.success("✅ Reset to original content!")
-                # Use experimental_rerun for better compatibility
-                st.experimental_rerun()
-    
-    with col3:
-        # Use a button outside the form for clear
-        if st.button("🗑️ Clear Formatting", use_container_width=True, key=f"clear_{question_index}"):
-            # Remove formatting (use original content)
-            for key in [question_key, option_a_key, option_b_key, option_c_key, option_d_key, explanation_key]:
-                if key in formatted_questions:
-                    del formatted_questions[key]
-            
-            if save_formatted_questions(formatted_questions):
-                st.success("✅ Formatting cleared!")
-                # Use experimental_rerun for better compatibility
-                st.experimental_rerun()
-    
-    # Handle save action (from the form)
+    # Save action status message
     if save_btn:
         # Save formatted content
         formatted_questions[question_key] = edited_question
@@ -658,6 +660,57 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         
         if save_formatted_questions(formatted_questions):
             st.success("✅ Changes saved successfully!")
+    
+    with col2:
+        # Use a button outside the form for reset - with a confirmation
+        if st.button("🔄 Reset to Original", 
+                    use_container_width=True, 
+                    type="secondary",
+                    key=f"reset_{question_index}"):
+            
+            # Show confirmation
+            st.warning("⚠️ This will replace all formatting with the original content from the Excel file.")
+            
+            # Actually reset the content
+            formatted_questions[question_key] = original_content['question']
+            formatted_questions[option_a_key] = original_content['option_a']
+            formatted_questions[option_b_key] = original_content['option_b']
+            formatted_questions[option_c_key] = original_content['option_c']
+            formatted_questions[option_d_key] = original_content['option_d']
+            formatted_questions[explanation_key] = original_content['explanation']
+            
+            if save_formatted_questions(formatted_questions):
+                st.success("✅ Reset to original content!")
+                # Clear the cache to force reload
+                if 'formatted_questions_cache' in st.session_state:
+                    del st.session_state.formatted_questions_cache
+                st.rerun()
+    
+    with col3:
+        # Use a button outside the form for clear - with a confirmation
+        if st.button("🗑️ Clear Formatting", 
+                    use_container_width=True, 
+                    type="secondary",
+                    key=f"clear_{question_index}"):
+            
+            # Show confirmation
+            st.warning("⚠️ This will remove all saved formatting for this question.")
+            
+            # Remove formatting (delete keys from formatted_questions)
+            keys_to_delete = []
+            for key in [question_key, option_a_key, option_b_key, option_c_key, option_d_key, explanation_key]:
+                if key in formatted_questions:
+                    keys_to_delete.append(key)
+            
+            for key in keys_to_delete:
+                del formatted_questions[key]
+            
+            if save_formatted_questions(formatted_questions):
+                st.success("✅ Formatting cleared!")
+                # Clear the cache to force reload
+                if 'formatted_questions_cache' in st.session_state:
+                    del st.session_state.formatted_questions_cache
+                st.rerun()
 
 def get_formatted_content(file_path, sheet_name, question_index, field, original_content):
     """Get formatted content if available, otherwise return original."""
