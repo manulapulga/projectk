@@ -390,146 +390,178 @@ def is_admin_user():
     admin_users = ["admin", "administrator"]  # Add admin usernames here
     return st.session_state.username.lower() in [admin.lower() for admin in admin_users]
 
-def show_question_editor():
-    """Admin interface for editing question formatting."""
-    show_litmusq_header("📝 Question Formatting Editor")
+def show_question_editing_interface(question_row, question_index, file_path, sheet_name, formatted_questions):
+    """Show editing interface for a specific question."""
+    st.markdown("---")
+    st.subheader(f"✏️ Editing Question {question_index + 1}")
     
-    # Check if user is admin
-    if not is_admin_user():
-        st.error("❌ Access Denied. This section is only available for administrators.")
-        st.info("Please contact your system administrator if you need access.")
-        return
+    # Store original content in session state for reliable access
+    session_key = f"original_{file_path}_{sheet_name}_{question_index}"
+    if session_key not in st.session_state:
+        st.session_state[session_key] = {
+            "question": question_row['Question'],
+            "option_a": question_row.get('Option A', ''),
+            "option_b": question_row.get('Option B', ''),
+            "option_c": question_row.get('Option C', ''),
+            "option_d": question_row.get('Option D', ''),
+            "explanation": question_row.get('Explanation', '')
+        }
     
-    # Load existing formatted questions
-    formatted_questions = load_formatted_questions()
+    original_content = st.session_state[session_key]
     
-    # Folder selection
-    st.subheader("Select Question Bank")
-    folder_structure = st.session_state.get('folder_structure', {})
+    # Display original question for reference
+    with st.expander("👀 Original Question (Read-only)", expanded=False):
+        st.write(f"**Question:** {original_content['question']}")
+        st.write(f"**Option A:** {original_content['option_a']}")
+        st.write(f"**Option B:** {original_content['option_b']}")
+        st.write(f"**Option C:** {original_content['option_c']}")
+        st.write(f"**Option D:** {original_content['option_d']}")
+        if original_content['explanation']:
+            st.write(f"**Explanation:** {original_content['explanation']}")
     
-    if not folder_structure:
-        st.error("No question banks found. Please ensure Question_Data_Folder exists.")
-        return
+    # Generate keys for this question
+    question_key = get_question_key(file_path, sheet_name, question_index, "question")
+    option_a_key = get_question_key(file_path, sheet_name, question_index, "option_a")
+    option_b_key = get_question_key(file_path, sheet_name, question_index, "option_b")
+    option_c_key = get_question_key(file_path, sheet_name, question_index, "option_c")
+    option_d_key = get_question_key(file_path, sheet_name, question_index, "option_d")
+    explanation_key = get_question_key(file_path, sheet_name, question_index, "explanation")
     
-    # Get current path - MUST BE DEFINED BEFORE USING IT
-    current_path = st.session_state.get('editor_current_path', [])
+    # Load existing formatted content
+    default_question = formatted_questions.get(question_key, original_content['question'])
+    default_a = formatted_questions.get(option_a_key, original_content['option_a'])
+    default_b = formatted_questions.get(option_b_key, original_content['option_b'])
+    default_c = formatted_questions.get(option_c_key, original_content['option_c'])
+    default_d = formatted_questions.get(option_d_key, original_content['option_d'])
+    default_explanation = formatted_questions.get(explanation_key, original_content['explanation'])
     
-    # Display current location breadcrumb
-    if current_path:
-        breadcrumb = " > ".join(current_path)
-        st.write(f"**Current Location:** `{breadcrumb}`")
-    
-    # Add back navigation - MOVED HERE AFTER current_path is defined
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col1:
-        if st.button("🏠 Home", use_container_width=True, key="editor_home"):
-            st.session_state.current_screen = "home"
-            st.rerun()
-    
-    # Only show back button if we're in a subfolder
-    with col2:
-        if current_path:  # Only show if we have a path
-            if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
-                st.session_state.editor_current_path = current_path[:-1]
-                st.rerun()
-        else:
-            st.button("⬅️ Back", use_container_width=True, disabled=True, key="editor_back_disabled")
-    
-    with col3:
-        if st.button("🏠 Back to Root", use_container_width=True, key="back_to_root"):
-            st.session_state.editor_current_path = []
-            st.rerun()
-    
-    # Display folder navigation for editor
-    def get_current_level(structure, path):
-        """Get the current level in folder structure based on path."""
-        current_level = structure
-        for folder in path:
-            if folder in current_level:
-                current_level = current_level[folder]
-            else:
-                return None
-        return current_level
-    
-    current_level = get_current_level(folder_structure, current_path)
-    
-    if current_level is None:
-        st.error("Invalid path in folder structure")
-        st.session_state.editor_current_path = []
-        st.rerun()
-        return
-    
-    # Display items at current level
-    items_displayed = 0
-    
-    # Display folders first
-    for item_name, item_content in current_level.items():
-        if item_name == '_files':
-            continue
-            
-        # Check if it's a folder (has sub-items that aren't _files)
-        is_folder = any(k != '_files' for k in item_content.keys())
-        has_qb = '_files' in item_content and 'QB.xlsx' in item_content['_files']
+    # Formatting guide
+    with st.expander("📋 Formatting Guide", expanded=False):
+        st.markdown("""
+        **Supported Formatting:**
+        - **Bold:** `<b>text</b>` or `<strong>text</strong>`
+        - *Italic:* `<i>text</i>` or `<em>text</em>`
+        - <u>Underline:</u> `<u>text</u>`
+        - Line breaks: `<br>`
+        - Colors: `<span style='color: red;'>text</span>`
+        - Font size: `<span style='font-size: 20px;'>text</span>`
         
-        button_label = f"{item_name}"
-        if st.button(
-            button_label, 
-            key=f"editor_nav_{len(current_path)}_{item_name}",
-            use_container_width=True,
-            help=f"Click to {'open question bank' if has_qb else 'explore folder'}"
-        ):
-            st.session_state.editor_current_path = current_path + [item_name]
-            st.rerun()
-        items_displayed += 1
+        **Examples:**
+        - `This is <b>bold</b> and <i>italic</i>`
+        - `First line<br>Second line`
+        - `<span style='color: blue;'>Blue text</span>`
+        - `<span style='font-size: 18px; color: red;'>Large red text</span>`
+        """)
     
-    # Show content if current path has a QB
-    if current_path:
-        has_qb = '_files' in current_level and 'QB.xlsx' in current_level['_files']
+    # Use a form for the editing interface
+    with st.form(f"edit_question_{question_index}"):
+        st.subheader("Edit Content")
         
-        if has_qb:
-            st.markdown("---")
-            st.subheader("📝 Question Bank Editor")
-            
-            qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
-            if os.path.exists(qb_path):
-                questions_data = load_questions(qb_path)
-                
-                if questions_data:
-                    # Sheet selection
-                    sheet_names = list(questions_data.keys())
-                    selected_sheet = st.selectbox("Select Sheet", sheet_names, key="editor_sheet")
-                    
-                    if selected_sheet:
-                        df = questions_data[selected_sheet]
-                        
-                        if len(df) > 0:
-                            # Question selection
-                            question_indices = list(range(len(df)))
-                            selected_index = st.selectbox(
-                                "Select Question", 
-                                question_indices,
-                                format_func=lambda x: f"Question {x+1}: {df.iloc[x]['Question'][:100]}..."
-                            )
-                            
-                            if selected_index is not None:
-                                show_question_editing_interface(
-                                    df.iloc[selected_index], 
-                                    selected_index,
-                                    qb_path,
-                                    selected_sheet,
-                                    formatted_questions
-                                )
-                        else:
-                            st.warning("No questions found in this sheet.")
-                else:
-                    st.error("Failed to load question bank data.")
-            else:
-                st.error(f"Question bank file not found: {qb_path}")
-        elif items_displayed == 0:
-            st.info("This folder is empty.")
-    else:
-        if items_displayed == 0:
-            st.info("No question banks or folders found in the root directory.")
+        edited_question = st.text_area(
+            "**Question Text**",
+            value=default_question,
+            height=150,
+            key=f"q_{question_index}"
+        )
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            edited_a = st.text_area("Option A", value=default_a, height=100, key=f"a_{question_index}")
+            edited_b = st.text_area("Option B", value=default_b, height=100, key=f"b_{question_index}")
+        with col2:
+            edited_c = st.text_area("Option C", value=default_c, height=100, key=f"c_{question_index}")
+            edited_d = st.text_area("Option D", value=default_d, height=100, key=f"d_{question_index}")
+        
+        edited_explanation = st.text_area(
+            "Explanation", 
+            value=default_explanation, 
+            height=150,
+            key=f"exp_{question_index}"
+        )
+        
+        # Preview
+        st.subheader("👁️ Live Preview")
+        st.markdown("**Question:**")
+        render_formatted_content(edited_question)
+        
+        st.markdown("**Options:**")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("A)")
+            render_formatted_content(edited_a)
+            st.markdown("B)")
+            render_formatted_content(edited_b)
+        with col2:
+            st.markdown("C)")
+            render_formatted_content(edited_c)
+            st.markdown("D)")
+            render_formatted_content(edited_d)
+        
+        if edited_explanation:
+            st.markdown("**Explanation:**")
+            render_formatted_content(edited_explanation)
+        
+        # Create three columns for action buttons INSIDE THE FORM
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
+        
+        with col2:
+            reset_btn = st.form_submit_button("🔄 Reset to Original", use_container_width=True, type="secondary")
+        
+        with col3:
+            clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True, type="secondary")
+    
+    # Handle button actions after the form
+    if save_btn:
+        # Save formatted content
+        formatted_questions[question_key] = edited_question
+        formatted_questions[option_a_key] = edited_a
+        formatted_questions[option_b_key] = edited_b
+        formatted_questions[option_c_key] = edited_c
+        formatted_questions[option_d_key] = edited_d
+        formatted_questions[explanation_key] = edited_explanation
+        
+        if save_formatted_questions(formatted_questions):
+            st.success("✅ Changes saved successfully!")
+            # Clear cache to force reload
+            if 'formatted_questions_cache' in st.session_state:
+                del st.session_state.formatted_questions_cache
+            st.rerun()
+    
+    elif reset_btn:
+        # Reset to original content
+        formatted_questions[question_key] = original_content['question']
+        formatted_questions[option_a_key] = original_content['option_a']
+        formatted_questions[option_b_key] = original_content['option_b']
+        formatted_questions[option_c_key] = original_content['option_c']
+        formatted_questions[option_d_key] = original_content['option_d']
+        formatted_questions[explanation_key] = original_content['explanation']
+        
+        if save_formatted_questions(formatted_questions):
+            st.success("✅ Reset to original content!")
+            # Clear cache to force reload
+            if 'formatted_questions_cache' in st.session_state:
+                del st.session_state.formatted_questions_cache
+            st.rerun()
+    
+    elif clear_btn:
+        # Remove formatting (delete keys from formatted_questions)
+        keys_to_delete = []
+        for key in [question_key, option_a_key, option_b_key, option_c_key, option_d_key, explanation_key]:
+            if key in formatted_questions:
+                keys_to_delete.append(key)
+        
+        for key in keys_to_delete:
+            del formatted_questions[key]
+        
+        if save_formatted_questions(formatted_questions):
+            st.success("✅ Formatting cleared!")
+            # Clear cache to force reload
+            if 'formatted_questions_cache' in st.session_state:
+                del st.session_state.formatted_questions_cache
+            st.rerun()
         
 def show_question_editing_interface(question_row, question_index, file_path, sheet_name, formatted_questions):
     """Show editing interface for a specific question."""
