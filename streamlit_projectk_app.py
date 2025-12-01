@@ -44,6 +44,41 @@ LITMUSQ_THEME = {
 def inject_custom_css():
     st.markdown(f"""
     <style>
+    
+    /* Hide Streamlit default UI elements */
+    #MainMenu {{visibility: hidden;}}
+    footer {{visibility: hidden;}}
+    header {{visibility: hidden;}}
+    
+    /* Hide the GitHub icon and other elements in the header */
+    .stDeployButton {{display:none;}}
+    
+    /* Hide the burger menu */
+    [data-testid="collapsedControl"] {{display: none;}}
+    
+    /* Hide the "Fork me on GitHub" ribbon */
+    .st-emotion-cache-1dp5vir {{display: none;}}
+    
+    /* Hide "Created with Streamlit" and "HOSTED WITH" */
+    .viewerBadge_container__1QSob {{display: none !important;}}
+    
+    /* Alternative selectors for newer Streamlit versions */
+    [data-testid="stToolbar"] {{display:none !important;}}
+    [data-testid="stDecoration"] {{display:none !important;}}
+    [data-testid="stStatusWidget"] {{display:none !important;}}
+    
+    /* Hide the "Manage app" menu */
+    [data-testid="stMainMenu"] {{display:none !important;}}
+    
+    /* Hide the entire header area */
+    #root > div:nth-child(1) > div > div > div > div > section > div > div:nth-child(1) > div > div:nth-child(1) > button {{display: none !important;}}
+    
+    /* Hide GitHub corner if present */
+    .github-corner {{display: none !important;}}
+    
+    /* Hide Streamlit branding in sidebar */
+    .css-1d391kg {{display: none !important;}}
+    
     .main .block-container {{
         padding-top: 2rem;
     }}
