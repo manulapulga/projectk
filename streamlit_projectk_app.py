@@ -68,9 +68,7 @@ def inject_custom_css():
     
     /* Hide any other Streamlit branding */
     .stApp > header {{display: none !important;}}
-    
-    /* Keep the burger menu but hide other header elements */
-    .stApp > header + div {{margin-top: -5rem;}}
+
 
     }}
     
