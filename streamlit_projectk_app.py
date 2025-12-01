@@ -648,7 +648,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
         
         with col2:
-            reset_btn = st.form_submit_button("🔄 Reset to Original", use_container_width=True, type="secondary")
+            reset_btn = st.form_submit_button("🔁 Reset to Original", use_container_width=True, type="secondary")
         
         with col3:
             clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True, type="secondary")
@@ -1919,7 +1919,7 @@ def show_results_screen():
             st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
             st.rerun()
     with col4:
-        if st.button("🔄 Retake Test", use_container_width=True, key="results_retake"):
+        if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
             df_exam = st.session_state.quiz_questions
             start_quiz(
                 df_exam, 
@@ -2148,7 +2148,7 @@ def show_home_screen():
     show_litmusq_header("Question Bank Navigator")
     
     # Quick actions
-    if st.button("🔄 Refresh", use_container_width=True, key="home_refresh"):
+    if st.button("🔁 Refresh", use_container_width=True, key="home_refresh"):
         st.session_state.folder_structure = scan_folder_structure()
         st.rerun()
 
