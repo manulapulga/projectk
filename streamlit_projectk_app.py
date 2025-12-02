@@ -1332,7 +1332,7 @@ def show_exam_config_screen():
                             font-size: 1.2rem;
                             font-weight: 600;
                             padding: 6px 0;
-                            color: #2e2e2e;
+                            color: #0af77d;
                         ">
                             ⏱️ You have {time_per_question} minutes to answer each question.
                         </div>
