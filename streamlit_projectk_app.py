@@ -268,18 +268,11 @@ def inject_custom_css():
 @lru_cache(maxsize=1)
 def load_formatted_questions_cached():
     """Cached version of load_formatted_questions."""
-    result = load_formatted_questions()
-    # Store in session state for immediate access
-    st.session_state.formatted_questions_cache = result
-    return result
+    return load_formatted_questions()
 
 def load_formatted_questions():
     """Load formatted questions from Firebase."""
     try:
-        # First check session state cache
-        if 'formatted_questions_cache' in st.session_state:
-            return st.session_state.formatted_questions_cache
-            
         if db is None:
             st.error("Firebase not initialized")
             return {}
@@ -289,10 +282,7 @@ def load_formatted_questions():
         doc = doc_ref.get()
         
         if doc.exists:
-            data = doc.to_dict()
-            # Cache in session state
-            st.session_state.formatted_questions_cache = data
-            return data
+            return doc.to_dict()
         else:
             # Check if local file exists as backup
             if os.path.exists(FORMATTED_QUESTIONS_FILE):
@@ -300,8 +290,6 @@ def load_formatted_questions():
                     data = json.load(f)
                     # Upload to Firebase for future use
                     save_formatted_questions(data)
-                    # Cache in session state
-                    st.session_state.formatted_questions_cache = data
                     return data
     except Exception as e:
         st.error(f"Error loading formatted questions: {e}")
@@ -321,9 +309,6 @@ def save_formatted_questions(formatted_data):
         # Also save locally as backup
         with open(FORMATTED_QUESTIONS_FILE, 'w', encoding='utf-8') as f:
             json.dump(formatted_data, f, indent=2, ensure_ascii=False)
-        
-        # Clear cache after saving
-        clear_formatted_cache()
             
         return True
     except Exception as e:
@@ -581,72 +566,6 @@ def show_question_editor():
     else:
         if items_displayed == 0:
             st.info("No question banks or folders found in the root directory.")
-def delete_formatted_keys(keys_to_delete):
-    """Delete specific formatted question keys from Firebase."""
-    try:
-        if db is None:
-            st.error("Firebase not initialized")
-            return False
-        
-        # Load current data
-        doc_ref = db.collection('formatted_questions').document('all_questions')
-        doc = doc_ref.get()
-        
-        if doc.exists:
-            data = doc.to_dict()
-            # Remove the specified keys
-            for key in keys_to_delete:
-                if key in data:
-                    del data[key]
-            
-            # Save the updated data
-            doc_ref.set(data)
-            
-            # Also update local backup
-            with open(FORMATTED_QUESTIONS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            
-            # Clear cache
-            clear_formatted_cache()
-            
-            return True
-        return False
-    except Exception as e:
-        st.error(f"Error deleting formatted keys: {e}")
-        return False        
-def delete_formatted_keys(keys_to_delete):
-    """Delete specific formatted question keys from Firebase."""
-    try:
-        if db is None:
-            st.error("Firebase not initialized")
-            return False
-        
-        # Load current data
-        doc_ref = db.collection('formatted_questions').document('all_questions')
-        doc = doc_ref.get()
-        
-        if doc.exists:
-            data = doc.to_dict()
-            # Remove the specified keys
-            for key in keys_to_delete:
-                if key in data:
-                    del data[key]
-            
-            # Save the updated data
-            doc_ref.set(data)
-            
-            # Also update local backup
-            with open(FORMATTED_QUESTIONS_FILE, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            
-            # Clear cache
-            clear_formatted_cache()
-            
-            return True
-        return False
-    except Exception as e:
-        st.error(f"Error deleting formatted keys: {e}")
-        return False
         
 def show_question_editing_interface(question_row, question_index, file_path, sheet_name, formatted_questions):
     """Show editing interface for a specific question."""
@@ -789,30 +708,21 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             st.rerun()
     
     elif reset_btn:
-        # Remove the formatted entries from the database (reset to original means no formatting)
-        keys_to_delete = []
-        for key in [question_key, option_a_key, option_b_key, option_c_key, option_d_key, explanation_key]:
-            # Check if the key exists in the current formatted questions
-            if key in formatted_questions:
-                keys_to_delete.append(key)
+        # Reset to original content
+        formatted_questions[question_key] = original_content['question']
+        formatted_questions[option_a_key] = original_content['option_a']
+        formatted_questions[option_b_key] = original_content['option_b']
+        formatted_questions[option_c_key] = original_content['option_c']
+        formatted_questions[option_d_key] = original_content['option_d']
+        formatted_questions[explanation_key] = original_content['explanation']
         
-        if keys_to_delete:
-            # Delete from Firebase directly
-            if delete_formatted_keys(keys_to_delete):
-                st.success("✅ Reset to original - formatting removed from cloud!")
-                # Update local formatted_questions dict
-                for key in keys_to_delete:
-                    if key in formatted_questions:
-                        del formatted_questions[key]
-        else:
-            st.info("ℹ️ No formatting to remove - already using original content")
-        
-        # Update the form by clearing the formatting cache and forcing a refresh
-        clear_formatted_cache()
-        
-        # Use st.experimental_rerun() instead of st.rerun() to maintain context
-        st.experimental_rerun()
-        
+        if save_formatted_questions(formatted_questions):
+            st.success("✅ Reset to original content!")
+            # Clear cache to force reload
+            if 'formatted_questions_cache' in st.session_state:
+                del st.session_state.formatted_questions_cache
+            st.rerun()
+    
     elif clear_btn:
         # Remove formatting (delete keys from formatted_questions)
         keys_to_delete = []
@@ -820,29 +730,16 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             if key in formatted_questions:
                 keys_to_delete.append(key)
         
-        if keys_to_delete:
-            # Delete from Firebase directly
-            if delete_formatted_keys(keys_to_delete):
-                st.success("✅ Formatting cleared from cloud!")
-                # Update local formatted_questions dict
-                for key in keys_to_delete:
-                    if key in formatted_questions:
-                        del formatted_questions[key]
-        else:
-            st.info("ℹ️ No formatting to clear")
+        for key in keys_to_delete:
+            del formatted_questions[key]
         
-        # Update the form by clearing the formatting cache and forcing a refresh
-        clear_formatted_cache()
-        
-        # Use st.experimental_rerun() instead of st.rerun() to maintain context
-        st.experimental_rerun()
+        if save_formatted_questions(formatted_questions):
+            st.success("✅ Formatting cleared!")
+            # Clear cache to force reload
+            if 'formatted_questions_cache' in st.session_state:
+                del st.session_state.formatted_questions_cache
+            st.rerun()
 
-def clear_formatted_cache():
-    """Clear the formatted questions cache."""
-    load_formatted_questions_cached.cache_clear()
-    if 'formatted_questions_cache' in st.session_state:
-        del st.session_state.formatted_questions_cache
-        
 def get_formatted_content(file_path, sheet_name, question_index, field, original_content):
     """Get formatted content if available, otherwise return original."""
     formatted_questions = load_formatted_questions()
