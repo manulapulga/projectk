@@ -2595,7 +2595,9 @@ def main():
     if st.session_state.current_screen != "quiz":
         st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
         if db:
-            st.sidebar.success("☁️ Cloud Connected")
+            if is_admin_user():
+                st.sidebar.markdown("☁️ Cloud Connected")
+
         else:
             st.sidebar.warning("⚠️ Using Local Storage")
     
