@@ -42,6 +42,7 @@ def initialize_firebase():
             firebase_admin.initialize_app(cred, {
                 'databaseURL': firebase_config.get("databaseURL", "")
             })
+            st.success("✅ Firebase Cloud Connected Successfully!")
         return firestore.client()
     except Exception as e:
         st.error(f"❌ Firebase initialization failed: {e}")
@@ -2534,6 +2535,11 @@ def main():
     global db
     if 'db' not in globals():
         db = initialize_firebase()
+        if db:
+            # Success message already shown in initialize_firebase()
+            pass
+        else:
+            st.warning("⚠️ Using Local Storage (Cloud not available)")
     
     # Initialize session state with stability features
     initialize_state()
