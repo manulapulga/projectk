@@ -9,6 +9,9 @@ from streamlit_autorefresh import st_autorefresh
 import psutil
 from functools import lru_cache
 import streamlit.components.v1 as components
+import firebase_admin
+from firebase_admin import credentials, firestore
+import json
 
 # =============================
 # Configuration & Theme
@@ -25,6 +28,27 @@ class PerformanceConfig:
     MAX_MEMORY_MB = 500
     CLEANUP_INTERVAL_MINUTES = 5
     MAX_QUESTIONS_PER_LOAD = 200
+
+# =============================
+# Firebase Configuration
+# =============================
+def initialize_firebase():
+    """Initialize Firebase connection."""
+    try:
+        if not firebase_admin._apps:
+            # Read from Streamlit secrets
+            firebase_config = dict(st.secrets["firebase"])
+            cred = credentials.Certificate(firebase_config)
+            firebase_admin.initialize_app(cred, {
+                'databaseURL': firebase_config.get("databaseURL", "")
+            })
+        return firestore.client()
+    except Exception as e:
+        st.error(f"❌ Firebase initialization failed: {e}")
+        return None
+
+# Initialize Firebase
+db = initialize_firebase()
 
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
@@ -240,7 +264,7 @@ def inject_custom_css():
     """, unsafe_allow_html=True)
     
 # =============================
-# cache formatted questions
+# Firebase Formatted Questions Functions
 # =============================
 @lru_cache(maxsize=1)
 def load_formatted_questions_cached():
@@ -248,14 +272,49 @@ def load_formatted_questions_cached():
     return load_formatted_questions()
 
 def load_formatted_questions():
-    """Load formatted questions from JSON file."""
+    """Load formatted questions from Firebase."""
     try:
-        if os.path.exists(FORMATTED_QUESTIONS_FILE):
-            with open(FORMATTED_QUESTIONS_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
+        if db is None:
+            st.error("Firebase not initialized")
+            return {}
+        
+        # Try to load from Firebase
+        doc_ref = db.collection('formatted_questions').document('all_questions')
+        doc = doc_ref.get()
+        
+        if doc.exists:
+            return doc.to_dict()
+        else:
+            # Check if local file exists as backup
+            if os.path.exists(FORMATTED_QUESTIONS_FILE):
+                with open(FORMATTED_QUESTIONS_FILE, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    # Upload to Firebase for future use
+                    save_formatted_questions(data)
+                    return data
     except Exception as e:
         st.error(f"Error loading formatted questions: {e}")
     return {}
+
+def save_formatted_questions(formatted_data):
+    """Save formatted questions to Firebase."""
+    try:
+        if db is None:
+            st.error("Firebase not initialized")
+            return False
+        
+        # Save to Firebase
+        doc_ref = db.collection('formatted_questions').document('all_questions')
+        doc_ref.set(formatted_data)
+        
+        # Also save locally as backup
+        with open(FORMATTED_QUESTIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(formatted_data, f, indent=2, ensure_ascii=False)
+            
+        return True
+    except Exception as e:
+        st.error(f"Error saving formatted questions: {e}")
+        return False
     
 # =============================
 # Branded Header
@@ -345,28 +404,7 @@ def show_login_screen():
     
     return False
 
-# =============================
-# Rich Text Formatting System
-# =============================
-def load_formatted_questions():
-    """Load formatted questions from JSON file."""
-    try:
-        if os.path.exists(FORMATTED_QUESTIONS_FILE):
-            with open(FORMATTED_QUESTIONS_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-    except Exception as e:
-        st.error(f"Error loading formatted questions: {e}")
-    return {}
 
-def save_formatted_questions(formatted_data):
-    """Save formatted questions to JSON file."""
-    try:
-        with open(FORMATTED_QUESTIONS_FILE, 'w', encoding='utf-8') as f:
-            json.dump(formatted_data, f, indent=2, ensure_ascii=False)
-        return True
-    except Exception as e:
-        st.error(f"Error saving formatted questions: {e}")
-        return False
 
 def get_question_key(file_path, sheet_name, question_index, field="question"):
     """Generate a unique key for each question/option."""
@@ -710,68 +748,105 @@ def get_formatted_content(file_path, sheet_name, question_index, field, original
     return formatted_questions.get(key, original_content)
 
 # =============================
-# User Progress & Analytics
+# Firebase User Progress & Analytics
 # =============================
-def ensure_user_progress_folder():
-    """Ensure user progress folder exists."""
-    os.makedirs(USER_PROGRESS_FOLDER, exist_ok=True)
-
-def get_user_progress_file(username):
-    """Get user progress file path."""
-    return os.path.join(USER_PROGRESS_FOLDER, f"user_{username}.json")
+def get_user_progress_doc_id(username):
+    """Get Firebase document ID for user progress."""
+    return f"user_{username}"
 
 def initialize_user_progress(username):
-    """Initialize user progress data."""
-    ensure_user_progress_folder()
-    progress_file = get_user_progress_file(username)
-    
-    if not os.path.exists(progress_file):
-        default_progress = {
-            "username": username,
-            "tests_taken": 0,
-            "total_score": 0,
-            "average_score": 0,
-            "test_history": [],
-            "achievements": [],
-            "weak_areas": [],
-            "strong_areas": [],
-            "join_date": datetime.now().isoformat()
-        }
-        save_user_progress(username, default_progress)
+    """Initialize user progress data in Firebase."""
+    try:
+        if db is None:
+            st.error("Firebase not initialized")
+            return
+        
+        doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            default_progress = {
+                "username": username,
+                "tests_taken": 0,
+                "total_score": 0,
+                "average_score": 0,
+                "test_history": [],
+                "achievements": [],
+                "weak_areas": [],
+                "strong_areas": [],
+                "join_date": datetime.now().isoformat(),
+                "last_updated": datetime.now().isoformat()
+            }
+            doc_ref.set(default_progress)
+            st.success(f"✅ Initialized progress for {username}")
+    except Exception as e:
+        st.error(f"Error initializing user progress: {e}")
 
 def save_user_progress(username, progress_data):
-    """Save user progress to file."""
+    """Save user progress to Firebase."""
     try:
-        progress_file = get_user_progress_file(username)
-        with open(progress_file, 'w') as f:
-            json.dump(progress_data, f, indent=2)
+        if db is None:
+            st.error("Firebase not initialized")
+            return False
+        
+        # Add timestamp
+        progress_data["last_updated"] = datetime.now().isoformat()
+        
+        doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
+        doc_ref.set(progress_data, merge=True)
+        return True
     except Exception as e:
         st.error(f"Error saving progress: {e}")
+        return False
 
 def load_user_progress(username):
-    """Load user progress from file."""
+    """Load user progress from Firebase."""
     try:
-        progress_file = get_user_progress_file(username)
-        if os.path.exists(progress_file):
-            with open(progress_file, 'r') as f:
-                return json.load(f)
+        if db is None:
+            st.error("Firebase not initialized")
+            return None
+        
+        doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
+        doc = doc_ref.get()
+        
+        if doc.exists:
+            return doc.to_dict()
     except Exception as e:
         st.error(f"Error loading progress: {e}")
     return None
 
 def clear_user_progress(username):
-    """Clear all performance data for the user."""
+    """Clear all performance data for the user from Firebase."""
     try:
-        progress_file = get_user_progress_file(username)
-        if os.path.exists(progress_file):
-            os.remove(progress_file)
+        if db is None:
+            st.error("Firebase not initialized")
+            return False
+        
+        doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
+        doc = doc_ref.get()
+        
+        if doc.exists:
+            # Reset to default progress instead of deleting
+            default_progress = {
+                "username": username,
+                "tests_taken": 0,
+                "total_score": 0,
+                "average_score": 0,
+                "test_history": [],
+                "achievements": [],
+                "weak_areas": [],
+                "strong_areas": [],
+                "join_date": datetime.now().isoformat(),
+                "last_updated": datetime.now().isoformat()
+            }
+            doc_ref.set(default_progress)
             st.success("✅ All your performance data has been cleared successfully!")
-            # Reinitialize with default progress
-            initialize_user_progress(username)
             return True
         else:
+            # Initialize if document doesn't exist
+            initialize_user_progress(username)
             st.info("ℹ️ No performance data found to clear.")
-            return False
+            return True
     except Exception as e:
         st.error(f"❌ Error clearing performance data: {e}")
         return False
@@ -2455,6 +2530,11 @@ def main():
     # Inject custom CSS
     inject_custom_css()
     
+    # Initialize Firebase
+    global db
+    if 'db' not in globals():
+        db = initialize_firebase()
+    
     # Initialize session state with stability features
     initialize_state()
     
@@ -2478,6 +2558,10 @@ def main():
     # User is logged in - show main app
     if st.session_state.current_screen != "quiz":
         st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
+        if db:
+            st.sidebar.success("☁️ Cloud Connected")
+        else:
+            st.sidebar.warning("⚠️ Using Local Storage")
     
     # Quick actions panel
     quick_actions_panel()
