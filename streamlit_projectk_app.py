@@ -33,7 +33,7 @@ class PerformanceConfig:
 # Firebase Configuration
 # =============================
 def initialize_firebase():
-    """Initialize Firebase connection."""
+    """Initialize Firebase connection with better error handling."""
     try:
         if not firebase_admin._apps:
             # Read from Streamlit secrets
@@ -42,10 +42,45 @@ def initialize_firebase():
             firebase_admin.initialize_app(cred, {
                 'databaseURL': firebase_config.get("databaseURL", "")
             })
-            st.success("✅ Firebase Cloud Connected Successfully!")
-        return firestore.client()
+        
+        # Test the connection
+        db = firestore.client()
+        
+        # Try a simple operation to verify connection
+        test_ref = db.collection('connection_test').document('test')
+        test_ref.set({'timestamp': datetime.now().isoformat()}, merge=True)
+        test_ref.delete()
+        
+        st.sidebar.success("☁️ Cloud Firestore Connected")
+        return db
     except Exception as e:
-        st.error(f"❌ Firebase initialization failed: {e}")
+        error_msg = str(e)
+        st.sidebar.warning("⚠️ Using Local Storage Mode")
+        
+        if "SERVICE_DISABLED" in error_msg or "firestore.googleapis.com" in error_msg:
+            st.sidebar.error("""
+            ⚠️ **Firestore API Disabled**
+            
+            Please enable Cloud Firestore API:
+            1. Visit: https://console.developers.google.com/apis/api/firestore.googleapis.com/overview?project=litmusq-2351a
+            2. Click **"ENABLE"**
+            3. Wait 2-3 minutes
+            4. Refresh this page
+            
+            Using local storage until Firestore is enabled.
+            """)
+        elif "databaseURL" in error_msg and "not found" in error_msg.lower():
+            st.sidebar.error("""
+            ⚠️ **Firestore Database Not Created**
+            
+            Please create Firestore database:
+            1. Go to Firebase Console: https://console.firebase.google.com/
+            2. Select project: litmusq-2351a
+            3. Click "Firestore Database" in left sidebar
+            4. Click "Create database"
+            5. Choose location and click "Enable"
+            """)
+        
         return None
 
 # Initialize Firebase
@@ -273,11 +308,10 @@ def load_formatted_questions_cached():
     return load_formatted_questions()
 
 def load_formatted_questions():
-    """Load formatted questions from Firebase."""
+    """Load formatted questions from Firebase with fallback."""
     try:
         if db is None:
-            st.error("Firebase not initialized")
-            return {}
+            return load_formatted_questions_local()
         
         # Try to load from Firebase
         doc_ref = db.collection('formatted_questions').document('all_questions')
@@ -286,33 +320,41 @@ def load_formatted_questions():
         if doc.exists:
             return doc.to_dict()
         else:
-            # Check if local file exists as backup
-            if os.path.exists(FORMATTED_QUESTIONS_FILE):
-                with open(FORMATTED_QUESTIONS_FILE, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    # Upload to Firebase for future use
-                    save_formatted_questions(data)
-                    return data
+            # Load from local as fallback
+            return load_formatted_questions_local()
+            
     except Exception as e:
-        st.error(f"Error loading formatted questions: {e}")
-    return {}
+        if "SERVICE_DISABLED" in str(e) or "firestore" in str(e).lower():
+            st.sidebar.warning("⚠️ Firestore API issue - using local storage")
+        return load_formatted_questions_local()
 
-def save_formatted_questions(formatted_data):
-    """Save formatted questions to Firebase."""
+def load_formatted_questions_local():
+    """Load formatted questions from local file."""
     try:
-        if db is None:
-            st.error("Firebase not initialized")
-            return False
-        
-        # Save to Firebase
-        doc_ref = db.collection('formatted_questions').document('all_questions')
-        doc_ref.set(formatted_data)
-        
-        # Also save locally as backup
+        if os.path.exists(FORMATTED_QUESTIONS_FILE):
+            with open(FORMATTED_QUESTIONS_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except Exception as e:
+        st.error(f"Error loading local formatted questions: {e}")
+    return {}
+    
+def save_formatted_questions(formatted_data):
+    """Save formatted questions to Firebase and local."""
+    try:
+        # Always save locally
         with open(FORMATTED_QUESTIONS_FILE, 'w', encoding='utf-8') as f:
             json.dump(formatted_data, f, indent=2, ensure_ascii=False)
-            
-        return True
+        
+        # Try to save to Firebase if available
+        if db is not None:
+            try:
+                doc_ref = db.collection('formatted_questions').document('all_questions')
+                doc_ref.set(formatted_data)
+                return True
+            except Exception as firebase_error:
+                st.sidebar.warning(f"⚠️ Cloud save failed: {firebase_error}")
+        
+        return True  # Local save succeeded
     except Exception as e:
         st.error(f"Error saving formatted questions: {e}")
         return False
@@ -784,38 +826,60 @@ def initialize_user_progress(username):
         st.error(f"Error initializing user progress: {e}")
 
 def save_user_progress(username, progress_data):
-    """Save user progress to Firebase."""
+    """Save user progress to both Firebase and local."""
     try:
-        if db is None:
-            st.error("Firebase not initialized")
-            return False
-        
         # Add timestamp
         progress_data["last_updated"] = datetime.now().isoformat()
+        progress_data["storage"] = "firebase" if db else "local"
         
-        doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
-        doc_ref.set(progress_data, merge=True)
+        # Always save locally
+        progress_file = os.path.join(USER_PROGRESS_FOLDER, f"user_{username}.json")
+        with open(progress_file, 'w') as f:
+            json.dump(progress_data, f, indent=2)
+        
+        # Try to save to Firebase if available
+        if db is not None:
+            try:
+                doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
+                doc_ref.set(progress_data, merge=True)
+            except Exception as firebase_error:
+                st.sidebar.warning(f"⚠️ Cloud sync failed: {firebase_error}")
+        
         return True
     except Exception as e:
         st.error(f"Error saving progress: {e}")
         return False
 
 def load_user_progress(username):
-    """Load user progress from Firebase."""
+    """Load user progress with Firebase fallback to local."""
     try:
-        if db is None:
-            st.error("Firebase not initialized")
-            return None
+        if db is not None:
+            try:
+                doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
+                doc = doc_ref.get()
+                if doc.exists:
+                    return doc.to_dict()
+            except Exception as firebase_error:
+                # If Firebase fails, try local
+                st.sidebar.warning("⚠️ Cloud sync failed - using local data")
         
-        doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
-        doc = doc_ref.get()
+        # Fallback to local file
+        return load_user_progress_local(username)
         
-        if doc.exists:
-            return doc.to_dict()
     except Exception as e:
         st.error(f"Error loading progress: {e}")
+        return None
+def load_user_progress_local(username):
+    """Load user progress from local file."""
+    try:
+        progress_file = os.path.join(USER_PROGRESS_FOLDER, f"user_{username}.json")
+        if os.path.exists(progress_file):
+            with open(progress_file, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        st.error(f"Error loading local progress: {e}")
     return None
-
+    
 def clear_user_progress(username):
     """Clear all performance data for the user from Firebase."""
     try:
@@ -936,6 +1000,16 @@ def show_clear_data_section():
 def show_student_dashboard():
     """Display student dashboard with progress analytics."""
     show_litmusq_header("Your Learning Dashboard")
+    
+    # Show storage status
+    storage_status = "☁️ Cloud Storage" if db else "💾 Local Storage"
+    st.sidebar.markdown(f"**Storage:** {storage_status}")
+    
+    if not db:
+        st.sidebar.info("""
+        **Note:** Data is stored locally. 
+        Enable Firestore API for cloud sync.
+        """)
     
     # Home button
     if st.button("🏠 Home", use_container_width=True, key="dashboard_home"):
