@@ -2596,7 +2596,10 @@ def main():
         st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
         if db:
             if is_admin_user():
-                st.sidebar.markdown("☁️ Cloud Connected")
+                st.sidebar.markdown(
+                    "<span style='color: green; font-weight: bold;'>☁️ Cloud Connected</span>",
+                    unsafe_allow_html=True
+                )
 
         else:
             st.sidebar.warning("⚠️ Using Local Storage")
