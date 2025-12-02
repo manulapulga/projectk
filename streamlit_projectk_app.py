@@ -1204,18 +1204,21 @@ def show_exam_config_screen():
                 "❓ Number of Questions", 
                 min_value=1, 
                 max_value=len(df_exam),
-                value=len(df_exam),  # Default to all available questions
+                value=min(100, len(df_exam)), 
                 step=1,
                 key="num_questions"
             )
-    
+        
         with col2:
+            # Calculate default duration: 1.5 minutes per question
+            default_duration = int(len(df_exam) * 1.5)
+            
             exam_duration = st.number_input(
                 "⏰ Duration (minutes)", 
                 min_value=0, 
                 max_value=600, 
-                value=90, 
-                help="Set to 0 for no time limit",
+                value=default_duration, 
+                help=f"Set to 0 for no time limit (Default: 1.5 min/question = {default_duration} min)",
                 key="exam_duration_input"
             )
     
