@@ -2249,7 +2249,17 @@ def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
                use_final_key: bool, exam_name: str):
     """Start quiz."""
     n = min(n_questions, len(df))
-    sampled = df.sample(n=n, random_state=np.random.randint(0, 10**9)).reset_index(drop=True)
+    
+    # Check if shuffle is enabled from session state
+    shuffle_enabled = st.session_state.get('shuffle_questions', False)
+    
+    if shuffle_enabled:
+        # Shuffle the questions
+        sampled = df.sample(n=n, random_state=np.random.randint(0, 10**9)).reset_index(drop=True)
+    else:
+        # Take first n questions without shuffling
+        sampled = df.head(n).reset_index(drop=True)
+    
     st.session_state.quiz_questions = sampled
     st.session_state.order = list(range(len(sampled)))
     st.session_state.answers = {}
