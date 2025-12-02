@@ -460,12 +460,7 @@ def show_question_editor():
     
     
     # Add back navigation - MOVED HERE AFTER current_path is defined
-    col1, col2, col3 = st.columns([1, 1, 1])
-    with col1:
-        if st.button("🏠 Home", use_container_width=True, key="editor_home"):
-            st.session_state.current_screen = "home"
-            st.rerun()
-    
+    col1, col2 = st.columns([1, 1])
     # Only show back button if we're in a subfolder
     with col2:
         if current_path:  # Only show if we have a path
@@ -475,7 +470,7 @@ def show_question_editor():
         else:
             st.button("⬅️ Back", use_container_width=True, disabled=True, key="editor_back_disabled")
     
-    with col3:
+    with col1:
         if st.button("🏠 Back to Root", use_container_width=True, key="back_to_root"):
             st.session_state.editor_current_path = []
             st.rerun()
