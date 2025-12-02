@@ -1244,21 +1244,30 @@ def show_exam_config_screen():
     st.write(f"**📍:** `{' > '.join(current_path)}`")
     
     st.metric("Total No. of Questions", len(df_exam))
+    
     # Enhanced metrics with expandable cards
     col1, col2 = st.columns(2)
+    
     with col1:
+        # MODIFICATION 1: Check for "Subjects Covered" column first, then "Subject" column
+        subjects_column = None
+        if "Subjects Covered" in df_exam.columns:
+            subjects_column = "Subjects Covered"
+        elif "Subject" in df_exam.columns:
+            subjects_column = "Subject"
         
-        if "Subject" in df_exam.columns:
+        if subjects_column:
             # Get unique subjects (case-insensitive and strip whitespace)
-            subjects = df_exam["Subject"].dropna().apply(lambda x: str(x).strip().title()).unique()
+            subjects = df_exam[subjects_column].dropna().apply(lambda x: str(x).strip().title()).unique()
             unique_subjects = sorted(subjects)
             
-            with st.expander(f"📚 Subjects Covered: **{len(unique_subjects)}**", expanded=False):
+            column_name_display = "Subjects Covered" if subjects_column == "Subjects Covered" else "Subject"
+            with st.expander(f"📚 {column_name_display}: **{len(unique_subjects)}**", expanded=False):
                 for i, subject in enumerate(unique_subjects, 1):
                     st.write(f"• {subject}")
                 st.markdown("</div>", unsafe_allow_html=True)
         else:
-            st.metric("No. of Subjects Covered", "N/A")
+            st.metric("Subjects Covered", "N/A")
     
     with col2:
         if "Exam Year" in df_exam.columns:
@@ -1302,7 +1311,46 @@ def show_exam_config_screen():
     use_final_key = True
     
     with st.expander("🎛️ Advanced Options"):
-    
+        # MODIFICATION 2: Dynamic time per question from Excel
+        time_per_question = 1.5  # Default value
+        
+        # Look for "Time in Minute/Question" in column headers
+        time_columns = [col for col in df_exam.columns if "Time in Minute/Question" in str(col)]
+        
+        if time_columns:
+            # Get the first row value from the time column (assumes it's the same for all rows)
+            time_col = time_columns[0]
+            try:
+                # Get the first non-null value
+                time_values = df_exam[time_col].dropna()
+                if not time_values.empty:
+                    # Try to convert to float, use default if conversion fails
+                    time_per_question = float(time_values.iloc[0])
+                    st.info(f"⏱️ Using time per question from Excel: {time_per_question} minutes")
+            except (ValueError, TypeError) as e:
+                st.warning(f"Could not read time per question from Excel. Using default 1.5 minutes. Error: {e}")
+                time_per_question = 1.5
+        else:
+            # Check if there's a cell with this value in the first few rows
+            # Sometimes this might be in a metadata row rather than a column header
+            for i in range(min(5, len(df_exam))):
+                row = df_exam.iloc[i]
+                for cell_value in row:
+                    if isinstance(cell_value, str) and "Time in Minute/Question" in cell_value:
+                        try:
+                            # Extract number from string like "Time in Minute/Question: 2"
+                            import re
+                            match = re.search(r'[\d.]+', cell_value)
+                            if match:
+                                time_per_question = float(match.group())
+                                st.info(f"⏱️ Found time per question in metadata: {time_per_question} minutes")
+                                break
+                        except:
+                            pass
+        
+        # Calculate default duration based on dynamic time per question
+        default_duration = int(len(df_exam) * time_per_question)
+        
         # Move both inputs inside the expander
         col1, col2 = st.columns(2)
         with col1:
@@ -1316,24 +1364,23 @@ def show_exam_config_screen():
             )
         
         with col2:
-            # Calculate default duration: 1.5 minutes per question
-            default_duration = int(len(df_exam) * 1.5)
-            
             exam_duration = st.number_input(
                 "⏰ Duration (minutes)", 
                 min_value=0, 
                 max_value=600, 
                 value=default_duration, 
-                help=f"Set to 0 for no time limit (Default: 1.5 min/question = {default_duration} min)",
+                help=f"Set to 0 for no time limit (Based on {time_per_question} min/question = {default_duration} min)",
                 key="exam_duration_input"
             )
-    
+        
+        # Store the time per question for reference
+        st.session_state.time_per_question = time_per_question
+        
         # Existing advanced options
         shuffle_questions = st.checkbox("🔀 Shuffle Questions", value=False, key="shuffle_questions")
         show_live_progress = st.checkbox("📊 Show Live Progress", value=True, key="show_live_progress")
         enable_auto_save = st.checkbox("💾 Auto-save Progress", value=True, key="enable_auto_save")
         full_screen_mode = st.checkbox("🖥️ Full Screen Mode", value=True, key="full_screen_mode")
-
     
     # Start test button
     st.markdown("---")
@@ -1347,10 +1394,11 @@ def show_exam_config_screen():
             start_quiz(df_exam, num_questions, exam_duration, use_final_key, sheet_name)
             st.session_state.current_screen = "quiz"
             st.rerun()
+    
     st.markdown(
         "<p style='font-size:16px; color:red; font-weight:600; text-align:center;'>⚠️ Do not minimize or switch apps during the test.</p>",
         unsafe_allow_html=True
-    )       
+    )
 
 # =============================
 # Enhanced Question Display in Quiz
