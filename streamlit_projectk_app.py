@@ -453,7 +453,10 @@ def show_question_editor():
     # Display current location breadcrumb
     if current_path:
         breadcrumb = " > ".join(current_path)
-        st.write(f"**Current Location:** `{breadcrumb}`")
+        st.write(f"**📍:** `{breadcrumb}`")
+    else:
+        st.write("**📍:** `Home`")
+    
     
     # Add back navigation - MOVED HERE AFTER current_path is defined
     col1, col2, col3 = st.columns([1, 1, 1])
