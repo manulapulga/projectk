@@ -705,6 +705,17 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             # Clear cache to force reload
             if 'formatted_questions_cache' in st.session_state:
                 del st.session_state.formatted_questions_cache
+            # Clear widget state so new defaults appear
+            for k in [
+                f"q_{question_index}",
+                f"a_{question_index}",
+                f"b_{question_index}",
+                f"c_{question_index}",
+                f"d_{question_index}",
+                f"exp_{question_index}",
+            ]:
+                if k in st.session_state:
+                    del st.session_state[k]
             st.rerun()
     
     elif reset_btn:
@@ -721,6 +732,17 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             # Clear cache to force reload
             if 'formatted_questions_cache' in st.session_state:
                 del st.session_state.formatted_questions_cache
+            # Clear widget state so new defaults appear
+            for k in [
+                f"q_{question_index}",
+                f"a_{question_index}",
+                f"b_{question_index}",
+                f"c_{question_index}",
+                f"d_{question_index}",
+                f"exp_{question_index}",
+            ]:
+                if k in st.session_state:
+                    del st.session_state[k]
             st.rerun()
     
     elif clear_btn:
@@ -738,6 +760,17 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             # Clear cache to force reload
             if 'formatted_questions_cache' in st.session_state:
                 del st.session_state.formatted_questions_cache
+            # Clear widget state so new defaults appear
+            for k in [
+                f"q_{question_index}",
+                f"a_{question_index}",
+                f"b_{question_index}",
+                f"c_{question_index}",
+                f"d_{question_index}",
+                f"exp_{question_index}",
+            ]:
+                if k in st.session_state:
+                    del st.session_state[k]
             st.rerun()
 
 def get_formatted_content(file_path, sheet_name, question_index, field, original_content):
