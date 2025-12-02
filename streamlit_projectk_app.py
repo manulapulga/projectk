@@ -1204,7 +1204,7 @@ def show_exam_config_screen():
                 "❓ Number of Questions", 
                 min_value=1, 
                 max_value=len(df_exam),
-                value=min(60, len(df_exam)), 
+                value=len(df_exam),  # Default to all available questions
                 step=1,
                 key="num_questions"
             )
