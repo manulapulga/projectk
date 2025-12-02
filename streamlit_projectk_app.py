@@ -807,18 +807,12 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         else:
             st.info("ℹ️ No formatting to remove - already using original content")
         
-        # Clear the form fields by updating session state
-        st.session_state[f"q_{question_index}"] = original_content['question']
-        st.session_state[f"a_{question_index}"] = original_content['option_a']
-        st.session_state[f"b_{question_index}"] = original_content['option_b']
-        st.session_state[f"c_{question_index}"] = original_content['option_c']
-        st.session_state[f"d_{question_index}"] = original_content['option_d']
-        st.session_state[f"exp_{question_index}"] = original_content['explanation']
-        
-        # Force immediate reload
+        # Update the form by clearing the formatting cache and forcing a refresh
         clear_formatted_cache()
-        st.rerun()
-    
+        
+        # Use st.experimental_rerun() instead of st.rerun() to maintain context
+        st.experimental_rerun()
+        
     elif clear_btn:
         # Remove formatting (delete keys from formatted_questions)
         keys_to_delete = []
@@ -837,17 +831,11 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         else:
             st.info("ℹ️ No formatting to clear")
         
-        # Update form fields with original content
-        st.session_state[f"q_{question_index}"] = original_content['question']
-        st.session_state[f"a_{question_index}"] = original_content['option_a']
-        st.session_state[f"b_{question_index}"] = original_content['option_b']
-        st.session_state[f"c_{question_index}"] = original_content['option_c']
-        st.session_state[f"d_{question_index}"] = original_content['option_d']
-        st.session_state[f"exp_{question_index}"] = original_content['explanation']
-        
-        # Force immediate reload
+        # Update the form by clearing the formatting cache and forcing a refresh
         clear_formatted_cache()
-        st.rerun()
+        
+        # Use st.experimental_rerun() instead of st.rerun() to maintain context
+        st.experimental_rerun()
 
 def clear_formatted_cache():
     """Clear the formatted questions cache."""
