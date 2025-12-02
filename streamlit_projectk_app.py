@@ -453,7 +453,7 @@ def show_question_editor():
     # Display current location breadcrumb
     if current_path:
         breadcrumb = " > ".join(current_path)
-        st.write(f"**📍:** `{breadcrumb}`")
+        st.write(f"**📍:**Home > `{breadcrumb}`")
     else:
         st.write("**📍:** `Home`")
     
