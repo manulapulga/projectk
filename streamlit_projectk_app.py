@@ -1626,34 +1626,35 @@ def get_question_display_info(q_num):
     is_marked = status_info['marked']
     status = status_info['status']
     
-    # Handle cleared responses with white square
+    # Determine text and emoji based on status
     if status == 'cleared':
-        color = LITMUSQ_THEME['background']  # White background
-        text = "⛔"  # White square emoji
+        emoji = "⛔"  # White square emoji
+        text = f"{q_num + 1}"  # Show number
         tooltip = "Response cleared"
     elif has_answer and is_marked:
-        color = "#FFD700"  # Gold for answered and marked
-        text = "🟩"
+        emoji = "🟩"
+        text = f"{q_num + 1}"  # Show number
         tooltip = "Answered & marked for review"
     elif has_answer:
-        color = LITMUSQ_THEME['success']  # Green for answered
-        text = "✅"
+        emoji = "✅"
+        text = f"{q_num + 1}"  # Show number
         tooltip = "Answered"
     elif is_marked:
-        color = LITMUSQ_THEME['primary']  # Blue for marked
-        text = "🟨"
+        emoji = "🟨"
+        text = f"{q_num + 1}"  # Show number
         tooltip = "Marked for Review"
     elif status == 'not_answered':
-        color = LITMUSQ_THEME['secondary']  # Red for not answered
-        text = "❌"
+        emoji = "❌"
+        text = f"{q_num + 1}"  # Show number
         tooltip = "Not Answered"
     else:  # not_visited
-        color = LITMUSQ_THEME['background']  # White for not visited
-        text = str(q_num + 1)  # Show question number
+        emoji = ""  # No emoji for not visited
+        text = f"{q_num + 1}"  # Show question number only
         tooltip = "Not Visited"
     
-    return color, text, tooltip
+    return emoji, text, tooltip
 
+# In the show_question_palette function, update the button creation:
 def show_question_palette():
     """Display the question palette with exam info above it."""
     # Show exam info above the palette
@@ -1677,7 +1678,7 @@ def show_question_palette():
     
     st.sidebar.markdown("---")
     
-    # Legend (keeping your existing legend code)
+    # Legend
     st.sidebar.markdown("""
     <style>
     .legend-item {
@@ -1714,7 +1715,7 @@ def show_question_palette():
     
     st.sidebar.markdown("---")
     
-    # Question palette grid (keeping your existing palette code)
+    # Question palette grid
     total_questions = len(st.session_state.quiz_questions)
     if total_questions == 0:
         st.sidebar.warning("No questions loaded")
@@ -1729,14 +1730,37 @@ def show_question_palette():
             q_num = row * cols + col_idx
             if q_num < total_questions:
                 with columns[col_idx]:
-                    color, text, tooltip = get_question_display_info(q_num)
+                    emoji, number, tooltip = get_question_display_info(q_num)
                     
+                    # Create button text with both emoji and number
+                    button_text = f"{emoji} {number}".strip()
+                    
+                    # Determine if current question
                     border_color = LITMUSQ_THEME['secondary'] if q_num == st.session_state.current_idx else "#cccccc"
+                    
+                    # Get appropriate background color
+                    status_info = st.session_state.question_status.get(q_num, {})
+                    has_answer = status_info.get('answer') is not None
+                    is_marked = status_info.get('marked', False)
+                    status = status_info.get('status', 'not_visited')
+                    
+                    if status == 'cleared':
+                        bg_color = LITMUSQ_THEME['background']
+                    elif has_answer and is_marked:
+                        bg_color = "#FFD700"  # Gold
+                    elif has_answer:
+                        bg_color = LITMUSQ_THEME['success']  # Green
+                    elif is_marked:
+                        bg_color = LITMUSQ_THEME['primary']  # Blue
+                    elif status == 'not_answered':
+                        bg_color = LITMUSQ_THEME['secondary']  # Red
+                    else:  # not_visited
+                        bg_color = LITMUSQ_THEME['background']  # White
                     
                     button_style = f"""
                     <style>
                     .qbtn-{q_num} {{
-                        background-color: {color} !important;
+                        background-color: {bg_color} !important;
                         border: 2px solid {border_color} !important;
                         border-radius: 5px !important;
                         color: #000000 !important;
@@ -1747,7 +1771,7 @@ def show_question_palette():
                     st.markdown(button_style, unsafe_allow_html=True)
                     
                     if st.button(
-                        text, 
+                        button_text, 
                         key=f"palette_{q_num}", 
                         use_container_width=True,
                         help=f"Q{q_num + 1}: {tooltip}"
