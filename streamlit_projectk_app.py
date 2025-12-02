@@ -1326,7 +1326,7 @@ def show_exam_config_screen():
                 if not time_values.empty:
                     # Try to convert to float, use default if conversion fails
                     time_per_question = float(time_values.iloc[0])
-                    st.info(f"⏱️ You have {time_per_question} minutes to answer each question.")
+                    st.markdown(f"⏱️ **Time allotted per question:** {time_per_question} minutes")
             except (ValueError, TypeError) as e:
                 st.warning(f"Could not read time per question from Excel. Using default 1.5 minutes. Error: {e}")
                 time_per_question = 1.5
