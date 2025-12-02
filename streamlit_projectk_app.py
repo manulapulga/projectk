@@ -39,10 +39,8 @@ def initialize_firebase():
             # Read from Streamlit secrets
             firebase_config = dict(st.secrets["firebase"])
             cred = credentials.Certificate(firebase_config)
-            firebase_admin.initialize_app(cred, {
-                'databaseURL': firebase_config.get("databaseURL", "")
-            })
-            st.success("✅ Firebase Cloud Connected Successfully!")
+            firebase_admin.initialize_app(cred)
+            # Note: No databaseURL needed for Firestore
         return firestore.client()
     except Exception as e:
         st.error(f"❌ Firebase initialization failed: {e}")
