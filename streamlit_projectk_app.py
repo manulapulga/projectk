@@ -67,26 +67,6 @@ LITMUSQ_THEME = {
 def inject_custom_css():
     st.markdown(f"""
     <style>
-    /* ===== FIXED TOP QUIZ RIBBON ===== */
-    .quiz-fixed-ribbon {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background: #ffffff;
-        padding: 1px 1px;
-        border-bottom: 2px solid #e5e7eb;
-        z-index: 9999;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }}
-    
-    /* Push main content below the fixed ribbon */
-    .quiz-content {{
-        margin-top: 20px !important;
-    }}
-
 
     /* =========================================================
        GLOBAL SAFE SPACING (NO OVERLAPS, NO HUGE MARGINS)
@@ -349,6 +329,25 @@ def inject_custom_css():
         .question-card {{
             padding: 1rem !important;
         }}
+    }}
+    /* ===== FIXED QUIZ TOP RIBBON ===== */
+    .quiz-fixed-ribbon {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background: #ffffff;
+        padding: 6px 12px;
+        border-bottom: 2px solid #e5e7eb;
+        z-index: 9999;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }}
+    
+    /* Push quiz content below the fixed ribbon */
+    .quiz-content-wrapper {{
+        margin-top: 60px !important;
     }}
 
     </style>
@@ -1664,6 +1663,33 @@ def show_exam_config_screen():
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
+    # ---------------- TOP FIXED RIBBON ----------------
+    st.markdown("""
+    <div class="quiz-fixed-ribbon">
+        <div id="quiz_timer" style="font-size:17px; font-weight:700; color:#dc2626;">
+            ⏳ Loading...
+        </div>
+    
+        <button onclick="document.getElementById('submit_test_btn').click();"
+            style="
+                background:#1E3A8A;
+                color:white;
+                padding:6px 14px;
+                border:none;
+                border-radius:6px;
+                cursor:pointer;
+                font-size:14px;">
+            📤 Submit Test
+        </button>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Hidden real Streamlit submit button
+    st.button("Submit Test", key="submit_test_btn", on_click=lambda: setattr(st.session_state, 'submitted', True))
+    
+    # Start content wrapper so that content scrolls under ribbon
+    st.markdown('<div class="quiz-content-wrapper">', unsafe_allow_html=True)
+
     current_idx = st.session_state.current_idx
     
     if current_idx >= len(df):
@@ -1825,6 +1851,7 @@ def show_enhanced_question_interface():
         st.metric("⏰ Time Left", "No Limit")
 
     st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("---")
 
