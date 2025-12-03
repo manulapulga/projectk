@@ -2922,10 +2922,6 @@ def show_home_screen():
     """Display the main folder navigation."""
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     st.subheader("Pick Your Test")
-    if st.button("🔁 Refresh", use_container_width=True, key="home_refresh"):
-        st.session_state.folder_structure = scan_folder_structure()
-        st.rerun()
-
     
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
