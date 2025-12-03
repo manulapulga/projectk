@@ -67,194 +67,124 @@ LITMUSQ_THEME = {
 def inject_custom_css():
     st.markdown(f"""
     <style>
-    /* TARGET THE MAIN CONTAINER - MULTIPLE SELECTORS FOR RELIABILITY */
-    .stMainBlockContainer,
-    .block-container,
-    .st-emotion-cache-zy6yx3,
-    .e4man114 {{
-        padding: 0.25rem 0.1rem 0.25rem !important;
-        margin: 0 !important;
+
+    /* =========================================================
+       GLOBAL SAFE SPACING (NO OVERLAPS, NO HUGE MARGINS)
+    ==========================================================*/
+
+    /* Main content container – prevents header overlap */
+    .block-container {{
+        padding-top: 4rem !important;   /* header clearance */
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        padding-bottom: 1rem !important;
     }}
-    
-    /* Target all containers that might have padding */
-    div[class*="block-container"],
-    div[class*="BlockContainer"],
-    div[data-testid="stMainBlockContainer"] {{
-        padding: 0.1rem !important;
-        margin: 0 !important;
+
+    /* Vertical spacing between Streamlit elements */
+    .stElementContainer {{
+        margin-top: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
+        padding: 0 !important;
     }}
-    
-    /* Target the vertical block container */
-    .stVerticalBlock,
-    .st-emotion-cache-tn0cau,
-    .e1wguzas3 {{
-        padding: 5px !important;
-        margin: 50px !important;
-        gap: 0.1rem !important;
+
+    /* prevent widget crowding */
+    .stMarkdown, .stRadio, .stButton, .stSelectbox,
+    .stNumberInput, .stTextInput, .stTextArea, .stFileUploader {{
+        margin-top: 0.3rem !important;
+        margin-bottom: 0.3rem !important;
     }}
-    
-    /* Target element containers */
-    .stElementContainer,
-    .st-emotion-cache-1vo6xi6,
-    .e1wguzas1 {{
-        padding: 0.1rem !important;
-        margin: 0 !important;
+
+    /* fix vertical block spacing safely */
+    .stVerticalBlock {{
+        margin: 0.4rem 0 !important;
+        padding: 0 !important;
+        gap: 0.4rem !important;
     }}
-    
-    /* Specifically target the first element container after CSS */
-    .stElementContainer:first-of-type {{
-        margin-top: 0rem !important;
-        padding-top: 0 !important;
-    }}
-    
-    /* Reduce heading spacing */
-    [data-testid="stHeadingWithActionElements"],
-    .st-emotion-cache-ua1rfn,
-    .et2rgd22,
+
+    /* headings */
     h1, h2, h3, h4, h5, h6 {{
-        margin-top: 0rem !important;
-        margin-bottom: 0.1rem !important;
-        padding-top: 0 !important;
-        padding-bottom: 0 !important;
-    }}
-    
-    /* Reduce markdown container spacing */
-    .stMarkdown,
-    [data-testid="stMarkdownContainer"],
-    .st-emotion-cache-168ogmh,
-    .et2rgd20 {{
-        margin: 0 !important;
+        margin-top: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
         padding: 0 !important;
     }}
-    
-    /* Reduce spacing between elements */
+
+    /* markdown inner spacing */
     .stMarkdown p,
-    .stMarkdown ol,
     .stMarkdown ul,
+    .stMarkdown ol,
     .stMarkdown li {{
-        margin-top: 0.1rem !important;
-        margin-bottom: 0.1rem !important;
+        margin: 0.2rem 0 !important;
     }}
-    
-    /* Remove horizontal rule spacing */
+
+    /* horizontal rule */
     hr {{
-        margin: 0.25rem 0 !important;
-        padding: 0 !important;
-    }}
-    
-    /* Reduce button container spacing */
-    .stButton,
-    .st-emotion-cache-8atqhb,
-    .e1mlolmg0 {{
-        margin: 0 !important;
-        padding: 0 !important;
-    }}
-    
-    /* Reduce column spacing */
-    .stColumn,
-    .st-emotion-cache-1wpb1x8,
-    .st-emotion-cache-1cmetgi,
-    .e1wguzas2 {{
-        padding: 0.05rem !important;
-        margin: 0 !important;
-    }}
-    
-    /* Reduce horizontal block spacing */
-    .stHorizontalBlock,
-    .st-emotion-cache-1permvm {{
-        gap: 0.1rem !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }}
-    
-    /* Target the layout wrapper */
-    [data-testid="stLayoutWrapper"],
-    .st-emotion-cache-18kf3ut,
-    .e1wguzas4 {{
-        padding: 0 !important;
-        margin: 0 !important;
-    }}
-    
-    /* Target the timer container specifically */
-    .st-emotion-cache-1h1pi45,
-    .stIFrame {{
-        margin: 0.1rem 0 !important;
-        padding: 0 !important;
-    }}
-    
-    /* Nuclear option - target all Streamlit elements */
-    [class*="st-"],
-    [class*="emotion-"] {{
-        margin: 0.05rem !important;
-        padding: 0.05rem !important;
-    }}
-    
-    /* But preserve certain elements */
-    .litmusq-header,
-    .question-card {{
-        margin: 0.5rem 0 !important;
-    }}
-    
-    /* Plain radio buttons override */
-    .stRadio > div {{ 
-        border: none !important;
-        padding: 0 !important;
-        background: none !important;
-    }}
-    
-    .stRadio label {{
-        margin: 2px 0 !important;
-        padding: 0 !important;
-        background: none !important;
-        border: none !important;
+        margin: 0.3rem 0 !important;
     }}
 
 
-    .main .block-container {{
-        padding-top: 2rem;
-    }}
-    
-    /* Primary Buttons */
-    .stButton>button {{
-        background-color: {LITMUSQ_THEME['primary']};
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }}
-    .stButton>button:hover {{
-        background-color: {LITMUSQ_THEME['accent']};
-        color: white;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }}
-    
-    /* Enhanced Expander Styling */
-    .streamlit-expanderHeader {{
+
+    /* =========================================================
+       RADIO BUTTONS (FULL WIDTH + THEME COLORS)
+    ==========================================================*/
+
+    .stRadio > div {{
         background-color: {LITMUSQ_THEME['light_bg']};
-        border: 1px solid {LITMUSQ_THEME['primary']};
+        padding: 1rem !important;
         border-radius: 8px;
-        padding: 1rem;
-        font-weight: 600;
-        color: {LITMUSQ_THEME['primary']};
-        margin-bottom: 0.5rem;
-    }}
-    .streamlit-expanderHeader:hover {{
-        background-color: {LITMUSQ_THEME['accent']}15;
-        border-color: {LITMUSQ_THEME['accent']};
-    }}
-    .streamlit-expanderContent {{
-        background-color: {LITMUSQ_THEME['background']};
         border: 1px solid #E2E8F0;
-        border-top: none;
-        border-radius: 0 0 8px 8px;
-        padding: 1rem;
+        width: 100% !important;
     }}
-    
-    /* Secondary Buttons */
-    .secondary-button>button {{
+
+    .stRadio > div > label {{
+        width: 100% !important;
+        margin: 0.2rem 0 !important;
+        padding: 0.5rem !important;
+        border-radius: 6px;
+        background-color: white !important;
+        transition: all 0.2s ease;
+        border: 1px solid transparent !important;
+    }}
+
+    .stRadio > div > label:hover {{
+        background-color: {LITMUSQ_THEME['light_bg']} !important;
+        border-color: {LITMUSQ_THEME['accent']} !important;
+    }}
+
+    .stRadio > div > label:has(input:checked) {{
+        background-color: {LITMUSQ_THEME['light_bg']} !important;
+        border-width: 2px !important;
+        border-color: {LITMUSQ_THEME['primary']} !important;
+    }}
+
+
+
+    /* =========================================================
+       PRIMARY BUTTONS
+    ==========================================================*/
+
+    .stButton > button {{
+        background-color: {LITMUSQ_THEME['primary']};
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: 500 !important;
+        transition: all 0.25s ease !important;
+    }}
+
+    .stButton > button:hover {{
+        background-color: {LITMUSQ_THEME['accent']};
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }}
+
+
+
+    /* =========================================================
+       SECONDARY BUTTONS
+    ==========================================================*/
+
+    .secondary-button > button {{
         background-color: {LITMUSQ_THEME['light_bg']};
         color: {LITMUSQ_THEME['primary']};
         border: 2px solid {LITMUSQ_THEME['primary']};
@@ -262,81 +192,98 @@ def inject_custom_css():
         padding: 0.5rem 1rem;
         font-weight: 500;
     }}
-    
-    /* Alerts */
-    .stAlert {{
-        border-left: 4px solid {LITMUSQ_THEME['secondary']};
-        background-color: {LITMUSQ_THEME['light_bg']};
-    }}
-    
-    /* Metrics */
-    .metric-container {{
-        background-color: {LITMUSQ_THEME['background']};
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid {LITMUSQ_THEME['primary']};
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }}
-    
-    /* Progress Bar */
-    .stProgress > div > div > div > div {{
-        background-color: {LITMUSQ_THEME['primary']};
-    }}
-    
-    /* Radio Buttons - Full Width */
-    .stRadio > div {{
-        background-color: {LITMUSQ_THEME['light_bg']};
-        padding: 1rem;
+
+
+
+    /* =========================================================
+       DANGER BUTTONS
+    ==========================================================*/
+
+    .danger-button > button {{
+        background-color: {LITMUSQ_THEME['secondary']};
+        color: white !important;
         border-radius: 8px;
-        border: 1px solid #E2E8F0;
-        width: 100% !important;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        border: none !important;
     }}
-    
-    /* Make radio button labels full width */
-    .stRadio [data-testid="stMarkdownContainer"] {{
-        width: 100% !important;
+
+    .danger-button > button:hover {{
+        background-color: #b91c1c !important;
     }}
-    
-    /* Radio option containers */
-    .stRadio > div > label {{
-        width: 100% !important;
-        padding: 0px 0px !important;
-        margin: 0px 0 !important;
-        background-color: white !important;
-        transition: all 0.2s ease !important;
-    }}
-    
-    .stRadio > div > label:hover {{
+
+
+
+    /* =========================================================
+       EXPANDERS – THEME COLORED
+    ==========================================================*/
+
+    .streamlit-expanderHeader {{
         background-color: {LITMUSQ_THEME['light_bg']} !important;
+        border: 1px solid {LITMUSQ_THEME['primary']} !important;
+        border-radius: 8px !important;
+        padding: 0.9rem !important;
+        font-weight: 600 !important;
+        color: {LITMUSQ_THEME['primary']} !important;
+        margin-bottom: 0.5rem !important;
+    }}
+
+    .streamlit-expanderHeader:hover {{
+        background-color: {LITMUSQ_THEME['accent']}22 !important;
         border-color: {LITMUSQ_THEME['accent']} !important;
     }}
-    
-    .stRadio > div > label:has(input:checked) {{
-        background-color: {LITMUSQ_THEME['light_bg']} !important;
-        border-color: {LITMUSQ_THEME['primary']} !important;
-        border-width: 2px !important;
+
+    .streamlit-expanderContent {{
+        background-color: {LITMUSQ_THEME['background']};
+        border: 1px solid #E2E8F0;
+        border-top: none !important;
+        border-radius: 0 0 8px 8px !important;
+        padding: 1rem !important;
     }}
-    
-    /* Sidebar */
-    .css-1d391kg {{
-        background-color: {LITMUSQ_THEME['light_bg']};
-    }}
-    
-    /* Custom Header */
+
+
+
+    /* =========================================================
+       CUSTOM HEADER
+    ==========================================================*/
+
     .litmusq-header {{
-        background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
-        border-radius: 10px;
+        background: linear-gradient(
+            135deg,
+            {LITMUSQ_THEME['primary']},
+            {LITMUSQ_THEME['secondary']}
+        );
         color: white;
-        padding: 0rem;
+        padding: 0.8rem;
+        border-radius: 10px;
         text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        margin-bottom: 1rem;
     }}
-    
-    /* Badge Styles */
+
+
+
+    /* =========================================================
+       QUESTION CARD
+    ==========================================================*/
+
+    .question-card {{
+        background-color: {LITMUSQ_THEME['light_bg']};
+        padding: 1.3rem;
+        border-radius: 12px;
+        border-left: 4px solid {LITMUSQ_THEME['primary']};
+        margin: 0.8rem 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }}
+
+
+
+    /* =========================================================
+       BADGE ELEMENT
+    ==========================================================*/
+
     .badge {{
         display: inline-block;
-        padding: 0.25rem 0.75rem;
+        padding: 0.3rem 0.8rem;
         background-color: {LITMUSQ_THEME['accent']};
         color: white;
         border-radius: 15px;
@@ -344,64 +291,54 @@ def inject_custom_css():
         font-weight: bold;
         margin: 0.1rem;
     }}
-    
-    /* Question Card */
-    .question-card {{
-        background-color: {LITMUSQ_THEME['light_bg']};
-        padding: 1.5rem;
-        border-radius: 10px;
-        border-left: 4px solid {LITMUSQ_THEME['primary']};
-        margin-bottom: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }}
-    
-    /* Danger Button */
-    .danger-button>button {{
-        background-color: {LITMUSQ_THEME['secondary']};
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 1rem;
-        font-weight: 500;
-    }}
-    .danger-button>button:hover {{
-        background-color: #B91C1C;
-        color: white;
-    }}
 
-    /* Formatted Content Styles */
+
+
+    /* =========================================================
+       FORMATTED CONTENT
+    ==========================================================*/
+
     .formatted-content {{
         line-height: 1.6;
         margin: 0.5rem 0;
     }}
-    .formatted-content b, .formatted-content strong {{
+
+    .formatted-content b {{
         color: {LITMUSQ_THEME['primary']};
     }}
-    .formatted-content i, .formatted-content em {{
+
+    .formatted-content i {{
         color: {LITMUSQ_THEME['secondary']};
     }}
+
     .formatted-content u {{
-        text-decoration: underline;
         color: {LITMUSQ_THEME['accent']};
+        text-decoration: underline !important;
     }}
-    
-    /* Mobile Responsive */
+
+
+
+    /* =========================================================
+       MOBILE OPTIMIZATION
+    ==========================================================*/
+
     @media (max-width: 768px) {{
         .stRadio > div {{
-            padding: 0.5rem !important;
+            padding: 0.6rem !important;
         }}
-        
+
         .stRadio > div > label {{
-            padding: 10px 12px !important;
-            margin: 3px 0 !important;
+            padding: 0.4rem !important;
         }}
-        
+
         .question-card {{
             padding: 1rem !important;
         }}
     }}
+
     </style>
     """, unsafe_allow_html=True)
+
     
 # =============================
 # Firebase Formatted Questions Functions
