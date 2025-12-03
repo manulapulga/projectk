@@ -2150,11 +2150,20 @@ def show_quiz_header_with_timer():
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = max(0, int(time_left.total_seconds()))
         
+        # Calculate initial time display
+        h = str(seconds_left // 3600).zfill(2)
+        m = str((seconds_left % 3600) // 60).zfill(2)
+        s = str(seconds_left % 60).zfill(2)
+        
+        # Determine color based on time remaining
+        timer_color = '#ff6b6b' if seconds_left < 300 else 'white'
+        timer_bg = 'rgba(255,107,107,0.3)' if seconds_left < 300 else 'rgba(255,255,255,0.2)'
+        
         # Create a custom HTML header with timer
         st.markdown(f"""
-        <div style="
+        <style>
+        .fixed-quiz-header {{
             position: fixed;
-            margin-top: 3.5rem;
             top: 0;
             left: 0;
             width: 100%;
@@ -2167,126 +2176,163 @@ def show_quiz_header_with_timer():
             align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        ">
-            <div style="font-weight: bold; font-size: 1.2rem;">
-                {st.session_state.exam_name}
+        }}
+        .content-wrapper {{
+            padding-top: 70px; /* Make space for fixed header */
+        }}
+        </style>
+        
+        <div class="fixed-quiz-header">
+            <div style="font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+                <span>🧪</span>
+                <span>{st.session_state.exam_name[:30]}{'...' if len(st.session_state.exam_name) > 30 else ''}</span>
             </div>
             <div id="header-timer" style="
                 font-size: 1.4rem;
                 font-weight: bold;
-                background: rgba(255,255,255,0.2);
+                background: {timer_bg};
                 padding: 0.3rem 1rem;
                 border-radius: 50px;
                 min-width: 120px;
                 text-align: center;
-                color: {'#ff6b6b' if seconds_left < 300 else 'white'};
+                color: {timer_color};
+                transition: all 0.3s ease;
             ">
-                Loading timer...
+                ⏰ {h}:{m}:{s}
+            </div>
+            <div style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                <span>👤</span>
+                <span>{st.session_state.username}</span>
             </div>
         </div>
         
+        <div class="content-wrapper"></div>
+        
         <script>
         (function() {{
+            let secondsLeft = {seconds_left};
+            const timerElement = document.getElementById('header-timer');
+            
             function updateHeaderTimer() {{
-                let now = new Date();
-                let endTime = new Date('{st.session_state.end_time.isoformat()}');
-                let secondsLeft = Math.max(0, Math.floor((endTime - now) / 1000));
-                
                 if (secondsLeft <= 0) {{
-                    document.getElementById('header-timer').innerHTML = "⏰ 00:00:00";
-                    // Auto-submit logic
+                    timerElement.innerHTML = "⏰ 00:00:00";
+                    timerElement.style.color = '#ff6b6b';
+                    timerElement.style.background = 'rgba(255,107,107,0.3)';
+                    
+                    // Dispatch event for auto-submit
                     const event = new Event('timeup');
                     document.dispatchEvent(event);
                     return;
                 }}
                 
-                let h = String(Math.floor(secondsLeft / 3600)).padStart(2, '0');
-                let m = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0');
-                let s = String(secondsLeft % 60).padStart(2, '0');
+                // Calculate time components
+                const h = Math.floor(secondsLeft / 3600).toString().padStart(2, '0');
+                const m = Math.floor((secondsLeft % 3600) / 60).toString().padStart(2, '0');
+                const s = (secondsLeft % 60).toString().padStart(2, '0');
                 
-                document.getElementById('header-timer').innerHTML = `⏰ ${{h}}:${{m}}:${{s}}`;
+                // Update display
+                timerElement.innerHTML = `⏰ ${{h}}:${{m}}:${{s}}`;
                 
-                // Color coding
-                if (secondsLeft < 300) {{ // 5 minutes
-                    document.getElementById('header-timer').style.color = '#ff6b6b';
-                    document.getElementById('header-timer').style.background = 'rgba(255,107,107,0.3)';
+                // Update colors for warning (5 minutes left)
+                if (secondsLeft < 300) {{
+                    timerElement.style.color = '#ff6b6b';
+                    timerElement.style.background = 'rgba(255,107,107,0.3)';
                 }}
+                
+                // Decrement seconds
+                secondsLeft--;
+                
+                // Schedule next update
+                setTimeout(updateHeaderTimer, 1000);
             }}
             
-            // Update timer every second
-            setInterval(updateHeaderTimer, 1000);
-            updateHeaderTimer(); // Initial call
+            // Start the timer
+            updateHeaderTimer();
             
-            // Listen for timeup event
+            // Handle auto-submit event
             document.addEventListener('timeup', function() {{
-                // This will trigger in Streamlit's JS context
-                // For auto-submit, you'd need to trigger a Streamlit event
+                // Auto-submit logic
+                console.log('Time is up! Auto-submitting...');
+                // You can trigger Streamlit rerun here if needed
             }});
         }})();
         </script>
-        
-        <div style="margin-top: 80px;"></div>
         """, unsafe_allow_html=True)
-
+    else:
+        # Show header without timer if no time limit
+        st.markdown(f"""
+        <style>
+        .fixed-quiz-header {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
+            color: white;
+            padding: 0.8rem 1rem;
+            z-index: 9999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }}
+        .content-wrapper {{
+            padding-top: 70px;
+        }}
+        </style>
+        
+        <div class="fixed-quiz-header">
+            <div style="font-weight: bold; font-size: 1.2rem;">
+                🧪 LitmusQ - {st.session_state.exam_name}
+            </div>
+            <div style="
+                font-size: 1rem;
+                font-weight: bold;
+                background: rgba(255,255,255,0.2);
+                padding: 0.3rem 1rem;
+                border-radius: 50px;
+                color: white;
+            ">
+                ⏰ No Time Limit
+            </div>
+            <div style="font-size: 0.9rem;">
+                👤 {st.session_state.username}
+            </div>
+        </div>
+        
+        <div class="content-wrapper"></div>
+        """, unsafe_allow_html=True)
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
     """Main quiz interface with professional layout."""
-    # Show header with timer
-    show_quiz_header_with_timer()
-    
-    # Rest of your existing code...
     if not st.session_state.quiz_started:
         st.error("Quiz not properly initialized. Returning to home.")
         st.session_state.current_screen = "home"
         st.rerun()
         return
     
+    # Show header with timer FIRST
+    show_quiz_header_with_timer()
+    
     if 'question_status' not in st.session_state or not st.session_state.question_status:
         initialize_question_status()
     
-    # Auto-check for timeout and auto-submit
+    # Auto-check for timeout
     if st.session_state.end_time and not st.session_state.submitted:
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = int(time_left.total_seconds())
         
-        # If time is up, auto-submit
         if seconds_left <= 0:
             st.session_state.submitted = True
             st.rerun()
             return
-        
-        # Set up auto-refresh with reduced frequency
-        if seconds_left <= 0:
-            # Time's up - auto-submit immediately
-            st.session_state.submitted = True
-            st.rerun()
-        elif seconds_left < 5:  # Last minute: every 5 seconds
-            st_autorefresh(interval=1000, key="timer_refresh_last_minute")
-        elif seconds_left < 300:  # Last 5 minutes: every 60 seconds
-            st_autorefresh(interval=60000, key="timer_refresh_last_5min")
-        elif seconds_left < 1800:  # Last 30 minutes: every 5 minutes
-            st_autorefresh(interval=300000, key="timer_refresh_last_30min")
-        else:  # More than 30 minutes: every 10 minutes
-            st_autorefresh(interval=1000000, key="timer_refresh_long_exam")
     
-    if st.session_state.get('show_leave_confirmation', False):
-        st.sidebar.warning("Leave test? Progress will be lost.")
-        col1, col2 = st.sidebar.columns(2)
-        with col1:
-            if st.button("Yes, Leave", use_container_width=True, key="confirm_leave"):
-                st.session_state.current_screen = "home"
-                st.session_state.show_leave_confirmation = False
-                st.rerun()
-        with col2:
-            if st.button("Cancel", use_container_width=True, key="cancel_leave"):
-                st.session_state.show_leave_confirmation = False
-                st.rerun()
-    
+    # Show question palette in sidebar
     show_question_palette()
     
-    # Show question first, then header at the bottom
+    # Show question interface
     if not st.session_state.submitted:
-        
         show_enhanced_question_interface()
     else:
         show_results_screen()
