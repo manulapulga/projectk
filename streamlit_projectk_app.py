@@ -2191,7 +2191,6 @@ def show_quiz_header_with_timer():
             <div id="header-timer" style="
                 font-size: 1rem;
                 font-weight: bold;
-                background: {timer_bg};
                 padding: 0.3rem 1rem;
                 border-radius: 50px;
                 min-width: 120px;
@@ -2287,7 +2286,6 @@ def show_quiz_header_with_timer():
             <div style="
                 font-size: 1rem;
                 font-weight: bold;
-                background: rgba(255,255,255,0.2);
                 padding: 0.3rem 1rem;
                 border-radius: 50px;
                 color: white;
