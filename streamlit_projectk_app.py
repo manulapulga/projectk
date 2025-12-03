@@ -2185,11 +2185,11 @@ def show_quiz_header_with_timer():
         </style>
         
         <div class="fixed-quiz-header">
-            <div style="font-weight: bold; font-size: 1.2rem;">
+            <div style="font-weight: bold; font-size: 1rem;">
                 {st.session_state.exam_name}
             </div>
             <div id="header-timer" style="
-                font-size: 1.4rem;
+                font-size: 1rem;
                 font-weight: bold;
                 background: {timer_bg};
                 padding: 0.3rem 1rem;
@@ -2281,7 +2281,7 @@ def show_quiz_header_with_timer():
         </style>
         
         <div class="fixed-quiz-header">
-            <div style="font-weight: bold; font-size: 1.2rem;">
+            <div style="font-weight: bold; font-size: 1rem;">
                 {st.session_state.exam_name}
             </div>
             <div style="
