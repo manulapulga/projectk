@@ -75,8 +75,8 @@ def inject_custom_css():
     /* Main content container – prevents header overlap */
     .block-container {{
         padding-top: 0.1rem !important;   /* header clearance */
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+        padding-left: 0.1rem !important;
+        padding-right: 0.1rem !important;
         padding-bottom: 1rem !important;
     }}
 
@@ -96,9 +96,9 @@ def inject_custom_css():
 
     /* fix vertical block spacing safely */
     .stVerticalBlock {{
-        margin: 0.4rem 0 !important;
+        margin: 0.1rem 0 !important;
         padding: 0 !important;
-        gap: 0.4rem !important;
+        gap: 0.1rem !important;
     }}
 
     /* headings */
