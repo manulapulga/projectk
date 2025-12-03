@@ -2233,6 +2233,7 @@ def show_quiz_header_with_timer():
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
     """Main quiz interface with professional layout."""
+    st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     # Show header with timer
     show_quiz_header_with_timer()
     
