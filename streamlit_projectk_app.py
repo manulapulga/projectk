@@ -433,6 +433,8 @@ def show_login_screen():
     st.write("")
     st.write("")
     st.write("")
+    st.write("")
+    st.write("")
     show_litmusq_header("Assess Better. Learn Faster.")
     
     # Add temporary CSS fix for login screen
