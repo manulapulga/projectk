@@ -528,7 +528,7 @@ def show_question_editor():
     formatted_questions = load_formatted_questions()
     
     # Folder selection
-    st.markdown("Select Question Bank")
+    st.subheader("Select Question Bank")
     folder_structure = st.session_state.get('folder_structure', {})
     
     if not folder_structure:
@@ -612,7 +612,7 @@ def show_question_editor():
         
         if has_qb:
             st.markdown("---")
-            st.markdown("📝 Question Bank Editor")
+            st.subheader("📝 Question Bank Editor")
             
             qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
             if os.path.exists(qb_path):
@@ -658,7 +658,7 @@ def show_question_editor():
 def show_question_editing_interface(question_row, question_index, file_path, sheet_name, formatted_questions):
     """Show editing interface for a specific question."""
     st.markdown("---")
-    st.markdown(f"✏️ Editing Question {question_index + 1}")
+    st.subheader(f"✏️ Editing Question {question_index + 1}")
     
     # Store original content in session state for reliable access
     session_key = f"original_{file_path}_{sheet_name}_{question_index}"
@@ -720,7 +720,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
     
     # Use a form for the editing interface
     with st.form(f"edit_question_{question_index}"):
-        st.markdown("Edit Content")
+        st.subheader("Edit Content")
         
         edited_question = st.text_area(
             "**Question Text**",
@@ -745,7 +745,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         )
         
         # Preview
-        st.markdown("👁️ Live Preview")
+        st.subheader("👁️ Live Preview")
         st.markdown("**Question:**")
         render_formatted_content(edited_question)
         
