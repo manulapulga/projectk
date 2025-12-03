@@ -455,8 +455,7 @@ def show_login_screen():
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         with st.container():
-            st.markdown("### 🔐 Please Login")
-            
+
             with st.form("login_form"):
                 username = st.text_input("👤 Username", placeholder="Enter your username", key="login_username")
                 password = st.text_input("🔒 Password", type="password", placeholder="Enter your password", key="login_password")
