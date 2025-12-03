@@ -1501,7 +1501,6 @@ def show_exam_config_screen():
         full_screen_mode = st.checkbox("🖥️ Full Screen Mode", value=True, key="full_screen_mode")
     
     # Start test button
-    st.markdown("---")
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.button("🚀 Start Test Now", type="primary", use_container_width=True, key="start_test"):
