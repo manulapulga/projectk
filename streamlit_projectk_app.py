@@ -69,46 +69,54 @@ def inject_custom_css():
     <style>
 
     /* =========================================================
-       GLOBAL SPACING – MOBILE OPTIMIZED (VERY COMPACT)
+       GLOBAL SAFE SPACING (NO OVERLAPS, NO HUGE MARGINS)
     ==========================================================*/
 
-    /* Main content wrapper */
+    /* Main content container – prevents header overlap */
     .block-container {{
-        padding-top: 3.2rem !important;   /* safe header space */
-        padding-left: 0.3rem !important;
-        padding-right: 0.3rem !important;
-        padding-bottom: 0.5rem !important;
+        padding-top: 0.2rem !important;   /* header clearance */
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+        padding-bottom: 1rem !important;
     }}
 
-    /* Reduce space between all elements */
+    /* Vertical spacing between Streamlit elements */
     .stElementContainer {{
-        margin-top: 0.25rem !important;
-        margin-bottom: 0.25rem !important;
+        margin-top: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
         padding: 0 !important;
     }}
 
-    /* Widgets */
-    .stMarkdown, .stRadio, .stSelectbox, .stNumberInput,
-    .stTextInput, .stTextArea, .stButton, .stFileUploader {{
-        margin-top: 0.25rem !important;
-        margin-bottom: 0.25rem !important;
+    /* prevent widget crowding */
+    .stMarkdown, .stRadio, .stButton, .stSelectbox,
+    .stNumberInput, .stTextInput, .stTextArea, .stFileUploader {{
+        margin-top: 0.3rem !important;
+        margin-bottom: 0.3rem !important;
     }}
 
-    /* Headings – tight spacing */
+    /* fix vertical block spacing safely */
+    .stVerticalBlock {{
+        margin: 0.4rem 0 !important;
+        padding: 0 !important;
+        gap: 0.4rem !important;
+    }}
+
+    /* headings */
     h1, h2, h3, h4, h5, h6 {{
-        margin: 0.3rem 0 !important;
+        margin-top: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
         padding: 0 !important;
-        line-height: 1.2rem !important;
     }}
 
-    /* Markdown text */
+    /* markdown inner spacing */
     .stMarkdown p,
     .stMarkdown ul,
+    .stMarkdown ol,
     .stMarkdown li {{
-        margin: 0.15rem 0 !important;
-        line-height: 1.25rem !important;
+        margin: 0.2rem 0 !important;
     }}
 
+    /* horizontal rule */
     hr {{
         margin: 0.3rem 0 !important;
     }}
@@ -116,136 +124,215 @@ def inject_custom_css():
 
 
     /* =========================================================
-       RADIO BUTTONS – SUPER COMPACT + THEME COLORS
+       RADIO BUTTONS (FULL WIDTH + THEME COLORS)
     ==========================================================*/
 
     .stRadio > div {{
         background-color: {LITMUSQ_THEME['light_bg']};
-        padding: 0.5rem !important;
+        padding: 1rem !important;
         border-radius: 8px;
         border: 1px solid #E2E8F0;
-        width: 100%;
+        width: 100% !important;
     }}
 
     .stRadio > div > label {{
-        width: 100%;
-        margin: 0.15rem 0 !important;
-        padding: 0.35rem 0.5rem !important;
-        font-size: 0.9rem;
-        line-height: 1.1rem;
+        width: 100% !important;
+        margin: 0.2rem 0 !important;
+        padding: 0.5rem !important;
         border-radius: 6px;
         background-color: white !important;
-        transition: 0.2s;
+        transition: all 0.2s ease;
+        border: 1px solid transparent !important;
     }}
 
     .stRadio > div > label:hover {{
         background-color: {LITMUSQ_THEME['light_bg']} !important;
-        border-color: {LITMUSQ_THEME['accent']};
+        border-color: {LITMUSQ_THEME['accent']} !important;
     }}
 
     .stRadio > div > label:has(input:checked) {{
-        border: 2px solid {LITMUSQ_THEME['primary']} !important;
         background-color: {LITMUSQ_THEME['light_bg']} !important;
+        border-width: 2px !important;
+        border-color: {LITMUSQ_THEME['primary']} !important;
     }}
 
 
 
     /* =========================================================
-       PRIMARY BUTTON – COMPACT
+       PRIMARY BUTTONS
     ==========================================================*/
 
     .stButton > button {{
         background-color: {LITMUSQ_THEME['primary']};
         color: white !important;
-        padding: 0.4rem 0.9rem !important;
-        border-radius: 7px !important;
-        font-size: 0.9rem !important;
-        transition: 0.25s;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: 500 !important;
+        transition: all 0.25s ease !important;
     }}
 
     .stButton > button:hover {{
         background-color: {LITMUSQ_THEME['accent']};
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }}
 
 
 
     /* =========================================================
-       EXPANDERS – TIGHT MOBILE SPACING
+       SECONDARY BUTTONS
+    ==========================================================*/
+
+    .secondary-button > button {{
+        background-color: {LITMUSQ_THEME['light_bg']};
+        color: {LITMUSQ_THEME['primary']};
+        border: 2px solid {LITMUSQ_THEME['primary']};
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+    }}
+
+
+
+    /* =========================================================
+       DANGER BUTTONS
+    ==========================================================*/
+
+    .danger-button > button {{
+        background-color: {LITMUSQ_THEME['secondary']};
+        color: white !important;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        border: none !important;
+    }}
+
+    .danger-button > button:hover {{
+        background-color: #b91c1c !important;
+    }}
+
+
+
+    /* =========================================================
+       EXPANDERS – THEME COLORED
     ==========================================================*/
 
     .streamlit-expanderHeader {{
-        padding: 0.6rem !important;
-        font-size: 0.95rem !important;
-        border-radius: 8px !important;
         background-color: {LITMUSQ_THEME['light_bg']} !important;
         border: 1px solid {LITMUSQ_THEME['primary']} !important;
+        border-radius: 8px !important;
+        padding: 0.9rem !important;
+        font-weight: 600 !important;
+        color: {LITMUSQ_THEME['primary']} !important;
+        margin-bottom: 0.5rem !important;
+    }}
+
+    .streamlit-expanderHeader:hover {{
+        background-color: {LITMUSQ_THEME['accent']}22 !important;
+        border-color: {LITMUSQ_THEME['accent']} !important;
     }}
 
     .streamlit-expanderContent {{
-        padding: 0.6rem !important;
-        font-size: 0.9rem !important;
-        line-height: 1.25rem !important;
-        border-radius: 0 0 8px 8px;
+        background-color: {LITMUSQ_THEME['background']};
+        border: 1px solid #E2E8F0;
+        border-top: none !important;
+        border-radius: 0 0 8px 8px !important;
+        padding: 1rem !important;
     }}
 
 
 
     /* =========================================================
-       QUESTION CARD – SHARPER + COMPACT
+       CUSTOM HEADER
+    ==========================================================*/
+
+    .litmusq-header {{
+        background: linear-gradient(
+            135deg,
+            {LITMUSQ_THEME['primary']},
+            {LITMUSQ_THEME['secondary']}
+        );
+        color: white;
+        padding: 0.8rem;
+        border-radius: 10px;
+        text-align: center;
+        margin-bottom: 1rem;
+    }}
+
+
+
+    /* =========================================================
+       QUESTION CARD
     ==========================================================*/
 
     .question-card {{
         background-color: {LITMUSQ_THEME['light_bg']};
-        padding: 0.8rem !important;
-        border-radius: 10px;
+        padding: 1.3rem;
+        border-radius: 12px;
         border-left: 4px solid {LITMUSQ_THEME['primary']};
-        margin: 0.5rem 0 !important;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        margin: 0.8rem 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }}
 
 
 
     /* =========================================================
-       BADGES
+       BADGE ELEMENT
     ==========================================================*/
 
     .badge {{
-        padding: 0.2rem 0.6rem;
-        font-size: 0.75rem;
+        display: inline-block;
+        padding: 0.3rem 0.8rem;
+        background-color: {LITMUSQ_THEME['accent']};
+        color: white;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        margin: 0.1rem;
     }}
 
 
 
     /* =========================================================
-       MOBILE TUNING
+       FORMATTED CONTENT
     ==========================================================*/
 
-    @media (max-width: 500px) {{
+    .formatted-content {{
+        line-height: 1.6;
+        margin: 0.5rem 0;
+    }}
 
-        .block-container {{
-            padding-top: 3rem !important;
-        }}
+    .formatted-content b {{
+        color: {LITMUSQ_THEME['primary']};
+    }}
 
+    .formatted-content i {{
+        color: {LITMUSQ_THEME['secondary']};
+    }}
+
+    .formatted-content u {{
+        color: {LITMUSQ_THEME['accent']};
+        text-decoration: underline !important;
+    }}
+
+
+
+    /* =========================================================
+       MOBILE OPTIMIZATION
+    ==========================================================*/
+
+    @media (max-width: 768px) {{
         .stRadio > div {{
-            padding: 0.45rem !important;
+            padding: 0.6rem !important;
         }}
 
         .stRadio > div > label {{
-            padding: 0.3rem !important;
-            font-size: 0.85rem !important;
-        }}
-
-        .stButton > button {{
-            padding: 0.35rem 0.8rem !important;
-            font-size: 0.85rem !important;
+            padding: 0.4rem !important;
         }}
 
         .question-card {{
-            padding: 0.7rem !important;
-        }}
-
-        .streamlit-expanderHeader {{
-            padding: 0.5rem !important;
+            padding: 1rem !important;
         }}
     }}
 
