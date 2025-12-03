@@ -1465,7 +1465,7 @@ def show_exam_config_screen():
             st.session_state.current_screen = "folder_view"
             st.rerun()
     
-    show_litmusq_header(f"Configure Test: {sheet_name}")
+    st.subheader(f"Configure Test: {sheet_name}")
     st.write(f"**📍:** `{' > '.join(current_path)}`")
     
     st.metric("Total No. of Questions", len(df_exam))
