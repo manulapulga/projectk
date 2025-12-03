@@ -1413,8 +1413,6 @@ def show_exam_config_screen():
         else:
             st.metric("Years Covered", "N/A")
     
-    st.markdown("---")
-    
     # Configuration options
     use_final_key = True
     
