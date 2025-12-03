@@ -1996,10 +1996,8 @@ def show_question_palette():
         with col2:
             st.metric("🟨 Marked", f"{marked}")
     
-    st.sidebar.markdown("---")
-    
+
     # Legend
-    st.sidebar.markdown("""
     <style>
     .legend-item {
         display: flex;
@@ -2032,8 +2030,6 @@ def show_question_palette():
         <span>🟩: Answered & marked for review</span>
     </div>
     """, unsafe_allow_html=True)
-    
-    st.sidebar.markdown("---")
     
     # Question palette grid
     total_questions = len(st.session_state.quiz_questions)
