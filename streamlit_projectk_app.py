@@ -2188,17 +2188,43 @@ def show_quiz_header_with_timer():
             <div style="font-size: 1rem;">
                 {st.session_state.exam_name}
             </div>
-            <div id="header-timer" style="
-                font-size: 1rem;
-                padding: 0.3rem 1rem;
-                border-radius: 50px;
-                min-width: 120px;
+            # Create timer with JavaScript
+            html_code = f"""
+            <div id="timer" style="
+                font-size: 24px;
+                font-weight: bold;
+                color: {'red' if seconds_left < 300 else 'green'};
                 text-align: center;
-                color: {timer_color};
-                transition: all 0.3s ease;
-            ">
-                ⏰ {h}:{m}:{s}
-            </div>
+            "></div>
+    
+            <script>
+                let timeLeft = {seconds_left};
+    
+                function updateTimer() {{
+                    if (timeLeft <= 0) {{
+                        document.getElementById('timer').innerHTML = "⏰ 00:00:00";
+                        // Trigger automatic submission when timer reaches zero
+                        const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
+                        if (submitButton) {{
+                            submitButton.click();
+                        }}
+                        return;
+                    }}
+    
+                    let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                    let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                    let s = String(timeLeft % 60).padStart(2, '0');
+    
+                    document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
+    
+                    timeLeft--;
+                    setTimeout(updateTimer, 1000);
+                }}
+    
+                updateTimer();
+            </script>
+            """
+            components.html(html_code, height=60)
         </div>
         
         <div class="content-wrapper"></div>
