@@ -103,7 +103,7 @@ def inject_custom_css():
     
     /* Specifically target the first element container after CSS */
     .stElementContainer:first-of-type {{
-        margin-top: 1.5rem !important;
+        margin-top: 0rem !important;
         padding-top: 0 !important;
     }}
     
@@ -112,7 +112,7 @@ def inject_custom_css():
     .st-emotion-cache-ua1rfn,
     .et2rgd22,
     h1, h2, h3, h4, h5, h6 {{
-        margin-top: 0.1rem !important;
+        margin-top: 2rem !important;
         margin-bottom: 0.1rem !important;
         padding-top: 0 !important;
         padding-bottom: 0 !important;
