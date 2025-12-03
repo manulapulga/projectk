@@ -2582,7 +2582,7 @@ def show_results_screen():
             st.session_state.current_screen = "quiz"
             st.rerun()
     with col5:
-        if st.button("📈 Dashboard", use_container_width=True, key="results_dashboard"):
+        if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
             st.session_state.current_screen = "dashboard"
             st.rerun()
     
@@ -2918,7 +2918,7 @@ def quick_actions_panel():
             st.session_state.current_screen = "question_editor"
             st.rerun()
     
-    if st.sidebar.button("📊 Performance", use_container_width=True, key="sidebar_dashboard"):
+    if st.sidebar.button("📈 Performance", use_container_width=True, key="sidebar_dashboard"):
         st.session_state.current_screen = "dashboard"
         st.rerun()
         
