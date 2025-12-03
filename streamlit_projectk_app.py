@@ -134,10 +134,8 @@ def inject_custom_css():
 
     .stRadio > div > label {{
         width: 100% !important;
-        margin: 0.2rem 0 !important;
-        padding: 0.5rem !important;
-        border-radius: 6px;
-        background-color: white !important;
+        margin: 0rem 0 !important;
+        padding: 0rem !important;
         transition: all 0.2s ease;
         border: 1px solid transparent !important;
     }}
