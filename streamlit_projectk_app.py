@@ -2435,7 +2435,7 @@ def show_retest_config(original_test):
         if original_test.get('is_retest', False):
             # This is a retest of a retest, add level indicator
             retest_type = original_test.get('retest_type', 'full')
-            exam_name = f"{exam_name} ({retest_option} Re-Test)"
+            exam_name = f"{exam_name} (Re-Test)"
         
         # Start the retest
         start_quiz(
