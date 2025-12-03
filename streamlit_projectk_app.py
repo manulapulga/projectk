@@ -1716,54 +1716,33 @@ def show_enhanced_question_interface():
     
     current_answer = st.session_state.question_status[current_idx]['answer']
     
-    # Use buttons instead of radio for better mobile experience
-    col1, col2 = st.columns(2)
+    # -------- RADIO BUTTON ANSWER SELECTION --------
+
+    options_dict = {
+        "A": formatted_a,
+        "B": formatted_b,
+        "C": formatted_c,
+        "D": formatted_d
+    }
     
-    with col1:
-        # Option A - Add green tick if selected
-        option_a_text = f"✅ **A)** {formatted_a}" if current_answer == "A" else f"**A)** {formatted_a}"
-        button_style = "primary" if current_answer == "A" else "secondary"
-        if st.button(option_a_text, 
-                    use_container_width=True, 
-                    type=button_style,
-                    key=f"option_a_{current_idx}"):
-            update_question_status(current_idx, 'answered', "A")
-            st.session_state.answers[current_idx] = "A"
-            st.rerun()
-        
-        # Option B - Add green tick if selected
-        option_b_text = f"✅ **B)** {formatted_b}" if current_answer == "B" else f"**B)** {formatted_b}"
-        button_style = "primary" if current_answer == "B" else "secondary"
-        if st.button(option_b_text, 
-                    use_container_width=True, 
-                    type=button_style,
-                    key=f"option_b_{current_idx}"):
-            update_question_status(current_idx, 'answered', "B")
-            st.session_state.answers[current_idx] = "B"
-            st.rerun()
+    # None selected by default
+    default_radio_value = (
+        current_answer if current_answer in options_dict else None
+    )
     
-    with col2:
-        # Option C - Add green tick if selected
-        option_c_text = f"✅ **C)** {formatted_c}" if current_answer == "C" else f"**C)** {formatted_c}"
-        button_style = "primary" if current_answer == "C" else "secondary"
-        if st.button(option_c_text, 
-                    use_container_width=True, 
-                    type=button_style,
-                    key=f"option_c_{current_idx}"):
-            update_question_status(current_idx, 'answered', "C")
-            st.session_state.answers[current_idx] = "C"
-            st.rerun()
-        
-        # Option D - Add green tick if selected
-        option_d_text = f"✅ **D)** {formatted_d}" if current_answer == "D" else f"**D)** {formatted_d}"
-        button_style = "primary" if current_answer == "D" else "secondary"
-        if st.button(option_d_text, 
-                    use_container_width=True, 
-                    type=button_style,
-                    key=f"option_d_{current_idx}"):
-            update_question_status(current_idx, 'answered', "D")
-            st.session_state.answers[current_idx] = "D"
-            st.rerun()
+    selected_option = st.radio(
+        "Choose an option:",
+        options=[None, "A", "B", "C", "D"],
+        format_func=lambda x: "— No Selection —" if x is None else f"{x}) {options_dict[x]}",
+        index=[None, "A", "B", "C", "D"].index(default_radio_value),
+        key=f"radio_{current_idx}"
+    )
+    
+    # Update session state when user selects an option
+    if selected_option is not None:
+        update_question_status(current_idx, 'answered', selected_option)
+        st.session_state.answers[current_idx] = selected_option
+    
     
     st.markdown("---")
     
@@ -1808,6 +1787,16 @@ def show_enhanced_question_interface():
             type="secondary"
         ):
             clear_response(current_idx)
+            st.session_state.answers[current_idx] = None
+            st.session_state.question_status[current_idx]["answer"] = None
+        
+            # CLEAR RADIO SELECTION
+            radio_key = f"radio_{current_idx}"
+            if radio_key in st.session_state:
+                del st.session_state[radio_key]
+        
+            st.rerun()
+
     
     with col5:
         st.button(
