@@ -196,18 +196,18 @@ def inject_custom_css():
     }}
     
     /* Plain radio buttons override */
-    .stRadio > div { 
+    .stRadio > div {{ 
         border: none !important;
         padding: 0 !important;
         background: none !important;
-    }
+    }}
     
-    .stRadio label {
+    .stRadio label {{
         margin: 2px 0 !important;
         padding: 0 !important;
         background: none !important;
         border: none !important;
-    }
+    }}
 
 
     .main .block-container {{
