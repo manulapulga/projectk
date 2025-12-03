@@ -1163,6 +1163,7 @@ def show_clear_data_section():
         )
 
 def show_student_dashboard():
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     """Display student dashboard with progress analytics."""
     show_litmusq_header("Your Learning Dashboard")
     
