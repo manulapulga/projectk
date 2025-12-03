@@ -430,11 +430,7 @@ def authenticate_user(username, password, credentials):
 
 def show_login_screen():
     """Enhanced login screen with LitmusQ branding."""
-    st.write("")
-    st.write("")
-    st.write("")
-    st.write("")
-    st.write("")
+    st.markdown("<div style='margin-top: 5rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Assess Better. Learn Faster.")
     
     # Add temporary CSS fix for login screen
