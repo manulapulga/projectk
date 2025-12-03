@@ -1763,47 +1763,81 @@ def show_enhanced_question_interface():
             st.rerun()
             return  # Exit early to prevent further rendering
         
-        # Create timer with JavaScript
+        # Create timer with JavaScript that syncs with the header timer
         html_code = f"""
-        <div id="timer" style="
-            font-size: 24px;
-            font-weight: bold;
-            color: {'red' if seconds_left < 300 else 'green'};
-            text-align: center;
-        "></div>
+        <div style="margin: 20px 0;">
+            <div id="bottom-timer" style="
+                font-size: 24px;
+                font-weight: bold;
+                color: {'red' if seconds_left < 300 else 'green'};
+                text-align: center;
+                padding: 10px;
+                background: rgba(0,0,0,0.05);
+                border-radius: 10px;
+                margin: 10px auto;
+                max-width: 300px;
+            "></div>
+        </div>
 
         <script>
-            let timeLeft = {seconds_left};
-
-            function updateTimer() {{
-                if (timeLeft <= 0) {{
-                    document.getElementById('timer').innerHTML = "⏰ 00:00:00";
-                    // Trigger automatic submission when timer reaches zero
-                    const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
-                    if (submitButton) {{
-                        submitButton.click();
-                    }}
+            // Initialize timer with server time
+            let serverSecondsLeft = {seconds_left};
+            let startTime = Date.now();
+            
+            function updateBottomTimer() {{
+                // Calculate elapsed time since page load
+                const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                let currentSecondsLeft = Math.max(0, serverSecondsLeft - elapsedSeconds);
+                
+                const timerEl = document.getElementById('bottom-timer');
+                
+                if (currentSecondsLeft <= 0) {{
+                    timerEl.innerHTML = "⏰ 00:00:00";
+                    timerEl.style.color = "red";
                     return;
                 }}
 
-                let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
-                let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
-                let s = String(timeLeft % 60).padStart(2, '0');
+                let h = String(Math.floor(currentSecondsLeft / 3600)).padStart(2, '0');
+                let m = String(Math.floor((currentSecondsLeft % 3600) / 60)).padStart(2, '0');
+                let s = String(currentSecondsLeft % 60).padStart(2, '0');
 
-                document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
+                timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
+                
+                // Update color when less than 5 minutes
+                if (currentSecondsLeft < 300) {{
+                    timerEl.style.color = 'red';
+                }} else {{
+                    timerEl.style.color = 'green';
+                }}
 
-                timeLeft--;
-                setTimeout(updateTimer, 1000);
+                setTimeout(updateBottomTimer, 1000);
             }}
 
-            updateTimer();
+            updateBottomTimer();
         </script>
         """
-        components.html(html_code, height=60)
+        components.html(html_code, height=80)
     else:
-        st.metric("⏰ Time Left", "No Limit")
+        st.markdown("""
+        <div style="margin: 20px 0;">
+            <div style="
+                font-size: 24px;
+                font-weight: bold;
+                color: #666;
+                text-align: center;
+                padding: 10px;
+                background: rgba(0,0,0,0.05);
+                border-radius: 10px;
+                margin: 10px auto;
+                max-width: 300px;
+            ">
+                ⏰ No Time Limit
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("</div>", unsafe_allow_html=True)
+    
 
     st.markdown("---")
 
