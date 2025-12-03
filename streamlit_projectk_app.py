@@ -515,6 +515,7 @@ def is_admin_user():
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
+    st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("📝 Question Formatting Editor")
     
     # Check if user is admin
