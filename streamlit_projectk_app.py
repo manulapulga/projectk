@@ -2207,7 +2207,7 @@ def show_quiz_header_with_timer():
         (function() {
         
             // Get end time directly from Python
-            const endTime = new Date("{{st.session_state.end_time.isoformat()}}");
+            const endTime = new Date("{st.session_state.end_time.isoformat()}");
         
             const timerElement = document.getElementById("header-timer");
         
