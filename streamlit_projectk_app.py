@@ -611,9 +611,9 @@ def show_question_editor():
         has_qb = '_files' in current_level and 'QB.xlsx' in current_level['_files']
         
         if has_qb:
-            st.markdown("---")
+            st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
             st.subheader("📝 Question Bank Editor")
-            
+            st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
             qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
             if os.path.exists(qb_path):
                 questions_data = load_questions(qb_path)
