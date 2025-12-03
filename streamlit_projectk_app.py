@@ -214,16 +214,6 @@ def inject_custom_css():
         border: 2px solid transparent !important;
     }}
 
-    .stRadio > div > label:hover {{
-        background-color: {LITMUSQ_THEME['light_bg']} !important;
-        border-color: {LITMUSQ_THEME['accent']} !important;
-    }}
-
-    .stRadio > div > label:has(input:checked) {{
-        border-width: 0px !important;
-    }}
-
-
 
     /* =========================================================
        PRIMARY BUTTONS
