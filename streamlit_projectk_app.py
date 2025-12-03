@@ -436,11 +436,11 @@ def show_login_screen():
     st.markdown("""
     <style>
     div[data-testid="stAppViewContainer"] {
-        padding-top: 1rem !important;
+        padding-top: 0rem !important;
     }
     .litmusq-header {
-        margin-top: 1rem !important;
-        padding-top: 1rem !important;
+        margin-top: 0rem !important;
+        padding-top: 0rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
