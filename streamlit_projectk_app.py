@@ -354,24 +354,7 @@ def load_login_credentials():
 def authenticate_user(username, password, credentials):
     return credentials.get(username) == password
 
-def ensure_python_types(data):
-    """Ensure all data is in Python native types for Firestore compatibility."""
-    if isinstance(data, dict):
-        return {key: ensure_python_types(value) for key, value in data.items()}
-    elif isinstance(data, list):
-        return [ensure_python_types(item) for item in data]
-    elif isinstance(data, (np.bool_, np.bool)):
-        return bool(data)
-    elif isinstance(data, np.integer):
-        return int(data)
-    elif isinstance(data, np.floating):
-        return float(data)
-    elif isinstance(data, np.ndarray):
-        return ensure_python_types(data.tolist())
-    elif pd.isna(data):
-        return None
-    else:
-        return data
+
 def show_login_screen():
     """Enhanced login screen with LitmusQ branding."""
     show_litmusq_header("Assess Better. Learn Faster.")
@@ -865,11 +848,36 @@ def convert_numpy_to_python(data):
         return float(data)
     elif isinstance(data, np.ndarray):
         return convert_numpy_to_python(data.tolist())
-    elif isinstance(data, (np.str_, np.string_)):
+    elif hasattr(np, 'string_') and isinstance(data, np.string_):
+        # For older versions of NumPy
         return str(data)
+    elif hasattr(np, 'bytes_') and isinstance(data, np.bytes_):
+        # For NumPy 2.0+
+        return data.decode('utf-8') if isinstance(data, bytes) else str(data)
     elif isinstance(data, np.datetime64):
         # Convert numpy datetime64 to ISO string
         return pd.Timestamp(data).isoformat()
+    elif pd.isna(data):
+        return None
+    else:
+        return data
+        
+def ensure_python_types(data):
+    """Ensure all data is in Python native types for Firestore compatibility."""
+    if isinstance(data, dict):
+        return {key: ensure_python_types(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [ensure_python_types(item) for item in data]
+    elif isinstance(data, (np.bool_, np.bool)):
+        return bool(data)
+    elif isinstance(data, np.integer):
+        return int(data)
+    elif isinstance(data, np.floating):
+        return float(data)
+    elif isinstance(data, np.ndarray):
+        return ensure_python_types(data.tolist())
+    elif pd.isna(data):
+        return None
     else:
         return data
         
