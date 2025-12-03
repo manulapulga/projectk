@@ -1710,7 +1710,7 @@ def show_enhanced_question_interface():
     st.markdown("---")
     
     # Enhanced action buttons
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.button(
@@ -1743,25 +1743,6 @@ def show_enhanced_question_interface():
         )
     
     with col4:
-        if st.button(
-            "🗑️ Clear Response",
-            use_container_width=True,
-            key=f"clear_{current_idx}",
-            type="secondary"
-        ):
-            clear_response(current_idx)
-            st.session_state.answers[current_idx] = None
-            st.session_state.question_status[current_idx]["answer"] = None
-        
-            # CLEAR RADIO SELECTION
-            radio_key = f"radio_{current_idx}"
-            if radio_key in st.session_state:
-                del st.session_state[radio_key]
-        
-            st.rerun()
-
-    
-    with col5:
         st.button(
             "📤 Submit Test",
             use_container_width=True,
