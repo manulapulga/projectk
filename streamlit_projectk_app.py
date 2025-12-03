@@ -2144,9 +2144,98 @@ def clear_response(question_idx):
     
     st.rerun()
 
+def show_quiz_header_with_timer():
+    """Show a custom header with timer for quiz interface."""
+    if st.session_state.end_time and not st.session_state.submitted:
+        time_left = st.session_state.end_time - datetime.now()
+        seconds_left = max(0, int(time_left.total_seconds()))
+        
+        # Create a custom HTML header with timer
+        st.markdown(f"""
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
+            color: white;
+            padding: 0.8rem 1rem;
+            z-index: 9999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        ">
+            <div style="font-weight: bold; font-size: 1.2rem;">
+                🧪 LitmusQ - {st.session_state.exam_name}
+            </div>
+            <div id="header-timer" style="
+                font-size: 1.4rem;
+                font-weight: bold;
+                background: rgba(255,255,255,0.2);
+                padding: 0.3rem 1rem;
+                border-radius: 50px;
+                min-width: 120px;
+                text-align: center;
+                color: {'#ff6b6b' if seconds_left < 300 else 'white'};
+            ">
+                Loading timer...
+            </div>
+            <div style="font-size: 0.9rem;">
+                👤 {st.session_state.username}
+            </div>
+        </div>
+        
+        <script>
+        (function() {{
+            function updateHeaderTimer() {{
+                let now = new Date();
+                let endTime = new Date('{st.session_state.end_time.isoformat()}');
+                let secondsLeft = Math.max(0, Math.floor((endTime - now) / 1000));
+                
+                if (secondsLeft <= 0) {{
+                    document.getElementById('header-timer').innerHTML = "⏰ 00:00:00";
+                    // Auto-submit logic
+                    const event = new Event('timeup');
+                    document.dispatchEvent(event);
+                    return;
+                }}
+                
+                let h = String(Math.floor(secondsLeft / 3600)).padStart(2, '0');
+                let m = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0');
+                let s = String(secondsLeft % 60).padStart(2, '0');
+                
+                document.getElementById('header-timer').innerHTML = `⏰ ${{h}}:${{m}}:${{s}}`;
+                
+                // Color coding
+                if (secondsLeft < 300) {{ // 5 minutes
+                    document.getElementById('header-timer').style.color = '#ff6b6b';
+                    document.getElementById('header-timer').style.background = 'rgba(255,107,107,0.3)';
+                }}
+            }}
+            
+            // Update timer every second
+            setInterval(updateHeaderTimer, 1000);
+            updateHeaderTimer(); // Initial call
+            
+            // Listen for timeup event
+            document.addEventListener('timeup', function() {{
+                // This will trigger in Streamlit's JS context
+                // For auto-submit, you'd need to trigger a Streamlit event
+            }});
+        }})();
+        </script>
+        
+        <div style="margin-top: 80px;"></div>
+        """, unsafe_allow_html=True)
+
+# In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
     """Main quiz interface with professional layout."""
-    if not st.session_state.quiz_started:
+    # Show header with timer
+    show_quiz_header_with_timer()
+        if not st.session_state.quiz_started:
         st.error("Quiz not properly initialized. Returning to home.")
         st.session_state.current_screen = "home"
         st.rerun()
