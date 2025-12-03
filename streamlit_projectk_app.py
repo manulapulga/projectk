@@ -103,8 +103,8 @@ def inject_custom_css():
 
     /* headings */
     h1, h2, h3, h4, h5, h6 {{
-        margin-top: 0.4rem !important;
-        margin-bottom: 0.4rem !important;
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
         padding: 0 !important;
     }}
 
@@ -162,7 +162,7 @@ def inject_custom_css():
         color: white !important;
         border: none !important;
         border-radius: 8px !important;
-        padding: 0.5rem 1rem !important;
+        padding: 0.2rem 1rem !important;
         font-weight: 500 !important;
         transition: all 0.25s ease !important;
     }}
@@ -184,7 +184,7 @@ def inject_custom_css():
         color: {LITMUSQ_THEME['primary']};
         border: 2px solid {LITMUSQ_THEME['primary']};
         border-radius: 8px;
-        padding: 0.5rem 1rem;
+        padding: 0.2rem 1rem;
         font-weight: 500;
     }}
 
@@ -198,7 +198,7 @@ def inject_custom_css():
         background-color: {LITMUSQ_THEME['secondary']};
         color: white !important;
         border-radius: 8px;
-        padding: 0.5rem 1rem;
+        padding: 0.2rem 1rem;
         font-weight: 500;
         border: none !important;
     }}
@@ -249,7 +249,7 @@ def inject_custom_css():
             {LITMUSQ_THEME['secondary']}
         );
         color: white;
-        padding: 0.8rem;
+        padding: 0.2rem;
         border-radius: 10px;
         text-align: center;
         margin-bottom: 1rem;
