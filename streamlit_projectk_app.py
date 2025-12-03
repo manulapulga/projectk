@@ -657,8 +657,9 @@ def show_question_editor():
         
 def show_question_editing_interface(question_row, question_index, file_path, sheet_name, formatted_questions):
     """Show editing interface for a specific question."""
-    st.markdown("---")
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.subheader(f"✏️ Editing Question {question_index + 1}")
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     
     # Store original content in session state for reliable access
     session_key = f"original_{file_path}_{sheet_name}_{question_index}"
@@ -701,6 +702,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
     default_explanation = formatted_questions.get(explanation_key, original_content['explanation'])
     
     # Formatting guide
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     with st.expander("📋 Formatting Guide", expanded=False):
         st.markdown("""
         **Supported Formatting:**
@@ -719,6 +721,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         """)
     
     # Use a form for the editing interface
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     with st.form(f"edit_question_{question_index}"):
         st.subheader("Edit Content")
         
@@ -745,7 +748,9 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         )
         
         # Preview
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         st.subheader("👁️ Live Preview")
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         st.markdown("**Question:**")
         render_formatted_content(edited_question)
         
@@ -766,6 +771,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             st.markdown("**Explanation:**")
             render_formatted_content(edited_explanation)
         
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         # Create three columns for action buttons INSIDE THE FORM
         col1, col2, col3 = st.columns(3)
         
