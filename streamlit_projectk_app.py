@@ -3078,6 +3078,7 @@ def show_home_screen():
 
 def show_platform_guide():
     """Actual platform guide implementation."""
+    st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("About LitmusQ")
 
     # Home button
