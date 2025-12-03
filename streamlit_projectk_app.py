@@ -1017,7 +1017,8 @@ def show_clear_data_section():
         if st.button("🚮 Clear All My Performance Data", type="secondary", key="clear_data_init"):
             st.session_state.show_clear_confirmation = True
             st.rerun()
-    st.write("This will permanently delete all your test history, achievements, and performance statistics. This action cannot be undone.")
+            st.write("This will permanently delete all your test history, achievements, and performance statistics. This action cannot be undone.")
+
     else:
         st.error("Are you sure you want to delete ALL your performance data? This action cannot be undone!")
         
