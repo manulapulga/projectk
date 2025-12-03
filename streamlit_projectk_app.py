@@ -2154,6 +2154,7 @@ def show_quiz_header_with_timer():
         st.markdown(f"""
         <div style="
             position: fixed;
+            margin-top: 4rem;
             top: 0;
             left: 0;
             width: 100%;
