@@ -12,6 +12,7 @@ import streamlit.components.v1 as components
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
+import hashlib
 
 # =============================
 # Configuration & Theme
@@ -48,6 +49,12 @@ def initialize_firebase():
 
 # Initialize Firebase
 db = initialize_firebase()
+
+# =============================
+# User Management Constants
+# =============================
+USER_COLLECTION = "users"
+DEFAULT_ADMIN_USERNAMES = ["admin", "administrator"]
 
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
@@ -261,7 +268,276 @@ def inject_custom_css():
     }}
     </style>
     """, unsafe_allow_html=True)
+
+# =============================
+# User Model & Management
+# =============================
+
+def get_user_document_id(username):
+    """Get Firebase document ID for user."""
+    return f"user_{username.lower()}"
+
+def create_user_data(username, password, full_name, email, phone_number, is_admin=False):
+    """Create user data dictionary with proper structure."""
+    return {
+        "username": username.lower(),
+        "full_name": full_name,
+        "email": email.lower(),
+        "phone_number": str(phone_number),
+        "password": password,  # In production, this should be hashed
+        "is_active": True,
+        "is_admin": is_admin,
+        "created_at": datetime.now().isoformat(),
+        "last_login": None,
+        "login_count": 0
+    }
+
+def is_admin_user():
+    """Check if current user is admin."""
+    if not st.session_state.get('logged_in'):
+        return False
     
+    # First check session state
+    if hasattr(st.session_state, 'user_data') and st.session_state.user_data.get('is_admin'):
+        return True
+    
+    # Fallback to hardcoded admin list
+    return st.session_state.username.lower() in [admin.lower() for admin in DEFAULT_ADMIN_USERNAMES]
+
+def validate_email(email):
+    """Basic email validation."""
+    import re
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+def validate_phone(phone):
+    """Basic phone number validation."""
+    import re
+    pattern = r'^[\+]?[0-9]{10,15}$'
+    return re.match(pattern, str(phone)) is not None
+
+def hash_password(password):
+    """Hash password for storage (basic implementation)."""
+    # In production, use proper hashing like bcrypt
+    import hashlib
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(stored_password, provided_password):
+    """Verify password against stored hash."""
+    # In production, use proper password verification
+    return stored_password == hash_password(provided_password)
+
+def user_exists(username):
+    """Check if user already exists."""
+    try:
+        if db is None:
+            return False
+        
+        doc_ref = db.collection(USER_COLLECTION).document(get_user_document_id(username))
+        doc = doc_ref.get()
+        return doc.exists
+    except Exception as e:
+        st.error(f"Error checking user existence: {e}")
+        return False
+
+def email_exists(email):
+    """Check if email already exists."""
+    try:
+        if db is None:
+            return False
+        
+        query = db.collection(USER_COLLECTION).where("email", "==", email.lower()).limit(1)
+        results = query.get()
+        return len(results) > 0
+    except Exception as e:
+        st.error(f"Error checking email existence: {e}")
+        return False
+
+def register_user(username, password, full_name, email, phone_number, is_admin=False):
+    """Register a new user."""
+    try:
+        if db is None:
+            st.error("Firebase not initialized")
+            return False
+        
+        # Check if user already exists
+        if user_exists(username):
+            st.error("Username already exists")
+            return False
+        
+        # Check if email already exists
+        if email_exists(email):
+            st.error("Email already registered")
+            return False
+        
+        # Validate email
+        if not validate_email(email):
+            st.error("Invalid email format")
+            return False
+        
+        # Validate phone
+        if not validate_phone(phone_number):
+            st.error("Invalid phone number format (10-15 digits)")
+            return False
+        
+        # Create user data
+        user_data = create_user_data(
+            username=username,
+            password=hash_password(password),  # Store hashed password
+            full_name=full_name,
+            email=email,
+            phone_number=phone_number,
+            is_admin=is_admin
+        )
+        
+        # Save to Firebase
+        doc_ref = db.collection(USER_COLLECTION).document(get_user_document_id(username))
+        doc_ref.set(user_data)
+        
+        return True
+    except Exception as e:
+        st.error(f"Error registering user: {e}")
+        return False
+
+def authenticate_user_firebase(username, password):
+    """Authenticate user using Firebase."""
+    try:
+        if db is None:
+            return False, None
+        
+        doc_ref = db.collection(USER_COLLECTION).document(get_user_document_id(username))
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return False, None
+        
+        user_data = doc.to_dict()
+        
+        # Check if user is active
+        if not user_data.get('is_active', True):
+            return False, "Account is disabled"
+        
+        # Verify password
+        if not verify_password(user_data['password'], password):
+            return False, "Invalid password"
+        
+        # Update last login
+        user_data['last_login'] = datetime.now().isoformat()
+        user_data['login_count'] = user_data.get('login_count', 0) + 1
+        doc_ref.update({
+            'last_login': user_data['last_login'],
+            'login_count': user_data['login_count']
+        })
+        
+        return True, user_data
+    except Exception as e:
+        st.error(f"Error authenticating user: {e}")
+        return False, None
+
+def get_all_users():
+    """Get all registered users."""
+    try:
+        if db is None:
+            return []
+        
+        users_ref = db.collection(USER_COLLECTION)
+        docs = users_ref.get()
+        
+        users = []
+        for doc in docs:
+            user_data = doc.to_dict()
+            user_data['id'] = doc.id
+            users.append(user_data)
+        
+        # Sort by creation date
+        users.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+        return users
+    except Exception as e:
+        st.error(f"Error getting users: {e}")
+        return []
+
+def update_user_status(username, is_active):
+    """Enable/disable user login."""
+    try:
+        if db is None:
+            return False
+        
+        doc_ref = db.collection(USER_COLLECTION).document(get_user_document_id(username))
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return False
+        
+        doc_ref.update({'is_active': is_active})
+        return True
+    except Exception as e:
+        st.error(f"Error updating user status: {e}")
+        return False
+
+def delete_user(username):
+    """Delete a user."""
+    try:
+        if db is None:
+            return False
+        
+        # Don't allow self-deletion
+        if username == st.session_state.username:
+            st.error("You cannot delete your own account")
+            return False
+        
+        doc_ref = db.collection(USER_COLLECTION).document(get_user_document_id(username))
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return False
+        
+        doc_ref.delete()
+        return True
+    except Exception as e:
+        st.error(f"Error deleting user: {e}")
+        return False
+
+def update_user_profile(username, updates):
+    """Update user profile information."""
+    try:
+        if db is None:
+            return False
+        
+        doc_ref = db.collection(USER_COLLECTION).document(get_user_document_id(username))
+        doc = doc_ref.get()
+        
+        if not doc.exists:
+            return False
+        
+        # Validate email if being updated
+        if 'email' in updates:
+            if not validate_email(updates['email']):
+                st.error("Invalid email format")
+                return False
+            
+            # Check if email already exists for other users
+            query = db.collection(USER_COLLECTION)\
+                      .where("email", "==", updates['email'].lower())\
+                      .where("username", "!=", username.lower())\
+                      .limit(1)
+            results = query.get()
+            if len(results) > 0:
+                st.error("Email already registered with another user")
+                return False
+        
+        # Validate phone if being updated
+        if 'phone_number' in updates:
+            if not validate_phone(updates['phone_number']):
+                st.error("Invalid phone number format")
+                return False
+        
+        # Update user data
+        doc_ref.update(updates)
+        return True
+    except Exception as e:
+        st.error(f"Error updating user profile: {e}")
+        return False
+        
 # =============================
 # Firebase Formatted Questions Functions
 # =============================
@@ -330,23 +606,24 @@ def show_litmusq_header(subtitle="Professional MCQ Assessment Platform"):
 # Authentication Helpers
 # =============================
 def load_login_credentials():
-    """Load username and password from Excel file."""
+    """Load username and password from Excel file (for backward compatibility)."""
     try:
-        df = pd.read_excel(LOGIN_FILE_PATH, engine="openpyxl")
-        df.columns = [str(col).strip().lower() for col in df.columns]
-        
-        if "username" not in df.columns or "password" not in df.columns:
-            st.error("Login file must contain 'Username' and 'Password' columns")
-            return {}
-        
-        credentials = {}
-        for _, row in df.iterrows():
-            username = str(row["username"]).strip()
-            password = str(row["password"]).strip()
-            if username and password:
-                credentials[username] = password
-                
-        return credentials
+        if os.path.exists(LOGIN_FILE_PATH):
+            df = pd.read_excel(LOGIN_FILE_PATH, engine="openpyxl")
+            df.columns = [str(col).strip().lower() for col in df.columns]
+            
+            if "username" not in df.columns or "password" not in df.columns:
+                return {}
+            
+            credentials = {}
+            for _, row in df.iterrows():
+                username = str(row["username"]).strip()
+                password = str(row["password"]).strip()
+                if username and password:
+                    credentials[username] = password
+                    
+            return credentials
+        return {}
     except Exception as e:
         st.error(f"Failed to load login credentials: {e}")
         return {}
@@ -356,40 +633,17 @@ def authenticate_user(username, password, credentials):
 
 
 def show_login_screen():
-    """Enhanced login screen with LitmusQ branding."""
+    """Enhanced login screen with registration tab."""
     show_litmusq_header("Assess Better. Learn Faster.")
     
-    credentials = load_login_credentials()
+    # Create tabs for Login and Register
+    tab1, tab2 = st.tabs(["🔐 Login", "📝 Register"])
     
-    if not credentials:
-        st.error("No valid login credentials found. Please contact administrator.")
-        return False
+    with tab1:
+        show_login_form()
     
-    # Center the login form
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        with st.container():
-            st.markdown("### 🔐 Please Login")
-            
-            with st.form("login_form"):
-                username = st.text_input("👤 Username", placeholder="Enter your username", key="login_username")
-                password = st.text_input("🔒 Password", type="password", placeholder="Enter your password", key="login_password")
-                submit_button = st.form_submit_button("🚀 Login to LitmusQ", use_container_width=True)
-                
-                if submit_button:
-                    if not username or not password:
-                        st.error("Please enter both username and password")
-                        return False
-                        
-                    if authenticate_user(username, password, credentials):
-                        st.session_state.logged_in = True
-                        st.session_state.username = username
-                        # Initialize user progress
-                        initialize_user_progress(username)
-                        st.rerun()
-                    else:
-                        st.error("❌ Invalid username or password")
-                        return False
+    with tab2:
+        show_registration_form()
     
     # Footer
     st.markdown("---")
@@ -401,11 +655,343 @@ def show_login_screen():
             "</div>", 
             unsafe_allow_html=True
         )
+
+def show_login_form():
+    """Show login form."""
+    st.markdown("### 🔐 Please Login")
     
-    return False
+    with st.form("login_form"):
+        username = st.text_input("👤 Username", placeholder="Enter your username", key="login_username")
+        password = st.text_input("🔒 Password", type="password", placeholder="Enter your password", key="login_password")
+        submit_button = st.form_submit_button("🚀 Login to LitmusQ", use_container_width=True)
+        
+        if submit_button:
+            if not username or not password:
+                st.error("Please enter both username and password")
+                return False
+                
+            # Authenticate with Firebase
+            authenticated, user_data_or_error = authenticate_user_firebase(username, password)
+            
+            if authenticated:
+                user_data = user_data_or_error
+                st.session_state.logged_in = True
+                st.session_state.username = username
+                st.session_state.user_data = user_data  # Store user data in session
+                
+                # Initialize user progress
+                initialize_user_progress(username)
+                st.success(f"Welcome back, {user_data.get('full_name', username)}!")
+                st.rerun()
+            else:
+                if user_data_or_error:
+                    st.error(f"❌ {user_data_or_error}")
+                else:
+                    st.error("❌ Invalid username or password")
+                return False
+    
+    # Forgot password link
+    st.markdown("<div style='text-align: center; margin-top: 20px;'>", unsafe_allow_html=True)
+    if st.button("🔓 Forgot Password?", use_container_width=False):
+        st.session_state.show_forgot_password = True
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
 
+def show_registration_form():
+    """Show user registration form."""
+    st.markdown("### 📝 Create New Account")
+    
+    with st.form("registration_form"):
+        # Basic info
+        col1, col2 = st.columns(2)
+        with col1:
+            full_name = st.text_input("👤 Full Name", placeholder="Enter your full name")
+        with col2:
+            username = st.text_input("👥 Username", placeholder="Choose a username")
+        
+        # Contact info
+        col1, col2 = st.columns(2)
+        with col1:
+            email = st.text_input("📧 Email", placeholder="Enter your email address")
+        with col2:
+            phone_number = st.text_input("📱 Phone Number", placeholder="Enter your phone number")
+        
+        # Password
+        col1, col2 = st.columns(2)
+        with col1:
+            password = st.text_input("🔒 Password", type="password", placeholder="Create a password")
+        with col2:
+            confirm_password = st.text_input("🔒 Confirm Password", type="password", placeholder="Confirm your password")
+        
+        # Terms and conditions
+        agree_terms = st.checkbox("I agree to the Terms and Conditions")
+        
+        submit_button = st.form_submit_button("📝 Create Account", use_container_width=True)
+        
+        if submit_button:
+            # Validate all fields
+            if not all([full_name, username, email, phone_number, password, confirm_password]):
+                st.error("Please fill in all fields")
+                return
+            
+            if password != confirm_password:
+                st.error("Passwords do not match")
+                return
+            
+            if len(password) < 6:
+                st.error("Password must be at least 6 characters long")
+                return
+            
+            if not agree_terms:
+                st.error("You must agree to the Terms and Conditions")
+                return
+            
+            # Register user
+            with st.spinner("Creating your account..."):
+                success = register_user(
+                    username=username,
+                    password=password,
+                    full_name=full_name,
+                    email=email,
+                    phone_number=phone_number,
+                    is_admin=False  # Regular users are not admins by default
+                )
+                
+                if success:
+                    st.success("✅ Account created successfully! Please login.")
+                    st.balloons()
+                else:
+                    st.error("❌ Failed to create account. Please try again.")
 
+def show_forgot_password():
+    """Show forgot password form."""
+    show_litmusq_header("🔓 Reset Password")
+    
+    # Back button
+    if st.button("← Back to Login"):
+        st.session_state.show_forgot_password = False
+        st.rerun()
+    
+    st.info("Please contact your administrator to reset your password.")
+    st.markdown("---")
+    
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        st.markdown("### Contact Administrator")
+        st.write("Email: admin@litmusq.com")
+        st.write("Phone: +1 (555) 123-4567")
 
+def show_user_management():
+    """Admin interface for managing users."""
+    show_litmusq_header("👥 User Management")
+    
+    # Check if user is admin
+    if not is_admin_user():
+        st.error("❌ Access Denied. This section is only available for administrators.")
+        st.info("Please contact your system administrator if you need access.")
+        return
+    
+    # Navigation
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🏠 Home", use_container_width=True):
+            st.session_state.current_screen = "home"
+            st.rerun()
+    with col2:
+        if st.button("📊 Dashboard", use_container_width=True):
+            st.session_state.current_screen = "dashboard"
+            st.rerun()
+    with col3:
+        if st.button("➕ Create New User", use_container_width=True, type="primary"):
+            st.session_state.show_create_user = True
+            st.rerun()
+    
+    st.markdown("---")
+    
+    # User Statistics
+    users = get_all_users()
+    active_users = [u for u in users if u.get('is_active', True)]
+    admin_users = [u for u in users if u.get('is_admin', False)]
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Users", len(users))
+    with col2:
+        st.metric("Active Users", len(active_users))
+    with col3:
+        st.metric("Admin Users", len(admin_users))
+    with col4:
+        recent_users = [u for u in users if u.get('created_at') and 
+                       (datetime.now() - datetime.fromisoformat(u['created_at'])).days < 7]
+        st.metric("New This Week", len(recent_users))
+    
+    st.markdown("---")
+    
+    # Users Table
+    st.subheader("📋 All Users")
+    
+    if not users:
+        st.info("No users found.")
+        return
+    
+    # Display users in a table with actions
+    for i, user in enumerate(users):
+        with st.container():
+            col1, col2, col3, col4, col5, col6 = st.columns([2, 2, 2, 2, 1, 1])
+            
+            with col1:
+                st.markdown(f"**{user.get('full_name', 'N/A')}**")
+                st.caption(f"@{user.get('username', '')}")
+            
+            with col2:
+                st.write(user.get('email', 'N/A'))
+            
+            with col3:
+                st.write(user.get('phone_number', 'N/A'))
+            
+            with col4:
+                # Status badges
+                status_col1, status_col2 = st.columns(2)
+                with status_col1:
+                    if user.get('is_active', True):
+                        st.markdown("<span style='color: green;'>● Active</span>", unsafe_allow_html=True)
+                    else:
+                        st.markdown("<span style='color: red;'>● Disabled</span>", unsafe_allow_html=True)
+                with status_col2:
+                    if user.get('is_admin', False):
+                        st.markdown("<span style='color: blue;'>👑 Admin</span>", unsafe_allow_html=True)
+            
+            with col5:
+                # Toggle active status
+                current_status = user.get('is_active', True)
+                toggle_label = "Disable" if current_status else "Enable"
+                toggle_color = "secondary" if current_status else "primary"
+                
+                if st.button(toggle_label, key=f"toggle_{user['username']}", 
+                           type=toggle_color, use_container_width=True):
+                    success = update_user_status(user['username'], not current_status)
+                    if success:
+                        st.success(f"User {'disabled' if current_status else 'enabled'} successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to update user status")
+            
+            with col6:
+                # Delete user button (with confirmation)
+                if st.button("🗑️", key=f"delete_{user['username']}", 
+                           help="Delete user", use_container_width=True):
+                    if user['username'] == st.session_state.username:
+                        st.error("You cannot delete your own account")
+                    else:
+                        st.session_state.user_to_delete = user['username']
+                        st.rerun()
+            
+            # Last login info
+            last_login = user.get('last_login')
+            if last_login:
+                login_time = datetime.fromisoformat(last_login)
+                time_diff = datetime.now() - login_time
+                
+                if time_diff.days == 0:
+                    if time_diff.seconds < 3600:
+                        login_text = f"Last login: {time_diff.seconds // 60} minutes ago"
+                    else:
+                        login_text = f"Last login: {time_diff.seconds // 3600} hours ago"
+                else:
+                    login_text = f"Last login: {login_time.strftime('%Y-%m-%d %H:%M')}"
+                
+                st.caption(login_text)
+            
+            st.markdown("---")
+    
+    # Handle user deletion confirmation
+    if 'user_to_delete' in st.session_state:
+        user_to_delete = st.session_state.user_to_delete
+        st.warning(f"⚠️ Are you sure you want to delete user '{user_to_delete}'? This action cannot be undone!")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("✅ Yes, Delete", type="primary", use_container_width=True):
+                success = delete_user(user_to_delete)
+                if success:
+                    st.success(f"User '{user_to_delete}' deleted successfully!")
+                    del st.session_state.user_to_delete
+                    st.rerun()
+        with col2:
+            if st.button("❌ Cancel", use_container_width=True):
+                del st.session_state.user_to_delete
+                st.rerun()
+
+def show_create_user_form():
+    """Form for admin to create new users."""
+    show_litmusq_header("➕ Create New User")
+    
+    # Back button
+    if st.button("← Back to User Management"):
+        del st.session_state.show_create_user
+        st.rerun()
+    
+    with st.form("admin_create_user_form"):
+        st.subheader("User Details")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            full_name = st.text_input("Full Name *", placeholder="Enter full name")
+            username = st.text_input("Username *", placeholder="Choose username")
+        with col2:
+            email = st.text_input("Email *", placeholder="Enter email address")
+            phone_number = st.text_input("Phone Number", placeholder="Enter phone number")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            password = st.text_input("Password *", type="password", placeholder="Create password")
+        with col2:
+            confirm_password = st.text_input("Confirm Password *", type="password", placeholder="Confirm password")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            is_admin = st.checkbox("Make this user an administrator")
+        with col2:
+            is_active = st.checkbox("Account is active", value=True)
+        
+        submit_button = st.form_submit_button("Create User", use_container_width=True, type="primary")
+        
+        if submit_button:
+            # Validate
+            if not all([full_name, username, email, password, confirm_password]):
+                st.error("Please fill in all required fields (*)")
+                return
+            
+            if password != confirm_password:
+                st.error("Passwords do not match")
+                return
+            
+            if len(password) < 6:
+                st.error("Password must be at least 6 characters")
+                return
+            
+            # Register user
+            success = register_user(
+                username=username,
+                password=password,
+                full_name=full_name,
+                email=email,
+                phone_number=phone_number,
+                is_admin=is_admin
+            )
+            
+            if success:
+                # If admin created an inactive account
+                if not is_active:
+                    update_user_status(username, False)
+                
+                st.success(f"✅ User '{username}' created successfully!")
+                st.balloons()
+                st.session_state.show_create_user = False
+                st.rerun()
+            else:
+                st.error("❌ Failed to create user. Please check the details and try again.")
+                
 def get_question_key(file_path, sheet_name, question_index, field="question"):
     """Generate a unique key for each question/option."""
     return f"{file_path}::{sheet_name}::{question_index}::{field}"
@@ -2933,7 +3519,7 @@ def quick_actions_panel():
         return
     
     st.sidebar.markdown("---")
-
+    
     # Home Button - Always available (except during quiz)
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
         st.session_state.current_screen = "home"
@@ -2941,6 +3527,9 @@ def quick_actions_panel():
     
     # Admin-only actions
     if is_admin_user():
+        if st.sidebar.button("👥 User Management", use_container_width=True, key="sidebar_users"):
+            st.session_state.current_screen = "user_management"
+            st.rerun()
         if st.sidebar.button("📝 Edit Questions", use_container_width=True, key="sidebar_editor"):
             st.session_state.current_screen = "question_editor"
             st.rerun()
@@ -2954,6 +3543,102 @@ def quick_actions_panel():
         st.rerun()
         
     st.sidebar.markdown("---")
+    
+    # User profile info
+    if st.session_state.logged_in and hasattr(st.session_state, 'user_data'):
+        user_data = st.session_state.user_data
+        st.sidebar.markdown(f"**👤 {user_data.get('full_name', st.session_state.username)}**")
+        if user_data.get('is_admin'):
+            st.sidebar.markdown("<span style='color: blue;'>👑 Administrator</span>", unsafe_allow_html=True)
+        
+        # Edit profile button
+        if st.sidebar.button("⚙️ Edit Profile", use_container_width=True, key="edit_profile"):
+            st.session_state.current_screen = "edit_profile"
+            st.rerun()
+        
+    st.sidebar.markdown("---")
+
+def show_edit_profile():
+    """Allow users to edit their profile."""
+    show_litmusq_header("⚙️ Edit Profile")
+    
+    # Back button
+    if st.button("← Back", use_container_width=True):
+        st.session_state.current_screen = "home"
+        st.rerun()
+    
+    if not hasattr(st.session_state, 'user_data'):
+        st.error("User data not found")
+        return
+    
+    user_data = st.session_state.user_data
+    
+    with st.form("edit_profile_form"):
+        st.subheader("Personal Information")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            full_name = st.text_input("Full Name", value=user_data.get('full_name', ''))
+            username = st.text_input("Username", value=user_data.get('username', ''), disabled=True)
+        with col2:
+            email = st.text_input("Email", value=user_data.get('email', ''))
+            phone_number = st.text_input("Phone Number", value=user_data.get('phone_number', ''))
+        
+        st.subheader("Change Password")
+        col1, col2 = st.columns(2)
+        with col1:
+            current_password = st.text_input("Current Password", type="password", placeholder="Enter current password")
+        with col2:
+            new_password = st.text_input("New Password", type="password", placeholder="Enter new password")
+        
+        submit_button = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
+        
+        if submit_button:
+            updates = {}
+            
+            # Update basic info if changed
+            if full_name != user_data.get('full_name'):
+                updates['full_name'] = full_name
+            
+            if email != user_data.get('email'):
+                updates['email'] = email
+            
+            if phone_number != user_data.get('phone_number'):
+                updates['phone_number'] = phone_number
+            
+            # Update password if provided
+            if current_password and new_password:
+                # Verify current password
+                if not verify_password(user_data['password'], current_password):
+                    st.error("Current password is incorrect")
+                    return
+                
+                if len(new_password) < 6:
+                    st.error("New password must be at least 6 characters")
+                    return
+                
+                updates['password'] = hash_password(new_password)
+            
+            # Apply updates if any
+            if updates:
+                success = update_user_profile(user_data['username'], updates)
+                if success:
+                    st.success("✅ Profile updated successfully!")
+                    
+                    # Update session data
+                    if 'full_name' in updates:
+                        user_data['full_name'] = updates['full_name']
+                    if 'email' in updates:
+                        user_data['email'] = updates['email']
+                    if 'phone_number' in updates:
+                        user_data['phone_number'] = updates['phone_number']
+                    
+                    st.session_state.user_data = user_data
+                    st.rerun()
+                else:
+                    st.error("❌ Failed to update profile")
+            else:
+                st.info("No changes made")
 
 # =============================
 # Enhanced Initialization
@@ -2973,6 +3658,7 @@ def initialize_state():
         "exam_name": None,
         "logged_in": False,
         "username": None,
+        "user_data": None,  # Add this
         "current_screen": "home",
         "current_path": [],
         "selected_sheet": None,
@@ -2988,7 +3674,10 @@ def initialize_state():
         "show_leave_confirmation": False,
         "show_clear_confirmation": False,
         "editor_current_path": [],
-        "last_cleanup": datetime.now(),  # Add this line
+        "last_cleanup": datetime.now(),
+        "show_forgot_password": False,  # Add this
+        "show_create_user": False,  # Add this
+        "user_to_delete": None,  # Add this
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -3012,100 +3701,84 @@ def optimized_show_folder_view():
 # =============================
 # Main App
 # =============================
-def main():
-    st.set_page_config(
-        page_title="LitmusQ - Professional MCQ Platform",
-        page_icon="🧪",
-        layout="wide",
-        initial_sidebar_state="expanded"
-    )
+def show_edit_profile():
+    """Allow users to edit their profile."""
+    show_litmusq_header("⚙️ Edit Profile")
     
-    # Inject custom CSS
-    inject_custom_css()
-    
-    # Initialize Firebase
-    global db
-    if 'db' not in globals():
-        db = initialize_firebase()
-        if db:
-            # Success message already shown in initialize_firebase()
-            pass
-        else:
-            st.warning("⚠️ Using Local Storage (Cloud not available)")
-    
-    # Initialize session state with stability features
-    initialize_state()
-    
-    # Handle auto-submit if triggered
-    handle_auto_submit()
-    
-    # Perform periodic cleanup
-    periodic_cleanup()
-    
-    # Check memory usage (only if psutil is available)
-    if 'psutil' in globals():
-        memory_used = check_memory_usage()
-        if memory_used > 400:  # Warning at 400MB
-            st.sidebar.warning(f"Memory: {memory_used:.1f}MB")
-    
-    # Check authentication
-    if not st.session_state.logged_in:
-        safe_execute(show_login_screen)
-        st.stop()
-    
-    # User is logged in - show main app
-    if st.session_state.current_screen != "quiz":
-        st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
-        if db:
-            if is_admin_user():
-                st.sidebar.markdown(
-                    "<span style='color: green; font-weight: bold;'>☁️ Cloud Connected</span>",
-                    unsafe_allow_html=True
-                )
-
-        else:
-            st.sidebar.warning("⚠️ Using Local Storage")
-    
-    # Quick actions panel
-    quick_actions_panel()
-    
-    # Logout button
-    if st.session_state.current_screen != "quiz":  
-        if st.sidebar.button("🚪 Logout", use_container_width=True, key="sidebar_logout"):
-            optimize_session_state()  # Clean up before logout
-            for key in list(st.session_state.keys()):
-                del st.session_state[key]
-            st.rerun()
-    
-    # Scan folder structure on first load with error handling
-    if not st.session_state.folder_structure:
-        with st.spinner("📁 Scanning question banks..."):
-            st.session_state.folder_structure = safe_execute(scan_folder_structure) or {}
-    
-    # Route to appropriate screen with error handling
-    # Add this to the screen_handlers dictionary in the main() function
-    screen_handlers = {
-        "home": optimized_show_home_screen,
-        "dashboard": lambda: safe_execute(show_student_dashboard),
-        "guide": lambda: safe_execute(show_platform_guide),
-        "folder_view": optimized_show_folder_view,
-        "exam_config": lambda: safe_execute(show_exam_config_screen),
-        "quiz": optimized_show_quiz_screen,
-        "question_editor": lambda: safe_execute(show_question_editor),
-        "retest_config": lambda: safe_execute(show_retest_config, st.session_state.get('retest_config', {}))
-    }
-    current_screen = st.session_state.current_screen
-    handler = screen_handlers.get(current_screen, optimized_show_home_screen)
-    
-    # Execute the screen handler with error recovery
-    try:
-        handler()
-    except Exception as e:
-        st.error("💥 A critical error occurred. Returning to home screen.")
-        st.error(f"Error: {str(e)}")
+    # Back button
+    if st.button("← Back", use_container_width=True):
         st.session_state.current_screen = "home"
-        optimize_session_state()
         st.rerun()
-
-if __name__ == "__main__":
-    main()
+    
+    if not hasattr(st.session_state, 'user_data'):
+        st.error("User data not found")
+        return
+    
+    user_data = st.session_state.user_data
+    
+    with st.form("edit_profile_form"):
+        st.subheader("Personal Information")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            full_name = st.text_input("Full Name", value=user_data.get('full_name', ''))
+            username = st.text_input("Username", value=user_data.get('username', ''), disabled=True)
+        with col2:
+            email = st.text_input("Email", value=user_data.get('email', ''))
+            phone_number = st.text_input("Phone Number", value=user_data.get('phone_number', ''))
+        
+        st.subheader("Change Password")
+        col1, col2 = st.columns(2)
+        with col1:
+            current_password = st.text_input("Current Password", type="password", placeholder="Enter current password")
+        with col2:
+            new_password = st.text_input("New Password", type="password", placeholder="Enter new password")
+        
+        submit_button = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
+        
+        if submit_button:
+            updates = {}
+            
+            # Update basic info if changed
+            if full_name != user_data.get('full_name'):
+                updates['full_name'] = full_name
+            
+            if email != user_data.get('email'):
+                updates['email'] = email
+            
+            if phone_number != user_data.get('phone_number'):
+                updates['phone_number'] = phone_number
+            
+            # Update password if provided
+            if current_password and new_password:
+                # Verify current password
+                if not verify_password(user_data['password'], current_password):
+                    st.error("Current password is incorrect")
+                    return
+                
+                if len(new_password) < 6:
+                    st.error("New password must be at least 6 characters")
+                    return
+                
+                updates['password'] = hash_password(new_password)
+            
+            # Apply updates if any
+            if updates:
+                success = update_user_profile(user_data['username'], updates)
+                if success:
+                    st.success("✅ Profile updated successfully!")
+                    
+                    # Update session data
+                    if 'full_name' in updates:
+                        user_data['full_name'] = updates['full_name']
+                    if 'email' in updates:
+                        user_data['email'] = updates['email']
+                    if 'phone_number' in updates:
+                        user_data['phone_number'] = updates['phone_number']
+                    
+                    st.session_state.user_data = user_data
+                    st.rerun()
+                else:
+                    st.error("❌ Failed to update profile")
+            else:
+                st.info("No changes made")
