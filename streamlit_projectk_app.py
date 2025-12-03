@@ -1017,7 +1017,10 @@ def show_clear_data_section():
             st.session_state.show_clear_confirmation = True
             st.rerun()
     else:
-        st.error("Are you sure you want to delete ALL your performance data? This action cannot be undone!")
+        st.markdown(
+            "<p style='color: #d9534f; font-weight: 600;'>⚠️ Are you sure you want to delete ALL your performance data? This action cannot be undone!</p>",
+            unsafe_allow_html=True
+        )
         
         col1, col2, col3 = st.columns([1, 1, 2])
         with col1:
@@ -1030,8 +1033,10 @@ def show_clear_data_section():
             if st.button("❌ Cancel", key="cancel_clear"):
                 st.session_state.show_clear_confirmation = False
                 st.rerun()
-        
-        st.info("Note: Your login credentials will remain unchanged. Only your performance data will be deleted.")
+        st.markdown(
+            "<p style='color: #286b33; font-weight: 600;'>Note: Your login credentials will remain unchanged. Only your performance data will be deleted.</p>",
+            unsafe_allow_html=True
+        )
     st.write("This will permanently delete all your test history, achievements, and performance statistics. This action cannot be undone.")
 
 def show_student_dashboard():
