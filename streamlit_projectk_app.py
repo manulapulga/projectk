@@ -2204,47 +2204,47 @@ def show_quiz_header_with_timer():
         <div class="content-wrapper"></div>
         
         <script>
-        (function() {
-        
-            // Get end time directly from Python
-            const endTime = new Date("{st.session_state.end_time.isoformat()}");
-        
-            const timerElement = document.getElementById("header-timer");
+
+            // Use the same logic as the bottom timer
+            let headerTimeLeft = {seconds_left};
         
             function updateHeaderTimer() {
         
-                // Always compute remaining time from system clock
-                const now = new Date();
-                let secondsLeft = Math.floor((endTime - now) / 1000);
-        
-                if (secondsLeft <= 0) {
-                    timerElement.innerHTML = "⏰ 00:00:00";
-                    timerElement.style.color = "#ff6b6b";
-                    timerElement.style.background = "rgba(255,107,107,0.3)";
-        
-                    // Auto-submit trigger
-                    const event = new Event("timeup");
-                    document.dispatchEvent(event);
+                const timerEl = document.getElementById("header-timer");
+                if (!timerEl) {
+                    setTimeout(updateHeaderTimer, 500);
                     return;
                 }
         
-                const h = Math.floor(secondsLeft / 3600).toString().padStart(2, "0");
-                const m = Math.floor((secondsLeft % 3600) / 60).toString().padStart(2, "0");
-                const s = (secondsLeft % 60).toString().padStart(2, "0");
+                if (headerTimeLeft <= 0) {
+                    timerEl.innerHTML = "⏰ 00:00:00";
+                    timerEl.style.color = "red";
         
-                timerElement.innerHTML = `⏰ ${h}:${m}:${s}`;
-        
-                if (secondsLeft < 300) {
-                    timerElement.style.color = "#ff6b6b";
-                    timerElement.style.background = "rgba(255,107,107,0.3)";
+                    // Auto-submit (optional)
+                    const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
+                    if (submitButton) {
+                        submitButton.click();
+                    }
+                    return;
                 }
         
+                let h = String(Math.floor(headerTimeLeft / 3600)).padStart(2, '0');
+                let m = String(Math.floor((headerTimeLeft % 3600) / 60)).padStart(2, '0');
+                let s = String(headerTimeLeft % 60).padStart(2, '0');
+        
+                timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
+        
+                // Color change for last 5 minutes
+                if (headerTimeLeft < 300) {
+                    timerEl.style.color = "red";
+                }
+        
+                headerTimeLeft--;
                 setTimeout(updateHeaderTimer, 1000);
             }
         
             updateHeaderTimer();
         
-        })();
         </script>
 
         """, unsafe_allow_html=True)
