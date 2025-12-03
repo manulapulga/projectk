@@ -2204,54 +2204,49 @@ def show_quiz_header_with_timer():
         <div class="content-wrapper"></div>
         
         <script>
-        (function() {{
-            let secondsLeft = {seconds_left};
-            const timerElement = document.getElementById('header-timer');
-            
-            function updateHeaderTimer() {{
-                if (secondsLeft <= 0) {{
+        (function() {
+        
+            // Get end time directly from Python
+            const endTime = new Date("{{st.session_state.end_time.isoformat()}}");
+        
+            const timerElement = document.getElementById("header-timer");
+        
+            function updateHeaderTimer() {
+        
+                // Always compute remaining time from system clock
+                const now = new Date();
+                let secondsLeft = Math.floor((endTime - now) / 1000);
+        
+                if (secondsLeft <= 0) {
                     timerElement.innerHTML = "⏰ 00:00:00";
-                    timerElement.style.color = '#ff6b6b';
-                    timerElement.style.background = 'rgba(255,107,107,0.3)';
-                    
-                    // Dispatch event for auto-submit
-                    const event = new Event('timeup');
+                    timerElement.style.color = "#ff6b6b";
+                    timerElement.style.background = "rgba(255,107,107,0.3)";
+        
+                    // Auto-submit trigger
+                    const event = new Event("timeup");
                     document.dispatchEvent(event);
                     return;
-                }}
-                
-                // Calculate time components
-                const h = Math.floor(secondsLeft / 3600).toString().padStart(2, '0');
-                const m = Math.floor((secondsLeft % 3600) / 60).toString().padStart(2, '0');
-                const s = (secondsLeft % 60).toString().padStart(2, '0');
-                
-                // Update display
-                timerElement.innerHTML = `⏰ ${{h}}:${{m}}:${{s}}`;
-                
-                // Update colors for warning (5 minutes left)
-                if (secondsLeft < 300) {{
-                    timerElement.style.color = '#ff6b6b';
-                    timerElement.style.background = 'rgba(255,107,107,0.3)';
-                }}
-                
-                // Decrement seconds
-                secondsLeft--;
-                
-                // Schedule next update
+                }
+        
+                const h = Math.floor(secondsLeft / 3600).toString().padStart(2, "0");
+                const m = Math.floor((secondsLeft % 3600) / 60).toString().padStart(2, "0");
+                const s = (secondsLeft % 60).toString().padStart(2, "0");
+        
+                timerElement.innerHTML = `⏰ ${h}:${m}:${s}`;
+        
+                if (secondsLeft < 300) {
+                    timerElement.style.color = "#ff6b6b";
+                    timerElement.style.background = "rgba(255,107,107,0.3)";
+                }
+        
                 setTimeout(updateHeaderTimer, 1000);
-            }}
-            
-            // Start the timer
+            }
+        
             updateHeaderTimer();
-            
-            // Handle auto-submit event
-            document.addEventListener('timeup', function() {{
-                // Auto-submit logic
-                console.log('Time is up! Auto-submitting...');
-                // You can trigger Streamlit rerun here if needed
-            }});
-        }})();
+        
+        })();
         </script>
+
         """, unsafe_allow_html=True)
     else:
         # Show header without timer if no time limit
