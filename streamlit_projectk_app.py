@@ -2796,7 +2796,8 @@ def show_results_screen():
     st.markdown("---")
     st.subheader("📊 Performance Summary")
     
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2 = st.columns(2)
+    col3, col4 = st.columns(2)
     
     with col1:
         st.metric("Total Questions", summary["Total Questions"])
