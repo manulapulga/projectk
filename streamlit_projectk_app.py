@@ -2503,7 +2503,11 @@ def show_results_screen():
     show_litmusq_header("Test Results")
     
     # Update user progress
-    update_user_progress(summary)
+    # Save progress only once per test
+    if not st.session_state.get("progress_saved", False):
+        update_user_progress(summary)
+        st.session_state.progress_saved = True
+
     
     # Clear retest state after saving results
     clear_retest_state()
@@ -2738,6 +2742,7 @@ def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
     st.session_state.quiz_questions = sampled
     st.session_state.order = list(range(len(sampled)))
     st.session_state.answers = {}
+    st.session_state.progress_saved = False
     st.session_state.current_idx = 0
     st.session_state.submitted = False
     st.session_state.quiz_started = True
