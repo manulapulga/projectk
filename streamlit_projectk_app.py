@@ -2395,7 +2395,7 @@ def show_retest_config(original_test):
         question_count = len(unanswered_questions)
         question_indices = unanswered_questions
     
-    st.info(f"✅ **{question_count} questions** will be included in the re-test.")
+    st.markdown(f"✅ **{question_count} questions** will be included in the re-test.")
     
     # Create DataFrame from stored questions
     questions_data = original_test['questions_used']
