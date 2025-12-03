@@ -2088,218 +2088,69 @@ def get_time_color(seconds_left):
     else:
         return LITMUSQ_THEME['success']    # Green
 
-# =============================
-# Professional Test Interface
-# =============================
 def show_test_header():
-    """Display fixed ribbon at the top with timer and submit button."""
-    # CSS to fix the ribbon at the top
-    st.markdown("""
-    <style>
-    .fixed-ribbon {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        z-index: 9999;
-        background: linear-gradient(135deg, #1E3A8A, #DC2626);
-        padding: 0.8rem 1rem;
-        color: white;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 2px solid #3B82F6;
-    }
+    """Display test header with timer only. Other items moved to sidebar."""
+    # Create columns for header (only timer now)
+    col1, col2, col3 = st.columns([1, 1, 1])
     
-    .fixed-ribbon-content {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-    }
-    
-    .timer-container {
-        font-size: 24px;
-        font-weight: bold;
-        text-align: center;
-        flex-grow: 1;
-    }
-    
-    .submit-container {
-        margin-left: 2rem;
-    }
-    
-    .main-content {
-        margin-top: 80px; /* Space for fixed ribbon */
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    # Create the fixed ribbon with timer and submit button
-    if not st.session_state.submitted:
-        # Calculate time left
-        if st.session_state.end_time:
+    # Center column for timer only
+    with col2:
+        st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+        
+        if st.session_state.end_time and not st.session_state.submitted:
+            # Calculate remaining time
             time_left = st.session_state.end_time - datetime.now()
             seconds_left = int(time_left.total_seconds())
             
+            # Auto-submit when time reaches zero
             if seconds_left <= 0:
                 st.session_state.submitted = True
                 st.rerun()
-                return
+                return  # Exit early to prevent further rendering
             
-            # Create timer HTML
-            timer_html = f"""
-            <div id="timer" class="timer-container">
-                ⏰ {seconds_left // 3600:02d}:{(seconds_left % 3600) // 60:02d}:{seconds_left % 60:02d}
-            </div>
-            """
-        else:
-            timer_html = '<div class="timer-container">⏰ No Time Limit</div>'
-        
-        # Create the fixed ribbon
-        st.markdown(f"""
-        <div class="fixed-ribbon">
-            <div class="fixed-ribbon-content">
-                <div style="font-weight: bold; font-size: 1.2rem; display: flex; align-items: center;">
-                    🧪 {st.session_state.exam_name[:30]}{'...' if len(st.session_state.exam_name) > 30 else ''}
-                </div>
-                {timer_html}
-                <div class="submit-container" id="submit-container">
-                    <!-- Submit button will be injected here -->
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Add JavaScript for the timer and submit button
-        if st.session_state.end_time:
-            js_code = f"""
-            <script>
-            // Timer functionality
-            let timeLeft = {seconds_left};
-            const timerElement = document.getElementById('timer');
-            
-            function updateTimer() {{
-                if (timeLeft <= 0) {{
-                    timerElement.innerHTML = '⏰ 00:00:00';
-                    // Auto-submit when time is up
-                    document.getElementById('auto-submit-btn').click();
-                    return;
-                }}
-                
-                const hours = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
-                const minutes = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
-                const seconds = String(timeLeft % 60).padStart(2, '0');
-                
-                timerElement.innerHTML = `⏰ ${{hours}}:${{minutes}}:${{seconds}}`;
-                
-                // Change color based on time left
-                if (timeLeft < 300) {{ // Less than 5 minutes
-                    timerElement.style.color = '#FF6B6B';
-                }} else if (timeLeft < 900) {{ // Less than 15 minutes
-                    timerElement.style.color = '#FFD93D';
-                }} else {{
-                    timerElement.style.color = '#6BCB77';
-                }}
-                
-                timeLeft--;
-                setTimeout(updateTimer, 1000);
-            }}
-            
-            // Create and inject the submit button
-            const submitContainer = document.getElementById('submit-container');
-            const submitButton = document.createElement('button');
-            submitButton.id = 'auto-submit-btn';
-            submitButton.innerHTML = '📤 Submit Test';
-            submitButton.style.cssText = `
-                background-color: #DC2626;
-                color: white;
-                border: none;
-                padding: 0.5rem 1.5rem;
-                border-radius: 8px;
+            # Create timer with JavaScript
+            html_code = f"""
+            <div id="timer" style="
+                font-size: 28px;
                 font-weight: bold;
-                font-size: 1rem;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            `;
-            
-            submitButton.onmouseover = function() {{
-                this.style.backgroundColor = '#B91C1C';
-                this.style.transform = 'translateY(-2px)';
-                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-            }};
-            
-            submitButton.onmouseout = function() {{
-                this.style.backgroundColor = '#DC2626';
-                this.style.transform = 'translateY(0)';
-                this.style.boxShadow = 'none';
-            }};
-            
-            submitButton.onclick = function(e) {{
-                e.preventDefault();
-                // Trigger Streamlit button click
-                const streamlitSubmitBtn = parent.document.querySelector('[data-testid="baseButton-secondary"]');
-                if (streamlitSubmitBtn) {{
-                    streamlitSubmitBtn.click();
+                color: {'red' if seconds_left < 300 else '#FFA500' if seconds_left < 900 else 'green'};
+                text-align: center;
+            "></div>
+
+            <script>
+                let timeLeft = {seconds_left};
+
+                function updateTimer() {{
+                    if (timeLeft <= 0) {{
+                        document.getElementById('timer').innerHTML = "⏰ 00:00:00";
+                        // Trigger automatic submission when timer reaches zero
+                        const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
+                        if (submitButton) {{
+                            submitButton.click();
+                        }}
+                        return;
+                    }}
+
+                    let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                    let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                    let s = String(timeLeft % 60).padStart(2, '0');
+
+                    document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
+
+                    timeLeft--;
+                    setTimeout(updateTimer, 1000);
                 }}
-            }};
-            
-            submitContainer.appendChild(submitButton);
-            
-            // Start the timer
-            updateTimer();
+
+                updateTimer();
             </script>
             """
+            components.html(html_code, height=60)
         else:
-            js_code = """
-            <script>
-            // Create and inject the submit button for no time limit
-            const submitContainer = document.getElementById('submit-container');
-            const submitButton = document.createElement('button');
-            submitButton.id = 'auto-submit-btn';
-            submitButton.innerHTML = '📤 Submit Test';
-            submitButton.style.cssText = `
-                background-color: #DC2626;
-                color: white;
-                border: none;
-                padding: 0.5rem 1.5rem;
-                border-radius: 8px;
-                font-weight: bold;
-                font-size: 1rem;
-                cursor: pointer;
-                transition: all 0.3s ease;
-            `;
-            
-            submitButton.onmouseover = function() {
-                this.style.backgroundColor = '#B91C1C';
-                this.style.transform = 'translateY(-2px)';
-                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-            };
-            
-            submitButton.onmouseout = function() {
-                this.style.backgroundColor = '#DC2626';
-                this.style.transform = 'translateY(0)';
-                this.style.boxShadow = 'none';
-            };
-            
-            submitButton.onclick = function(e) {
-                e.preventDefault();
-                // Trigger Streamlit button click
-                const streamlitSubmitBtn = parent.document.querySelector('[data-testid="baseButton-secondary"]');
-                if (streamlitSubmitBtn) {
-                    streamlitSubmitBtn.click();
-                }
-            };
-            
-            submitContainer.appendChild(submitButton);
-            </script>
-            """
-        
-        components.html(js_code, height=0)
+            st.metric("⏰ Time Left", "No Limit")
     
-    # Add margin to main content
-    st.markdown('<div class="main-content">', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    st.markdown("---")
 
 def auto_submit_on_timeout():
     """Auto-submit the test when time is up using JavaScript."""
@@ -2366,9 +2217,6 @@ def show_quiz_screen():
     if 'question_status' not in st.session_state or not st.session_state.question_status:
         initialize_question_status()
     
-    # Show the fixed ribbon at the top
-    show_test_header()
-    
     # Auto-check for timeout and auto-submit
     if st.session_state.end_time and not st.session_state.submitted:
         time_left = st.session_state.end_time - datetime.now()
@@ -2379,6 +2227,20 @@ def show_quiz_screen():
             st.session_state.submitted = True
             st.rerun()
             return
+        
+        # Set up auto-refresh with reduced frequency
+        if seconds_left <= 0:
+            # Time's up - auto-submit immediately
+            st.session_state.submitted = True
+            st.rerun()
+        elif seconds_left < 5:  # Last minute: every 5 seconds
+            st_autorefresh(interval=1000, key="timer_refresh_last_minute")
+        elif seconds_left < 300:  # Last 5 minutes: every 60 seconds
+            st_autorefresh(interval=60000, key="timer_refresh_last_5min")
+        elif seconds_left < 1800:  # Last 30 minutes: every 5 minutes
+            st_autorefresh(interval=300000, key="timer_refresh_last_30min")
+        else:  # More than 30 minutes: every 10 minutes
+            st_autorefresh(interval=1000000, key="timer_refresh_long_exam")
     
     if st.session_state.get('show_leave_confirmation', False):
         st.sidebar.warning("Leave test? Progress will be lost.")
@@ -2393,131 +2255,15 @@ def show_quiz_screen():
                 st.session_state.show_leave_confirmation = False
                 st.rerun()
     
-    # Show question palette in sidebar
     show_question_palette()
     
-    # Show question content (this will scroll)
+    # Show question first, then header at the bottom
     if not st.session_state.submitted:
-        # REMOVE the submit button from the question interface since it's now in the fixed ribbon
-        # We'll modify show_enhanced_question_interface to remove the submit button
-        show_enhanced_question_interface_no_submit()
+        
+        show_enhanced_question_interface()
     else:
         show_results_screen()
-    
-    # Close the main content div
-    st.markdown('</div>', unsafe_allow_html=True)
 
-def show_enhanced_question_interface_no_submit():
-    """Display the current question with formatted content without submit button."""
-    df = st.session_state.quiz_questions
-    current_idx = st.session_state.current_idx
-    
-    if current_idx >= len(df):
-        st.error("Invalid question index")
-        return
-        
-    row = df.iloc[current_idx]
-    
-    if st.session_state.question_status[current_idx]['status'] == 'not_visited':
-        update_question_status(current_idx, 'not_answered')
-    
-    # Get formatted content
-    file_path = st.session_state.get('current_qb_path', '')
-    sheet_name = st.session_state.get('selected_sheet', '')
-    
-    formatted_question = get_formatted_content(
-        file_path, sheet_name, current_idx, "question", row['Question']
-    )
-    formatted_a = get_formatted_content(file_path, sheet_name, current_idx, "option_a", row.get('Option A', ''))
-    formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get('Option B', ''))
-    formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
-    formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
-    
-    # Enhanced question card with formatted content
-    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-    st.markdown(f"### Question No. {current_idx + 1}")
-    
-    # Render formatted question
-    render_formatted_content(formatted_question)
-    
-    st.markdown("---")
-    st.markdown("**Select your answer:**")
-    
-    current_answer = st.session_state.question_status[current_idx]['answer']
-    
-    # -------- RADIO BUTTON ANSWER SELECTION --------
-    options_dict = {
-        "A": formatted_a,
-        "B": formatted_b,
-        "C": formatted_c,
-        "D": formatted_d
-    }
-    
-    # None selected by default
-    default_radio_value = (
-        current_answer if current_answer in options_dict else None
-    )
-    
-    selected_option = st.radio(
-        "Choose an option:",
-        options=["A", "B", "C", "D", None],
-        format_func=lambda x: "Clear Response" if x is None else f"{x}) {options_dict[x]}",
-        index=["A", "B", "C", "D", None].index(default_radio_value),
-        key=f"radio_{current_idx}"
-    )
-    
-    # Update session state when user selects an option
-    if selected_option is not None:
-        update_question_status(current_idx, 'answered', selected_option)
-        st.session_state.answers[current_idx] = selected_option
-    
-    st.markdown("---")
-    
-    # Navigation buttons only (no submit button)
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.button(
-            "◀ Previous",
-            use_container_width=True,
-            disabled=current_idx == 0,
-            key=f"prev_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
-        )
-    
-    with col2:
-        st.button(
-            "Next ▶",
-            use_container_width=True,
-            disabled=current_idx == len(df) - 1,
-            key=f"next_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
-        )
-    
-    with col3:
-        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
-        st.button(
-            button_text,
-            use_container_width=True,
-            key=f"mark_{current_idx}",
-            type="secondary",
-            on_click=lambda: toggle_mark_review(current_idx)
-        )
-    
-    # Clear response button
-    if current_answer is not None:
-        col1, col2, col3 = st.columns([1, 1, 1])
-        with col2:
-            st.button(
-                "⛔ Clear Response",
-                use_container_width=True,
-                key=f"clear_{current_idx}",
-                type="secondary",
-                on_click=lambda: clear_response(current_idx)
-            )
-            
 # Add this function to handle auto-submits from JavaScript
 def handle_auto_submit():
     """Handle auto-submit from JavaScript timer."""
