@@ -893,6 +893,12 @@ def update_user_progress(test_results):
         progress["total_score"] += test_results["Marks Obtained"]
         progress["average_score"] = progress["total_score"] / progress["tests_taken"]
         
+        # Store detailed question data for each test
+        if 'detailed_answers' in test_results:
+            detailed_answers = test_results['detailed_answers']
+        else:
+            detailed_answers = []
+        
         # Add to test history
         test_history_entry = {
             "exam_name": test_results["Exam Name"],
@@ -901,7 +907,11 @@ def update_user_progress(test_results):
             "total_marks": test_results["Total Marks"],
             "percentage": (test_results["Marks Obtained"] / test_results["Total Marks"]) * 100,
             "correct_answers": test_results["Correct"],
-            "total_questions": test_results["Total Questions"]
+            "total_questions": test_results["Total Questions"],
+            "detailed_answers": detailed_answers,  # Store detailed answers
+            "is_retest": test_results.get("is_retest", False),  # Flag for retests
+            "original_test_id": test_results.get("original_test_id", None),  # Link to original test
+            "test_id": str(datetime.now().timestamp())  # Unique ID for each test
         }
         progress["test_history"].append(test_history_entry)
         
@@ -987,43 +997,68 @@ def show_student_dashboard():
     
     with col1:
         st.metric("Tests Taken", progress["tests_taken"])
-        st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         avg_score = progress.get("average_score", 0)
         st.metric("Average Score", f"{avg_score:.1f}")
-        st.markdown('</div>', unsafe_allow_html=True)
     
     with col3:
         total_correct = sum(entry["correct_answers"] for entry in progress["test_history"])
         total_questions = sum(entry["total_questions"] for entry in progress["test_history"])
         accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
         st.metric("Overall Accuracy", f"{accuracy:.1f}%")
-        st.markdown('</div>', unsafe_allow_html=True)
     
     with col4:
         st.metric("Achievements", len(progress.get("achievements", [])))
-        st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown("---")
     
     # Recent Test History
     if progress["test_history"]:
         st.subheader("📋 Recent Tests")
-        recent_tests = progress["test_history"][-5:]  # Last 5 tests
+        recent_tests = progress["test_history"][-10:]  # Show last 10 tests
         
-        for test in reversed(recent_tests):
+        for idx, test in enumerate(reversed(recent_tests)):
             test_date = datetime.fromisoformat(test["date"]).strftime("%Y-%m-%d %H:%M")
             percentage = test["percentage"]
             
-            col1, col2, col3, col4 = st.columns([3, 2, 2, 1])
+            # Create columns for layout
+            col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 2, 2, 1, 1])
+            
             with col1:
-                st.write(f"**{test['exam_name']}**")
+                exam_name = test['exam_name']
+                if test.get('is_retest', False):
+                    exam_name += " (Re-Test)"
+                st.write(f"**{exam_name}**")
+            
             with col2:
                 st.write(f"Score: {test['score']}/{test['total_marks']}")
+            
             with col3:
                 st.write(f"Accuracy: {percentage:.1f}%")
+            
             with col4:
                 st.write(test_date)
             
+            with col5:
+                # Take Retest button
+                if st.button("🔄", key=f"retest_{test.get('test_id', idx)}", 
+                           help="Take Re-Test"):
+                    st.session_state.retest_config = test
+                    st.session_state.current_screen = "retest_config"
+                    st.rerun()
+            
+            with col6:
+                # Delete Entry button
+                if st.button("🗑️", key=f"delete_{test.get('test_id', idx)}", 
+                           help="Delete this test entry"):
+                    if delete_test_entry(username, test.get('test_id')):
+                        st.success("Test entry deleted successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to delete test entry")
+            
+            # Progress bar
             st.progress(int(percentage))
             st.markdown("---")
     
@@ -2109,6 +2144,17 @@ def compute_results():
     attempted = sum(1 for status in st.session_state.question_status.values() 
                    if status['answer'] is not None)
     correct = int(df["Is Correct"].sum())
+    
+    # Create detailed answers list for retest functionality
+    detailed_answers = []
+    for i in range(len(df)):
+        detailed_answers.append({
+            "question_index": i,
+            "user_answer": user_ans.get(i, None),
+            "correct_answer": df.iloc[i]["Correct Option Used"],
+            "is_correct": df.iloc[i]["Is Correct"],
+            "marked": st.session_state.question_status.get(i, {}).get('marked', False)
+        })
 
     summary = {
         "Exam Name": st.session_state.exam_name,
@@ -2119,9 +2165,159 @@ def compute_results():
         "Marks Obtained": obtained,
         "Answer Key Used": "Final" if use_final else "Provisional",
         "Username": st.session_state.username,
-        "Percentage": (obtained / total * 100) if total > 0 else 0
+        "Percentage": (obtained / total * 100) if total > 0 else 0,
+        "detailed_answers": detailed_answers,
+        "is_retest": st.session_state.get('is_retest', False),
+        "original_test_id": st.session_state.get('original_test_id', None)
     }
     return df, summary
+    
+def delete_test_entry(username, test_id):
+    """Delete a specific test entry from user progress."""
+    try:
+        if db is None:
+            st.error("Firebase not initialized")
+            return False
+        
+        progress = load_user_progress(username)
+        if not progress:
+            return False
+        
+        # Find and remove the test
+        test_history = progress.get("test_history", [])
+        test_to_delete = None
+        updated_history = []
+        
+        for test in test_history:
+            if test.get("test_id") == test_id:
+                test_to_delete = test
+            else:
+                updated_history.append(test)
+        
+        if test_to_delete:
+            # Update progress statistics
+            progress["test_history"] = updated_history
+            progress["tests_taken"] = len(updated_history)
+            
+            # Recalculate total score and average
+            if updated_history:
+                progress["total_score"] = sum(t["score"] for t in updated_history)
+                progress["average_score"] = progress["total_score"] / len(updated_history)
+            else:
+                progress["total_score"] = 0
+                progress["average_score"] = 0
+            
+            # Save updated progress
+            save_user_progress(username, progress)
+            return True
+        
+        return False
+    except Exception as e:
+        st.error(f"Error deleting test entry: {e}")
+        return False
+        
+def show_retest_config(original_test):
+    """Show configuration for retest based on original test."""
+    show_litmusq_header(f"Configure Re-Test: {original_test['exam_name']}")
+    
+    # Navigation buttons
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🏠 Home", use_container_width=True, key="retest_home"):
+            st.session_state.current_screen = "home"
+            st.rerun()
+    with col2:
+        if st.button("← Back to Dashboard", use_container_width=True, key="retest_back"):
+            st.session_state.current_screen = "dashboard"
+            st.rerun()
+    
+    st.markdown(f"**Original Test Date:** {datetime.fromisoformat(original_test['date']).strftime('%Y-%m-%d %H:%M')}")
+    st.markdown(f"**Original Score:** {original_test['score']}/{original_test['total_marks']} ({original_test['percentage']:.1f}%)")
+    
+    # Analyze original test performance
+    total_questions = original_test['total_questions']
+    incorrect_questions = []
+    unanswered_questions = []
+    
+    if 'detailed_answers' in original_test:
+        for answer in original_test['detailed_answers']:
+            if not answer.get('is_correct', False):
+                incorrect_questions.append(answer['question_index'])
+            if answer.get('user_answer') is None:
+                unanswered_questions.append(answer['question_index'])
+    
+    st.markdown("---")
+    st.subheader("📊 Original Test Analysis")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Questions", total_questions)
+    with col2:
+        st.metric("Incorrect Answers", len(incorrect_questions))
+    with col3:
+        st.metric("Unanswered", len(unanswered_questions))
+    
+    st.markdown("---")
+    st.subheader("⚙️ Re-Test Configuration")
+    
+    # Retest options
+    retest_option = st.radio(
+        "Select Re-Test Type:",
+        ["All Questions", "Incorrectly Answered Questions Only", "Unanswered Questions Only"],
+        key="retest_option"
+    )
+    
+    # Calculate questions based on selection
+    if retest_option == "All Questions":
+        question_count = total_questions
+        question_indices = list(range(total_questions))
+    elif retest_option == "Incorrectly Answered Questions Only":
+        question_count = len(incorrect_questions)
+        question_indices = incorrect_questions
+    else:  # Unanswered Questions Only
+        question_count = len(unanswered_questions)
+        question_indices = unanswered_questions
+    
+    st.info(f"✅ **{question_count} questions** will be included in the re-test.")
+    
+    # Load original question bank data
+    exam_name = original_test['exam_name']
+    
+    # Find the original QB file path (you'll need to store this in test history)
+    # For now, we'll use the current session's QB if available
+    qb_data = st.session_state.get('current_qb_data', {})
+    
+    if exam_name in qb_data:
+        df_exam = qb_data[exam_name]
+        
+        # Store retest configuration in session state
+        if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
+            # Filter questions based on selection
+            if question_indices:
+                filtered_df = df_exam.iloc[question_indices].reset_index(drop=True)
+            else:
+                filtered_df = df_exam
+            
+            # Set retest flags
+            st.session_state.is_retest = True
+            st.session_state.original_test_id = original_test.get('test_id')
+            st.session_state.retest_type = retest_option
+            
+            # Start the retest
+            start_quiz(
+                filtered_df,
+                len(filtered_df),
+                st.session_state.quiz_duration,
+                st.session_state.use_final_key,
+                f"{exam_name} (Re-Test)"
+            )
+            st.session_state.current_screen = "quiz"
+            st.rerun()
+    else:
+        st.error("Original question bank not found. Please select a test from the folder view first.")
+        if st.button("Select Question Bank", use_container_width=True):
+            st.session_state.current_screen = "home"
+            st.rerun()    
 
 def show_enhanced_detailed_analysis(res_df):
     """Show detailed analysis with formatted content and question status in headings."""
@@ -2222,6 +2418,9 @@ def show_results_screen():
     
     # Update user progress
     update_user_progress(summary)
+    
+    # Clear retest state after saving results
+    clear_retest_state()
     
     # Navigation options - Add Home button
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -2466,8 +2665,26 @@ def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
     st.session_state.exam_name = exam_name
     st.session_state.quiz_duration = duration_minutes
     
+    # Preserve retest information if available
+    if hasattr(st.session_state, 'is_retest'):
+        st.session_state.is_retest = st.session_state.is_retest
+    if hasattr(st.session_state, 'original_test_id'):
+        st.session_state.original_test_id = st.session_state.original_test_id
+    if hasattr(st.session_state, 'retest_type'):
+        st.session_state.retest_type = st.session_state.retest_type
+    
     if 'question_status' in st.session_state:
         del st.session_state.question_status
+        
+def clear_retest_state():
+    """Clear retest state after test completion."""
+    if hasattr(st.session_state, 'is_retest'):
+        del st.session_state.is_retest
+    if hasattr(st.session_state, 'original_test_id'):
+        del st.session_state.original_test_id
+    if hasattr(st.session_state, 'retest_type'):
+        del st.session_state.retest_type
+        
 
 # =============================
 # Enhanced Home Screen
@@ -2705,6 +2922,7 @@ def main():
             st.session_state.folder_structure = safe_execute(scan_folder_structure) or {}
     
     # Route to appropriate screen with error handling
+    # Add this to the screen_handlers dictionary in the main() function
     screen_handlers = {
         "home": optimized_show_home_screen,
         "dashboard": lambda: safe_execute(show_student_dashboard),
@@ -2712,9 +2930,9 @@ def main():
         "folder_view": optimized_show_folder_view,
         "exam_config": lambda: safe_execute(show_exam_config_screen),
         "quiz": optimized_show_quiz_screen,
-        "question_editor": lambda: safe_execute(show_question_editor)
+        "question_editor": lambda: safe_execute(show_question_editor),
+        "retest_config": lambda: safe_execute(show_retest_config, st.session_state.get('retest_config', {}))
     }
-    
     current_screen = st.session_state.current_screen
     handler = screen_handlers.get(current_screen, optimized_show_home_screen)
     
