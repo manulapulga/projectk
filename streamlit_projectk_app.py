@@ -2165,8 +2165,8 @@ def show_quiz_header_with_timer():
         .fixed-quiz-header {{
             position: fixed;
             top: 0;
-            margin-top: 3.5rem;
             left: 0;
+            margin-top: 3.5rem;
             width: 100%;
             background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
             color: white;
@@ -2184,9 +2184,8 @@ def show_quiz_header_with_timer():
         </style>
         
         <div class="fixed-quiz-header">
-            <div style="font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
-                <span>🧪</span>
-                <span>{st.session_state.exam_name[:30]}{'...' if len(st.session_state.exam_name) > 30 else ''}</span>
+            <div style="font-weight: bold; font-size: 1.2rem;">
+                {st.session_state.exam_name}
             </div>
             <div id="header-timer" style="
                 font-size: 1.4rem;
@@ -2200,10 +2199,6 @@ def show_quiz_header_with_timer():
                 transition: all 0.3s ease;
             ">
                 ⏰ {h}:{m}:{s}
-            </div>
-            <div style="font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
-                <span>👤</span>
-                <span>{st.session_state.username}</span>
             </div>
         </div>
         
@@ -2267,6 +2262,7 @@ def show_quiz_header_with_timer():
             position: fixed;
             top: 0;
             left: 0;
+            margin-top: 3.5rem;
             width: 100%;
             background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
             color: white;
@@ -2285,7 +2281,7 @@ def show_quiz_header_with_timer():
         
         <div class="fixed-quiz-header">
             <div style="font-weight: bold; font-size: 1.2rem;">
-                🧪 LitmusQ - {st.session_state.exam_name}
+                {st.session_state.exam_name}
             </div>
             <div style="
                 font-size: 1rem;
@@ -2297,43 +2293,68 @@ def show_quiz_header_with_timer():
             ">
                 ⏰ No Time Limit
             </div>
-            <div style="font-size: 0.9rem;">
-                👤 {st.session_state.username}
-            </div>
         </div>
-        
         <div class="content-wrapper"></div>
         """, unsafe_allow_html=True)
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
     """Main quiz interface with professional layout."""
+    # Show header with timer
+    show_quiz_header_with_timer()
+    
+    # Rest of your existing code...
     if not st.session_state.quiz_started:
         st.error("Quiz not properly initialized. Returning to home.")
         st.session_state.current_screen = "home"
         st.rerun()
         return
     
-    # Show header with timer FIRST
-    show_quiz_header_with_timer()
-    
     if 'question_status' not in st.session_state or not st.session_state.question_status:
         initialize_question_status()
     
-    # Auto-check for timeout
+    # Auto-check for timeout and auto-submit
     if st.session_state.end_time and not st.session_state.submitted:
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = int(time_left.total_seconds())
         
+        # If time is up, auto-submit
         if seconds_left <= 0:
             st.session_state.submitted = True
             st.rerun()
             return
+        
+        # Set up auto-refresh with reduced frequency
+        if seconds_left <= 0:
+            # Time's up - auto-submit immediately
+            st.session_state.submitted = True
+            st.rerun()
+        elif seconds_left < 5:  # Last minute: every 5 seconds
+            st_autorefresh(interval=1000, key="timer_refresh_last_minute")
+        elif seconds_left < 300:  # Last 5 minutes: every 60 seconds
+            st_autorefresh(interval=60000, key="timer_refresh_last_5min")
+        elif seconds_left < 1800:  # Last 30 minutes: every 5 minutes
+            st_autorefresh(interval=300000, key="timer_refresh_last_30min")
+        else:  # More than 30 minutes: every 10 minutes
+            st_autorefresh(interval=1000000, key="timer_refresh_long_exam")
     
-    # Show question palette in sidebar
+    if st.session_state.get('show_leave_confirmation', False):
+        st.sidebar.warning("Leave test? Progress will be lost.")
+        col1, col2 = st.sidebar.columns(2)
+        with col1:
+            if st.button("Yes, Leave", use_container_width=True, key="confirm_leave"):
+                st.session_state.current_screen = "home"
+                st.session_state.show_leave_confirmation = False
+                st.rerun()
+        with col2:
+            if st.button("Cancel", use_container_width=True, key="cancel_leave"):
+                st.session_state.show_leave_confirmation = False
+                st.rerun()
+    
     show_question_palette()
     
-    # Show question interface
+    # Show question first, then header at the bottom
     if not st.session_state.submitted:
+        
         show_enhanced_question_interface()
     else:
         show_results_screen()
