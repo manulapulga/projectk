@@ -74,7 +74,7 @@ def inject_custom_css():
         left: 0;
         width: 100%;
         background: #ffffff;
-        padding: 6px 12px;
+        padding: 1px 1px;
         border-bottom: 2px solid #e5e7eb;
         z-index: 9999;
         display: flex;
@@ -84,7 +84,7 @@ def inject_custom_css():
     
     /* Push main content below the fixed ribbon */
     .quiz-content {{
-        margin-top: 60px !important;
+        margin-top: 20px !important;
     }}
 
 
@@ -1662,7 +1662,6 @@ def show_exam_config_screen():
 # Enhanced Question Display in Quiz
 # =============================
 def show_enhanced_question_interface():
-  
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
     current_idx = st.session_state.current_idx
