@@ -2714,6 +2714,7 @@ def show_enhanced_detailed_analysis(res_df):
             status_color = LITMUSQ_THEME['secondary']  # Red
         
         # Create expander with status in heading
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         with st.expander(
             f"Q{i+1}: {status_indicator}", 
             expanded=False
@@ -2877,8 +2878,9 @@ def show_results_screen():
     
     # Detailed analysis
     if st.session_state.get('show_detailed_analysis', False):
-        st.markdown("---")
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         st.subheader("📋 Question-wise Review")
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         show_enhanced_detailed_analysis(res_df)
         
 # =============================
