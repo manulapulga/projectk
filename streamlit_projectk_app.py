@@ -1980,8 +1980,7 @@ def show_question_palette():
     # Show exam info above the palette
     st.sidebar.markdown(f"### 📝 {st.session_state.exam_name}")
     st.sidebar.markdown(f"**Question {st.session_state.current_idx + 1} of {len(st.session_state.quiz_questions)}**")
-    st.sidebar.markdown("---")
-    
+
     # Show answered and marked counts
     if 'question_status' in st.session_state:
         total = len(st.session_state.quiz_questions)
