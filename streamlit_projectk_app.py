@@ -82,8 +82,8 @@ def inject_custom_css():
 
     /* Vertical spacing between Streamlit elements */
     .stElementContainer {{
-        margin-top: 0.1rem !important;
-        margin-bottom: 0.1rem !important;
+        margin-top: 0.2rem !important;
+        margin-bottom: 0.2rem !important;
         padding: 0 !important;
     }}
 
