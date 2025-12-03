@@ -2154,7 +2154,7 @@ def show_quiz_header_with_timer():
         st.markdown(f"""
         <div style="
             position: fixed;
-            margin-top: 4rem;
+            margin-top: 3.5rem;
             top: 0;
             left: 0;
             width: 100%;
@@ -2169,7 +2169,7 @@ def show_quiz_header_with_timer():
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         ">
             <div style="font-weight: bold; font-size: 1.2rem;">
-                🧪 LitmusQ - {st.session_state.exam_name}
+                {st.session_state.exam_name}
             </div>
             <div id="header-timer" style="
                 font-size: 1.4rem;
@@ -2182,9 +2182,6 @@ def show_quiz_header_with_timer():
                 color: {'#ff6b6b' if seconds_left < 300 else 'white'};
             ">
                 Loading timer...
-            </div>
-            <div style="font-size: 0.9rem;">
-                👤 {st.session_state.username}
             </div>
         </div>
         
