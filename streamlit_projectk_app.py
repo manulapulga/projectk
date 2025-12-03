@@ -1763,81 +1763,47 @@ def show_enhanced_question_interface():
             st.rerun()
             return  # Exit early to prevent further rendering
         
-        # Create timer with JavaScript that syncs with the header timer
+        # Create timer with JavaScript
         html_code = f"""
-        <div style="margin: 20px 0;">
-            <div id="bottom-timer" style="
-                font-size: 24px;
-                font-weight: bold;
-                color: {'red' if seconds_left < 300 else 'green'};
-                text-align: center;
-                padding: 10px;
-                background: rgba(0,0,0,0.05);
-                border-radius: 10px;
-                margin: 10px auto;
-                max-width: 300px;
-            "></div>
-        </div>
+        <div id="timer" style="
+            font-size: 24px;
+            font-weight: bold;
+            color: {'red' if seconds_left < 300 else 'green'};
+            text-align: center;
+        "></div>
 
         <script>
-            // Initialize timer with server time
-            let serverSecondsLeft = {seconds_left};
-            let startTime = Date.now();
-            
-            function updateBottomTimer() {{
-                // Calculate elapsed time since page load
-                const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-                let currentSecondsLeft = Math.max(0, serverSecondsLeft - elapsedSeconds);
-                
-                const timerEl = document.getElementById('bottom-timer');
-                
-                if (currentSecondsLeft <= 0) {{
-                    timerEl.innerHTML = "⏰ 00:00:00";
-                    timerEl.style.color = "red";
+            let timeLeft = {seconds_left};
+
+            function updateTimer() {{
+                if (timeLeft <= 0) {{
+                    document.getElementById('timer').innerHTML = "⏰ 00:00:00";
+                    // Trigger automatic submission when timer reaches zero
+                    const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
+                    if (submitButton) {{
+                        submitButton.click();
+                    }}
                     return;
                 }}
 
-                let h = String(Math.floor(currentSecondsLeft / 3600)).padStart(2, '0');
-                let m = String(Math.floor((currentSecondsLeft % 3600) / 60)).padStart(2, '0');
-                let s = String(currentSecondsLeft % 60).padStart(2, '0');
+                let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                let s = String(timeLeft % 60).padStart(2, '0');
 
-                timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
-                
-                // Update color when less than 5 minutes
-                if (currentSecondsLeft < 300) {{
-                    timerEl.style.color = 'red';
-                }} else {{
-                    timerEl.style.color = 'green';
-                }}
+                document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
 
-                setTimeout(updateBottomTimer, 1000);
+                timeLeft--;
+                setTimeout(updateTimer, 1000);
             }}
 
-            updateBottomTimer();
+            updateTimer();
         </script>
         """
-        components.html(html_code, height=80)
+        components.html(html_code, height=60)
     else:
-        st.markdown("""
-        <div style="margin: 20px 0;">
-            <div style="
-                font-size: 24px;
-                font-weight: bold;
-                color: #666;
-                text-align: center;
-                padding: 10px;
-                background: rgba(0,0,0,0.05);
-                border-radius: 10px;
-                margin: 10px auto;
-                max-width: 300px;
-            ">
-                ⏰ No Time Limit
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.metric("⏰ Time Left", "No Limit")
 
     st.markdown("</div>", unsafe_allow_html=True)
-    
 
     st.markdown("---")
 
@@ -2183,8 +2149,17 @@ def show_quiz_header_with_timer():
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = max(0, int(time_left.total_seconds()))
         
-        # Create the HTML/JS for the header timer that auto-updates every second
-        timer_html = f"""
+        # Calculate initial time display
+        h = str(seconds_left // 3600).zfill(2)
+        m = str((seconds_left % 3600) // 60).zfill(2)
+        s = str(seconds_left % 60).zfill(2)
+        
+        # Determine color based on time remaining
+        timer_color = '#ff6b6b' if seconds_left < 300 else 'white'
+        timer_bg = 'rgba(255,107,107,0.3)' if seconds_left < 300 else 'rgba(255,255,255,0.2)'
+        
+        # Create a custom HTML header with timer
+        st.markdown(f"""
         <style>
         .fixed-quiz-header {{
             position: fixed;
@@ -2192,7 +2167,7 @@ def show_quiz_header_with_timer():
             left: 0;
             margin-top: 3.5rem;
             width: 100%;
-            height: 2rem;
+            height:2rem;
             background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
             color: white;
             padding: 0.8rem 1rem;
@@ -2218,84 +2193,59 @@ def show_quiz_header_with_timer():
                 border-radius: 50px;
                 min-width: 120px;
                 text-align: center;
-                background: rgba(255, 255, 255, 0.2);
+                color: {timer_color};
                 transition: all 0.3s ease;
-                font-weight: bold;
             ">
-                ⏰ Loading...
+                ⏰ {h}:{m}:{s}
             </div>
         </div>
         
         <div class="content-wrapper"></div>
         
         <script>
-        (function() {{
-            // Initialize timer with server time
-            let serverSecondsLeft = {seconds_left};
-            let startTime = Date.now();
-            
+            let timeLeft = {seconds_left};
+
             function updateTimer() {{
-                // Calculate elapsed time since page load
-                const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
-                let currentSecondsLeft = Math.max(0, serverSecondsLeft - elapsedSeconds);
-                
                 const timerEl = document.getElementById("header-timer");
+                
                 if (!timerEl) {{
-                    setTimeout(updateTimer, 100);
+                    setTimeout(updateTimer, 500);
                     return;
                 }}
                 
-                if (currentSecondsLeft <= 0) {{
+                if (timeLeft <= 0) {{
                     timerEl.innerHTML = "⏰ 00:00:00";
                     timerEl.style.color = "red";
-                    timerEl.style.background = "rgba(255, 0, 0, 0.3)";
                     
                     // Trigger automatic submission when timer reaches zero
-                    setTimeout(function() {{
-                        const submitButtons = document.querySelectorAll('[data-testid="baseButton-secondary"]');
-                        if (submitButtons && submitButtons.length > 0) {{
-                            // Look for submit button
-                            for (let btn of submitButtons) {{
-                                if (btn.textContent.includes('Submit') || btn.textContent.includes('submit')) {{
-                                    btn.click();
-                                    break;
-                                }}
-                            }}
-                        }}
-                    }}, 1000);
-                    
+                    const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
+                    if (submitButton) {{
+                        submitButton.click();
+                    }}
                     return;
                 }}
-                
-                let h = String(Math.floor(currentSecondsLeft / 3600)).padStart(2, '0');
-                let m = String(Math.floor((currentSecondsLeft % 3600) / 60)).padStart(2, '0');
-                let s = String(currentSecondsLeft % 60).padStart(2, '0');
-                
+
+                let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                let s = String(timeLeft % 60).padStart(2, '0');
+
                 timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
                 
                 // Update color when less than 5 minutes
-                if (currentSecondsLeft < 300) {{
-                    timerEl.style.color = "#ff6b6b";
-                    timerEl.style.background = "rgba(255, 107, 107, 0.3)";
-                }} else {{
-                    timerEl.style.color = "white";
-                    timerEl.style.background = "rgba(255, 255, 255, 0.2)";
+                if (timeLeft < 300) {{
+                    timerEl.style.color = "red";
                 }}
-                
+
+                timeLeft--;
                 setTimeout(updateTimer, 1000);
             }}
-            
-            // Start the timer
-            setTimeout(updateTimer, 50);
-        }})();
+
+            updateTimer();
         </script>
-        """
-        # Use components.html to render the timer with JavaScript
-        components.html(timer_html, height=70)
-        
+        """, unsafe_allow_html=True)
     else:
         # Show header without timer if no time limit
-        timer_html = f"""
+        st.markdown(f"""
         <style>
         .fixed-quiz-header {{
             position: fixed;
@@ -2327,15 +2277,12 @@ def show_quiz_header_with_timer():
                 padding: 0.3rem 1rem;
                 border-radius: 50px;
                 color: white;
-                background: rgba(255, 255, 255, 0.2);
-                font-weight: bold;
             ">
                 ⏰ No Time Limit
             </div>
         </div>
         <div class="content-wrapper"></div>
-        """
-        components.html(timer_html, height=70)
+        """, unsafe_allow_html=True)
 
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
