@@ -300,10 +300,8 @@ def inject_custom_css():
     /* Radio option containers */
     .stRadio > div > label {{
         width: 100% !important;
-        padding: 12px 16px !important;
-        margin: 4px 0 !important;
-        border-radius: 6px !important;
-        border: 1px solid #E2E8F0 !important;
+        padding: 0px 0px !important;
+        margin: 0px 0 !important;
         background-color: white !important;
         transition: all 0.2s ease !important;
     }}
