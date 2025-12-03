@@ -354,6 +354,24 @@ def load_login_credentials():
 def authenticate_user(username, password, credentials):
     return credentials.get(username) == password
 
+def ensure_python_types(data):
+    """Ensure all data is in Python native types for Firestore compatibility."""
+    if isinstance(data, dict):
+        return {key: ensure_python_types(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [ensure_python_types(item) for item in data]
+    elif isinstance(data, (np.bool_, np.bool)):
+        return bool(data)
+    elif isinstance(data, np.integer):
+        return int(data)
+    elif isinstance(data, np.floating):
+        return float(data)
+    elif isinstance(data, np.ndarray):
+        return ensure_python_types(data.tolist())
+    elif pd.isna(data):
+        return None
+    else:
+        return data
 def show_login_screen():
     """Enhanced login screen with LitmusQ branding."""
     show_litmusq_header("Assess Better. Learn Faster.")
@@ -814,7 +832,7 @@ def initialize_user_progress(username):
         st.error(f"Error initializing user progress: {e}")
 
 def save_user_progress(username, progress_data):
-    """Save user progress to Firebase."""
+    """Save user progress to Firebase with proper type conversion."""
     try:
         if db is None:
             st.error("Firebase not initialized")
@@ -823,6 +841,9 @@ def save_user_progress(username, progress_data):
         # Add timestamp
         progress_data["last_updated"] = datetime.now().isoformat()
         
+        # Convert numpy types to Python native types before saving to Firestore
+        progress_data = convert_numpy_to_python(progress_data)
+        
         doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
         doc_ref.set(progress_data, merge=True)
         return True
@@ -830,8 +851,30 @@ def save_user_progress(username, progress_data):
         st.error(f"Error saving progress: {e}")
         return False
 
+def convert_numpy_to_python(data):
+    """Recursively convert numpy types to Python native types for Firestore compatibility."""
+    if isinstance(data, dict):
+        return {key: convert_numpy_to_python(value) for key, value in data.items()}
+    elif isinstance(data, list):
+        return [convert_numpy_to_python(item) for item in data]
+    elif isinstance(data, (np.bool_, np.bool)):
+        return bool(data)
+    elif isinstance(data, (np.integer, np.int64, np.int32, np.int16, np.int8)):
+        return int(data)
+    elif isinstance(data, (np.floating, np.float64, np.float32, np.float16)):
+        return float(data)
+    elif isinstance(data, np.ndarray):
+        return convert_numpy_to_python(data.tolist())
+    elif isinstance(data, (np.str_, np.string_)):
+        return str(data)
+    elif isinstance(data, np.datetime64):
+        # Convert numpy datetime64 to ISO string
+        return pd.Timestamp(data).isoformat()
+    else:
+        return data
+        
 def load_user_progress(username):
-    """Load user progress from Firebase."""
+    """Load user progress from Firebase and ensure Python types."""
     try:
         if db is None:
             st.error("Firebase not initialized")
@@ -841,7 +884,9 @@ def load_user_progress(username):
         doc = doc_ref.get()
         
         if doc.exists:
-            return doc.to_dict()
+            data = doc.to_dict()
+            # Ensure all data is in Python native types
+            return ensure_python_types(data)
     except Exception as e:
         st.error(f"Error loading progress: {e}")
     return None
@@ -888,10 +933,10 @@ def update_user_progress(test_results):
     progress = load_user_progress(username)
     
     if progress:
-        # Update basic stats
-        progress["tests_taken"] += 1
-        progress["total_score"] += test_results["Marks Obtained"]
-        progress["average_score"] = progress["total_score"] / progress["tests_taken"]
+        # Update basic stats with proper type conversion
+        progress["tests_taken"] = int(progress.get("tests_taken", 0)) + 1
+        progress["total_score"] = float(progress.get("total_score", 0)) + float(test_results["Marks Obtained"])
+        progress["average_score"] = float(progress["total_score"]) / float(progress["tests_taken"])
         
         # Store detailed question data for each test
         if 'detailed_answers' in test_results:
@@ -899,20 +944,25 @@ def update_user_progress(test_results):
         else:
             detailed_answers = []
         
-        # Add to test history
+        # Add to test history with proper types
         test_history_entry = {
-            "exam_name": test_results["Exam Name"],
+            "exam_name": str(test_results["Exam Name"]),
             "date": datetime.now().isoformat(),
-            "score": test_results["Marks Obtained"],
-            "total_marks": test_results["Total Marks"],
-            "percentage": (test_results["Marks Obtained"] / test_results["Total Marks"]) * 100,
-            "correct_answers": test_results["Correct"],
-            "total_questions": test_results["Total Questions"],
-            "detailed_answers": detailed_answers,  # Store detailed answers
-            "is_retest": test_results.get("is_retest", False),  # Flag for retests
-            "original_test_id": test_results.get("original_test_id", None),  # Link to original test
-            "test_id": str(datetime.now().timestamp())  # Unique ID for each test
+            "score": float(test_results["Marks Obtained"]),
+            "total_marks": float(test_results["Total Marks"]),
+            "percentage": float((test_results["Marks Obtained"] / test_results["Total Marks"]) * 100) if test_results["Total Marks"] > 0 else 0.0,
+            "correct_answers": int(test_results["Correct"]),
+            "total_questions": int(test_results["Total Questions"]),
+            "detailed_answers": detailed_answers,
+            "is_retest": bool(test_results.get("is_retest", False)),
+            "original_test_id": test_results.get("original_test_id"),
+            "test_id": str(datetime.now().timestamp())
         }
+        
+        # Ensure test_history exists
+        if "test_history" not in progress:
+            progress["test_history"] = []
+        
         progress["test_history"].append(test_history_entry)
         
         # Update achievements
@@ -991,48 +1041,57 @@ def show_student_dashboard():
         show_clear_data_section()
         return
     
-    # Key Metrics
+    # Key Metrics - ensure all values are proper Python types
     st.subheader("📈 Performance Overview")
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        st.metric("Tests Taken", progress["tests_taken"])
+        tests_taken = int(progress.get("tests_taken", 0))
+        st.metric("Tests Taken", tests_taken)
     
     with col2:
-        avg_score = progress.get("average_score", 0)
+        avg_score = float(progress.get("average_score", 0))
         st.metric("Average Score", f"{avg_score:.1f}")
     
     with col3:
-        total_correct = sum(entry["correct_answers"] for entry in progress["test_history"])
-        total_questions = sum(entry["total_questions"] for entry in progress["test_history"])
+        test_history = progress.get("test_history", [])
+        total_correct = sum(int(entry.get("correct_answers", 0)) for entry in test_history)
+        total_questions = sum(int(entry.get("total_questions", 0)) for entry in test_history)
         accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
         st.metric("Overall Accuracy", f"{accuracy:.1f}%")
     
     with col4:
-        st.metric("Achievements", len(progress.get("achievements", [])))
+        achievements = progress.get("achievements", [])
+        if isinstance(achievements, list):
+            st.metric("Achievements", len(achievements))
+        else:
+            st.metric("Achievements", 0)
     
     st.markdown("---")
     
     # Recent Test History
-    if progress["test_history"]:
+    test_history = progress.get("test_history", [])
+    if test_history:
         st.subheader("📋 Recent Tests")
-        recent_tests = progress["test_history"][-10:]  # Show last 10 tests
+        recent_tests = test_history[-10:]  # Show last 10 tests
         
         for idx, test in enumerate(reversed(recent_tests)):
-            test_date = datetime.fromisoformat(test["date"]).strftime("%Y-%m-%d %H:%M")
-            percentage = test["percentage"]
+            test_date = datetime.fromisoformat(str(test.get("date", ""))).strftime("%Y-%m-%d %H:%M")
+            percentage = float(test.get("percentage", 0))
             
             # Create columns for layout
             col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 2, 2, 1, 1])
             
             with col1:
-                exam_name = test['exam_name']
+                exam_name = str(test.get('exam_name', 'Unknown Test'))
                 if test.get('is_retest', False):
                     exam_name += " (Re-Test)"
                 st.write(f"**{exam_name}**")
             
             with col2:
-                st.write(f"Score: {test['score']}/{test['total_marks']}")
+                score = float(test.get('score', 0))
+                total_marks = float(test.get('total_marks', 0))
+                st.write(f"Score: {score:.0f}/{total_marks:.0f}")
             
             with col3:
                 st.write(f"Accuracy: {percentage:.1f}%")
@@ -1042,7 +1101,8 @@ def show_student_dashboard():
             
             with col5:
                 # Take Retest button
-                if st.button("🔄", key=f"retest_{test.get('test_id', idx)}", 
+                test_id = test.get('test_id', f"test_{idx}")
+                if st.button("🔄", key=f"retest_{test_id}", 
                            help="Take Re-Test"):
                     st.session_state.retest_config = test
                     st.session_state.current_screen = "retest_config"
@@ -1050,9 +1110,9 @@ def show_student_dashboard():
             
             with col6:
                 # Delete Entry button
-                if st.button("🗑️", key=f"delete_{test.get('test_id', idx)}", 
+                if st.button("🗑️", key=f"delete_{test_id}", 
                            help="Delete this test entry"):
-                    if delete_test_entry(username, test.get('test_id')):
+                    if delete_test_entry(username, test_id):
                         st.success("Test entry deleted successfully!")
                         st.rerun()
                     else:
@@ -1061,7 +1121,7 @@ def show_student_dashboard():
             # Progress bar
             st.progress(int(percentage))
             st.markdown("---")
-    
+
     # Achievements
     if progress.get("achievements"):
         st.subheader("🏆 Your Achievements")
@@ -2122,7 +2182,7 @@ def handle_auto_submit():
 # Enhanced Results Screen
 # =============================
 def compute_results():
-    """Compute results."""
+    """Compute results with proper type conversion."""
     df = st.session_state.quiz_questions.copy()
     use_final = st.session_state.use_final_key
     user_ans = st.session_state.answers
@@ -2138,6 +2198,7 @@ def compute_results():
         df["Marks"] = 1
         df["Score"] = np.where(df["Is Correct"], 1, 0)
 
+    # Convert to Python native types
     total = int(df["Marks"].sum())
     obtained = int(df["Score"].sum())
     
@@ -2148,26 +2209,34 @@ def compute_results():
     # Create detailed answers list for retest functionality
     detailed_answers = []
     for i in range(len(df)):
+        user_answer = user_ans.get(i, None)
+        correct_answer = df.iloc[i]["Correct Option Used"]
+        is_correct = df.iloc[i]["Is Correct"]
+        
+        # Convert numpy bool to Python bool
+        if isinstance(is_correct, (np.bool_, np.bool)):
+            is_correct = bool(is_correct)
+        
         detailed_answers.append({
-            "question_index": i,
-            "user_answer": user_ans.get(i, None),
-            "correct_answer": df.iloc[i]["Correct Option Used"],
-            "is_correct": df.iloc[i]["Is Correct"],
-            "marked": st.session_state.question_status.get(i, {}).get('marked', False)
+            "question_index": int(i),  # Ensure integer
+            "user_answer": user_answer,
+            "correct_answer": correct_answer,
+            "is_correct": is_correct,
+            "marked": bool(st.session_state.question_status.get(i, {}).get('marked', False))
         })
 
     summary = {
         "Exam Name": st.session_state.exam_name,
-        "Total Questions": len(df),
-        "Attempted": attempted,
-        "Correct": correct,
-        "Total Marks": total,
-        "Marks Obtained": obtained,
+        "Total Questions": int(len(df)),
+        "Attempted": int(attempted),
+        "Correct": int(correct),
+        "Total Marks": int(total),
+        "Marks Obtained": int(obtained),
         "Answer Key Used": "Final" if use_final else "Provisional",
         "Username": st.session_state.username,
-        "Percentage": (obtained / total * 100) if total > 0 else 0,
+        "Percentage": float((obtained / total * 100) if total > 0 else 0),
         "detailed_answers": detailed_answers,
-        "is_retest": st.session_state.get('is_retest', False),
+        "is_retest": bool(st.session_state.get('is_retest', False)),
         "original_test_id": st.session_state.get('original_test_id', None)
     }
     return df, summary
@@ -2183,6 +2252,9 @@ def delete_test_entry(username, test_id):
         if not progress:
             return False
         
+        # Convert progress data to ensure proper types
+        progress = convert_numpy_to_python(progress)
+        
         # Find and remove the test
         test_history = progress.get("test_history", [])
         test_to_delete = None
@@ -2195,17 +2267,17 @@ def delete_test_entry(username, test_id):
                 updated_history.append(test)
         
         if test_to_delete:
-            # Update progress statistics
+            # Update progress statistics with proper types
             progress["test_history"] = updated_history
-            progress["tests_taken"] = len(updated_history)
+            progress["tests_taken"] = int(len(updated_history))
             
             # Recalculate total score and average
             if updated_history:
-                progress["total_score"] = sum(t["score"] for t in updated_history)
-                progress["average_score"] = progress["total_score"] / len(updated_history)
+                progress["total_score"] = float(sum(float(t["score"]) for t in updated_history))
+                progress["average_score"] = float(progress["total_score"]) / float(len(updated_history))
             else:
-                progress["total_score"] = 0
-                progress["average_score"] = 0
+                progress["total_score"] = 0.0
+                progress["average_score"] = 0.0
             
             # Save updated progress
             save_user_progress(username, progress)
