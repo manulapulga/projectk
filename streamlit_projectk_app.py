@@ -432,19 +432,6 @@ def show_login_screen():
     """Enhanced login screen with LitmusQ branding."""
     show_litmusq_header("Assess Better. Learn Faster.")
     
-    # Add temporary CSS fix for login screen
-    st.markdown("""
-    <style>
-    div[data-testid="stAppViewContainer"] {
-        padding-top: 0rem !important;
-    }
-    .litmusq-header {
-        margin-top: 2rem !important;
-        padding-top: 0rem !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    
     credentials = load_login_credentials()
     
     if not credentials:
