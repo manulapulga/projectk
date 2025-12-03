@@ -74,7 +74,7 @@ def inject_custom_css():
 
     /* Main content container – prevents header overlap */
     .block-container {{
-        padding-top: 0.2rem !important;   /* header clearance */
+        padding-top: 0.1rem !important;   /* header clearance */
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
         padding-bottom: 1rem !important;
@@ -128,10 +128,7 @@ def inject_custom_css():
     ==========================================================*/
 
     .stRadio > div {{
-        background-color: {LITMUSQ_THEME['light_bg']};
-        padding: 1rem !important;
-        border-radius: 8px;
-        border: 1px solid #E2E8F0;
+        padding: 0rem !important;
         width: 100% !important;
     }}
 
