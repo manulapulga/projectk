@@ -2323,14 +2323,6 @@ def show_quiz_header_with_timer():
             <div style="font-size: 1rem;">
                 {st.session_state.exam_name}
             </div>
-            <div style="
-                font-size: 1rem;
-                padding: 0.3rem 1rem;
-                border-radius: 50px;
-                color: white;
-            ">
-                ⏰ No Time Limit
-            </div>
         </div>
         <div class="content-wrapper"></div>
         """, unsafe_allow_html=True)
