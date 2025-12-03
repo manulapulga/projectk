@@ -2149,8 +2149,17 @@ def show_quiz_header_with_timer():
     if st.session_state.end_time and not st.session_state.submitted:
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = max(0, int(time_left.total_seconds()))
-
-        # Ribbon Header CSS
+        
+        # Calculate initial time display
+        h = str(seconds_left // 3600).zfill(2)
+        m = str((seconds_left % 3600) // 60).zfill(2)
+        s = str(seconds_left % 60).zfill(2)
+        
+        # Determine color based on time remaining
+        timer_color = '#ff6b6b' if seconds_left < 300 else 'white'
+        timer_bg = 'rgba(255,107,107,0.3)' if seconds_left < 300 else 'rgba(255,255,255,0.2)'
+        
+        # Create a custom HTML header with timer
         st.markdown(f"""
         <style>
         .fixed-quiz-header {{
@@ -2159,7 +2168,7 @@ def show_quiz_header_with_timer():
             left: 0;
             margin-top: 3.5rem;
             width: 100%;
-            height: 2rem;
+            height:2rem;
             background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
             color: white;
             padding: 0.8rem 1rem;
@@ -2171,40 +2180,45 @@ def show_quiz_header_with_timer():
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }}
         .content-wrapper {{
-            padding-top: 70px;
+            padding-top: 70px; /* Make space for fixed header */
         }}
         </style>
-
+        
         <div class="fixed-quiz-header">
             <div style="font-size: 1rem;">
                 {st.session_state.exam_name}
             </div>
-            <div id="timer"></div>
+            <div id="header-timer" style="
+                font-size: 1rem;
+                padding: 0.3rem 1rem;
+                border-radius: 50px;
+                min-width: 120px;
+                text-align: center;
+                color: {timer_color};
+                transition: all 0.3s ease;
+            ">
+                ⏰ {h}:{m}:{s}
+            </div>
         </div>
-
+        
         <div class="content-wrapper"></div>
-        """, unsafe_allow_html=True)
-
-        # -------------------------
-        # REPLACED TIMER JAVASCRIPT
-        # -------------------------
-        html_code = f"""
+        
         <script>
             let timeLeft = {seconds_left};
 
             function updateTimer() {{
-
-                const timerEl = document.getElementById('timer');
+                const timerEl = document.getElementById("header-timer");
+                
                 if (!timerEl) {{
                     setTimeout(updateTimer, 500);
                     return;
                 }}
-
+                
                 if (timeLeft <= 0) {{
                     timerEl.innerHTML = "⏰ 00:00:00";
                     timerEl.style.color = "red";
-
-                    // Auto-submit when time expires
+                    
+                    // Trigger automatic submission when timer reaches zero
                     const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
                     if (submitButton) {{
                         submitButton.click();
@@ -2217,11 +2231,11 @@ def show_quiz_header_with_timer():
                 let s = String(timeLeft % 60).padStart(2, '0');
 
                 timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
-                timerEl.style.fontSize = "1rem";
-                timerEl.style.fontWeight = "bold";
-                timerEl.style.minWidth = "120px";
-                timerEl.style.textAlign = "center";
-                timerEl.style.color = (timeLeft < 300) ? "red" : "white";
+                
+                // Update color when less than 5 minutes
+                if (timeLeft < 300) {{
+                    timerEl.style.color = "red";
+                }}
 
                 timeLeft--;
                 setTimeout(updateTimer, 1000);
@@ -2229,12 +2243,9 @@ def show_quiz_header_with_timer():
 
             updateTimer();
         </script>
-        """
-
-        st.markdown(html_code, unsafe_allow_html=True)
-
+        """, unsafe_allow_html=True)
     else:
-        # Header without timer
+        # Show header without timer if no time limit
         st.markdown(f"""
         <style>
         .fixed-quiz-header {{
@@ -2257,18 +2268,22 @@ def show_quiz_header_with_timer():
             padding-top: 70px;
         }}
         </style>
-
+        
         <div class="fixed-quiz-header">
             <div style="font-size: 1rem;">
                 {st.session_state.exam_name}
             </div>
-            <div style="font-size: 1rem; padding: 0.3rem 1rem; border-radius: 50px;">
+            <div style="
+                font-size: 1rem;
+                padding: 0.3rem 1rem;
+                border-radius: 50px;
+                color: white;
+            ">
                 ⏰ No Time Limit
             </div>
         </div>
         <div class="content-wrapper"></div>
         """, unsafe_allow_html=True)
-
 
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
