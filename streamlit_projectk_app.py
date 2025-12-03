@@ -65,40 +65,6 @@ LITMUSQ_THEME = {
 # Custom CSS Injection
 # =============================
 def inject_custom_css():
-    # Add this to your custom CSS
-    
-    st.markdown("""
-    <style>
-    
-    /* TARGET THE MAIN CONTAINER - CRITICAL FIX */
-    .st-emotion-cache-zy6yx3 {{
-        padding: 1rem 0.5rem 1rem !important;
-        max-width: 100% !important;
-    }}
-    
-    /* Reduce default Streamlit padding */
-    .main .block-container {
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-    }
-    
-    /* Reduce spacing in question cards */
-    .question-card {
-        padding: 0.75rem !important;
-        margin-bottom: 0.5rem !important;
-    }
-    
-    /* Reduce spacing between elements */
-    .stMarkdown {
-        margin-bottom: 0.25rem !important;
-    }
-    
-    /* Reduce spacing in columns */
-    [data-testid="column"] {
-        padding: 0.25rem !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
     st.markdown(f"""
     <style>    
     .main .block-container {{
@@ -1611,17 +1577,14 @@ def show_enhanced_question_interface():
     formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
     formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
     
-    # Enhanced question card with MINIMAL spacing
-    st.markdown(f"### Question No. {current_idx + 1}")
+    # Enhanced question card with formatted content
+    st.markdown(f"###Question No. {current_idx + 1}")
     
-    # Render formatted question with less spacing
-    st.markdown("<div style='margin-top: -0.5rem;'>", unsafe_allow_html=True)
+    # Render formatted question
     render_formatted_content(formatted_question)
-    st.markdown("</div>", unsafe_allow_html=True)
     
-    st.markdown("<div style='margin-top: 0.5rem;'>", unsafe_allow_html=True)
+    st.markdown("---")
     st.markdown("**Select your answer:**")
-    st.markdown("</div>", unsafe_allow_html=True)
     
     current_answer = st.session_state.question_status[current_idx]['answer']
     
@@ -1674,8 +1637,7 @@ def show_enhanced_question_interface():
             st.session_state.answers[current_idx] = "D"
             st.rerun()
     
-    # Add minimal spacing between options and action buttons
-    st.markdown("<div style='margin-top: 0.5rem;'>", unsafe_allow_html=True)
+    st.markdown("---")
     
     # Enhanced action buttons
     col1, col2, col3, col4, col5 = st.columns(5)
@@ -1727,11 +1689,8 @@ def show_enhanced_question_interface():
             type="secondary",
             on_click=lambda: setattr(st.session_state, 'submitted', True)
         )
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Timer display
-    st.markdown("<div style='text-align:center; margin-top: 0.5rem;'>", unsafe_allow_html=True)
+        
+    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
     if st.session_state.end_time and not st.session_state.submitted:
         # Calculate remaining time
@@ -1785,6 +1744,8 @@ def show_enhanced_question_interface():
         st.metric("⏰ Time Left", "No Limit")
 
     st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
 
 # =============================
 # Professional Test Interface
