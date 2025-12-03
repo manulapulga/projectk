@@ -775,9 +775,21 @@ def show_question_editing_interface(question_row, question_index, file_path, she
 
 def get_formatted_content(file_path, sheet_name, question_index, field, original_content):
     """Get formatted content if available, otherwise return original."""
-    formatted_questions = load_formatted_questions()
-    key = get_question_key(file_path, sheet_name, question_index, field)
-    return formatted_questions.get(key, original_content)
+    # For retests, we might not have the original file path
+    if hasattr(st.session_state, 'is_retest') and st.session_state.is_retest:
+        # Try to get from formatted questions cache first
+        formatted_questions = load_formatted_questions()
+        key = get_question_key(file_path, sheet_name, question_index, field)
+        formatted_content = formatted_questions.get(key, original_content)
+        
+        # If not found in formatted questions, use the original content
+        # (which for retests should be the stored question content)
+        return formatted_content
+    else:
+        # Original behavior for non-retests
+        formatted_questions = load_formatted_questions()
+        key = get_question_key(file_path, sheet_name, question_index, field)
+        return formatted_questions.get(key, original_content)
 
 # =============================
 # Firebase User Progress & Analytics
@@ -958,6 +970,23 @@ def update_user_progress(test_results):
         else:
             detailed_answers = []
         
+        # Get the actual questions used in this test
+        questions_used = []
+        df = st.session_state.quiz_questions
+        
+        for i in range(len(df)):
+            row = df.iloc[i]
+            questions_used.append({
+                "question_index": int(i),
+                "question_text": str(row.get('Question', '')),
+                "option_a": str(row.get('Option A', '')),
+                "option_b": str(row.get('Option B', '')),
+                "option_c": str(row.get('Option C', '')),
+                "option_d": str(row.get('Option D', '')),
+                "correct_option": str(test_results.get('detailed_answers', [{}])[i].get('correct_answer', '') if i < len(test_results.get('detailed_answers', [])) else ''),
+                "explanation": str(row.get('Explanation', ''))
+            })
+        
         # Add to test history with proper types
         test_history_entry = {
             "exam_name": str(test_results["Exam Name"]),
@@ -968,8 +997,10 @@ def update_user_progress(test_results):
             "correct_answers": int(test_results["Correct"]),
             "total_questions": int(test_results["Total Questions"]),
             "detailed_answers": detailed_answers,
+            "questions_used": questions_used,  # Store the actual questions
             "is_retest": bool(test_results.get("is_retest", False)),
             "original_test_id": test_results.get("original_test_id"),
+            "retest_type": test_results.get("retest_type", "full"),  # Store retest type
             "test_id": str(datetime.now().timestamp())
         }
         
@@ -2234,7 +2265,6 @@ def compute_results():
             "is_correct": is_correct,
             "marked": bool(st.session_state.question_status.get(i, {}).get('marked', False))
         })
-
     summary = {
         "Exam Name": st.session_state.exam_name,
         "Total Questions": int(len(df)),
@@ -2247,7 +2277,8 @@ def compute_results():
         "Percentage": float((obtained / total * 100) if total > 0 else 0),
         "detailed_answers": detailed_answers,
         "is_retest": bool(st.session_state.get('is_retest', False)),
-        "original_test_id": st.session_state.get('original_test_id', None)
+        "original_test_id": st.session_state.get('original_test_id', None),
+        "retest_type": st.session_state.get('retest_type', 'full')  # Add this line
     }
     return df, summary
     
@@ -2316,6 +2347,12 @@ def show_retest_config(original_test):
     st.markdown(f"**Original Test Date:** {datetime.fromisoformat(original_test['date']).strftime('%Y-%m-%d %H:%M')}")
     st.markdown(f"**Original Score:** {original_test['score']}/{original_test['total_marks']} ({original_test['percentage']:.1f}%)")
     
+    # Check if we have stored questions
+    if 'questions_used' not in original_test or not original_test['questions_used']:
+        st.error("Original questions data not available. Cannot create retest.")
+        st.info("Note: This feature requires tests taken after this update.")
+        return
+    
     # Analyze original test performance
     total_questions = original_test['total_questions']
     incorrect_questions = []
@@ -2362,39 +2399,54 @@ def show_retest_config(original_test):
     
     st.info(f"✅ **{question_count} questions** will be included in the re-test.")
     
-    # Load original question bank data
-    exam_name = original_test['exam_name']
+    # Create DataFrame from stored questions
+    questions_data = original_test['questions_used']
     
-    # Find the original QB file path (you'll need to store this in test history)
-    # For now, we'll use the current session's QB if available
-    qb_data = st.session_state.get('current_qb_data', {})
+    # Convert to DataFrame format
+    questions_list = []
+    for q_data in questions_data:
+        questions_list.append({
+            'Question': q_data.get('question_text', ''),
+            'Option A': q_data.get('option_a', ''),
+            'Option B': q_data.get('option_b', ''),
+            'Option C': q_data.get('option_c', ''),
+            'Option D': q_data.get('option_d', ''),
+            'Explanation': q_data.get('explanation', ''),
+            'Correct Option (Final Answer Key)': q_data.get('correct_option', '')
+        })
     
-    if exam_name in qb_data:
-        df_exam = qb_data[exam_name]
+    df_questions = pd.DataFrame(questions_list)
+    
+    # Store retest configuration in session state
+    if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
+        # Filter questions based on selection
+        if question_indices:
+            filtered_df = df_questions.iloc[question_indices].reset_index(drop=True)
+        else:
+            filtered_df = df_questions
         
-        # Store retest configuration in session state
-        if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
-            # Filter questions based on selection
-            if question_indices:
-                filtered_df = df_exam.iloc[question_indices].reset_index(drop=True)
-            else:
-                filtered_df = df_exam
-            
-            # Set retest flags
-            st.session_state.is_retest = True
-            st.session_state.original_test_id = original_test.get('test_id')
-            st.session_state.retest_type = retest_option
-            
-            # Start the retest
-            start_quiz(
-                filtered_df,
-                len(filtered_df),
-                st.session_state.quiz_duration,
-                st.session_state.use_final_key,
-                f"{exam_name} (Re-Test)"
-            )
-            st.session_state.current_screen = "quiz"
-            st.rerun()
+        # Set retest flags
+        st.session_state.is_retest = True
+        st.session_state.original_test_id = original_test.get('test_id')
+        st.session_state.retest_type = retest_option
+        
+        # Get exam name
+        exam_name = original_test['exam_name']
+        if original_test.get('is_retest', False):
+            # This is a retest of a retest, add level indicator
+            retest_type = original_test.get('retest_type', 'full')
+            exam_name = f"{exam_name} ({retest_option} Re-Test)"
+        
+        # Start the retest
+        start_quiz(
+            filtered_df,
+            len(filtered_df),
+            st.session_state.quiz_duration,
+            st.session_state.use_final_key,
+            exam_name
+        )
+        st.session_state.current_screen = "quiz"
+        st.rerun()
     else:
         st.error("Original question bank not found. Please select a test from the folder view first.")
         if st.button("Select Question Bank", use_container_width=True):
@@ -2498,13 +2550,16 @@ def show_results_screen():
     
     show_litmusq_header("Test Results")
     
+    # Add retest type to summary if applicable
+    if hasattr(st.session_state, 'retest_type'):
+        summary['retest_type'] = st.session_state.retest_type
+    
     # Update user progress
     # Save progress only once per test
     if not st.session_state.get("progress_saved", False):
         update_user_progress(summary)
         st.session_state.progress_saved = True
 
-    
     # Clear retest state after saving results
     clear_retest_state()
     
