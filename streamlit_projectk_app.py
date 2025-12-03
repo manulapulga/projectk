@@ -88,9 +88,9 @@ def inject_custom_css():
     .stVerticalBlock,
     .st-emotion-cache-tn0cau,
     .e1wguzas3 {{
-        padding: 0 !important;
-        margin: 10px !important;
-        gap: 0.1rem !important;
+        padding: 5px !important;
+        margin: 50px !important;
+        gap: 0.5rem !important;
     }}
     
     /* Target element containers */
