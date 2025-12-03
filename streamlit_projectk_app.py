@@ -1039,7 +1039,6 @@ def show_clear_data_section():
             "<p style='color: #286b33; font-weight: 600;'>Note: Your login credentials will remain unchanged. Only your performance data will be deleted.</p>",
             unsafe_allow_html=True
         )
-    st.write("This will permanently delete all your test history, achievements, and performance statistics. This action cannot be undone.")
 
 def show_student_dashboard():
     """Display student dashboard with progress analytics."""
