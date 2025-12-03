@@ -193,7 +193,7 @@ def inject_custom_css():
     .litmusq-header,
     .question-card {{
         margin: 0.5rem 0 !important;
-    }
+    }}
     
     .main .block-container {{
         padding-top: 2rem;
