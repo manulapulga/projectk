@@ -2375,8 +2375,6 @@ def show_retest_config(original_test):
     with col3:
         st.metric("Unanswered", len(unanswered_questions))
     
-    st.subheader("⚙️ Re-Test Configuration")
-    
     # Retest options
     retest_option = st.radio(
         "Select Re-Test Type:",
