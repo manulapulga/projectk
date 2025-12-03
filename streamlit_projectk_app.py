@@ -2165,6 +2165,7 @@ def show_quiz_header_with_timer():
         .fixed-quiz-header {{
             position: fixed;
             top: 0;
+            margin-top: 3.5rem;
             left: 0;
             width: 100%;
             background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
