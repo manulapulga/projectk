@@ -2235,7 +2235,9 @@ def show_quiz_screen():
     """Main quiz interface with professional layout."""
     # Show header with timer
     show_quiz_header_with_timer()
-        if not st.session_state.quiz_started:
+    
+    # Rest of your existing code...
+    if not st.session_state.quiz_started:
         st.error("Quiz not properly initialized. Returning to home.")
         st.session_state.current_screen = "home"
         st.rerun()
