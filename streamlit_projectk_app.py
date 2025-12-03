@@ -2922,7 +2922,7 @@ def clear_retest_state():
 def show_home_screen():
     """Display the main folder navigation."""
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
-    show_litmusq_header("Test Results")
+    show_litmusq_header("Select Exam")
 
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
