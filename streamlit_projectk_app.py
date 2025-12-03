@@ -2365,7 +2365,6 @@ def show_retest_config(original_test):
             if answer.get('user_answer') is None:
                 unanswered_questions.append(answer['question_index'])
     
-    st.markdown("---")
     st.subheader("📊 Original Test Analysis")
     
     col1, col2, col3 = st.columns(3)
@@ -2376,7 +2375,6 @@ def show_retest_config(original_test):
     with col3:
         st.metric("Unanswered", len(unanswered_questions))
     
-    st.markdown("---")
     st.subheader("⚙️ Re-Test Configuration")
     
     # Retest options
