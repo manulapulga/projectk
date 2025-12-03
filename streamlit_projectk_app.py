@@ -220,9 +220,7 @@ def inject_custom_css():
     }}
 
     .stRadio > div > label:has(input:checked) {{
-        background-color: {LITMUSQ_THEME['light_bg']} !important;
-        border-width: 2px !important;
-        border-color: {LITMUSQ_THEME['primary']} !important;
+        border-width: 0px !important;
     }}
 
 
