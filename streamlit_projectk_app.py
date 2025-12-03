@@ -90,7 +90,7 @@ def inject_custom_css():
     .e1wguzas3 {{
         padding: 5px !important;
         margin: 50px !important;
-        gap: 1E293Brem !important;
+        gap: 0.1rem !important;
     }}
     
     /* Target element containers */
