@@ -3019,8 +3019,6 @@ def quick_actions_panel():
         st.session_state.current_screen = "guide"
         st.rerun()
         
-    st.sidebar.markdown("---")
-
 # =============================
 # Enhanced Initialization
 # =============================
