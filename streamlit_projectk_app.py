@@ -103,7 +103,7 @@ def inject_custom_css():
     
     /* Specifically target the first element container after CSS */
     .stElementContainer:first-of-type {{
-        margin-top: 1rem !important;
+        margin-top: 1.5rem !important;
         padding-top: 0 !important;
     }}
     
