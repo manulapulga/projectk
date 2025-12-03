@@ -2205,28 +2205,26 @@ def show_quiz_header_with_timer():
         
         <script>
 
-            // Use the same logic as the bottom timer
             let headerTimeLeft = {seconds_left};
         
-            function updateHeaderTimer() {
+            function updateHeaderTimer() {{
         
                 const timerEl = document.getElementById("header-timer");
-                if (!timerEl) {
+                if (!timerEl) {{
                     setTimeout(updateHeaderTimer, 500);
                     return;
-                }
+                }}
         
-                if (headerTimeLeft <= 0) {
+                if (headerTimeLeft <= 0) {{
                     timerEl.innerHTML = "⏰ 00:00:00";
                     timerEl.style.color = "red";
         
-                    // Auto-submit (optional)
                     const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
-                    if (submitButton) {
+                    if (submitButton) {{
                         submitButton.click();
-                    }
+                    }}
                     return;
-                }
+                }}
         
                 let h = String(Math.floor(headerTimeLeft / 3600)).padStart(2, '0');
                 let m = String(Math.floor((headerTimeLeft % 3600) / 60)).padStart(2, '0');
@@ -2234,14 +2232,13 @@ def show_quiz_header_with_timer():
         
                 timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
         
-                // Color change for last 5 minutes
-                if (headerTimeLeft < 300) {
+                if (headerTimeLeft < 300) {{
                     timerEl.style.color = "red";
-                }
+                }}
         
                 headerTimeLeft--;
                 setTimeout(updateHeaderTimer, 1000);
-            }
+            }}
         
             updateHeaderTimer();
         
