@@ -958,29 +958,9 @@ def update_user_progress(test_results):
         else:
             detailed_answers = []
         
-        # Count retests for this original test
-        retest_count = 0
-        is_retest = test_results.get("is_retest", False)
-        original_test_id = test_results.get("original_test_id")
-        
-        if is_retest and original_test_id:
-            for test in progress.get("test_history", []):
-                if test.get("original_test_id") == original_test_id:
-                    retest_count += 1
-        
-        # Create exam name with retest numbering
-        exam_name = str(test_results["Exam Name"])
-        if is_retest:
-            if " (Re-Test" in exam_name:
-                # Extract base name
-                base_name = exam_name.split(" (Re-Test")[0]
-                exam_name = f"{base_name} (Re-Test {retest_count + 1})"
-            else:
-                exam_name = f"{exam_name} (Re-Test {retest_count + 1})"
-        
         # Add to test history with proper types
         test_history_entry = {
-            "exam_name": exam_name,  # Use the properly formatted name
+            "exam_name": str(test_results["Exam Name"]),
             "date": datetime.now().isoformat(),
             "score": float(test_results["Marks Obtained"]),
             "total_marks": float(test_results["Total Marks"]),
@@ -988,8 +968,8 @@ def update_user_progress(test_results):
             "correct_answers": int(test_results["Correct"]),
             "total_questions": int(test_results["Total Questions"]),
             "detailed_answers": detailed_answers,
-            "is_retest": bool(is_retest),
-            "original_test_id": original_test_id,
+            "is_retest": bool(test_results.get("is_retest", False)),
+            "original_test_id": test_results.get("original_test_id"),
             "test_id": str(datetime.now().timestamp())
         }
         
@@ -2324,16 +2304,7 @@ def delete_test_entry(username, test_id):
         
 def show_retest_config(original_test):
     """Show configuration for retest based on original test."""
-    # Extract base exam name (remove any retest suffix)
-    original_exam_name = original_test['exam_name']
-    if " (Re-Test" in original_exam_name:
-        base_name = original_exam_name.split(" (Re-Test")[0]
-        display_name = base_name
-    else:
-        base_name = original_exam_name
-        display_name = original_exam_name
-    
-    show_litmusq_header(f"Configure Re-Test: {display_name}")
+    show_litmusq_header(f"Configure Re-Test: {original_test['exam_name']}")
     
     # Navigation buttons
     col1, col2 = st.columns(2)
@@ -2396,10 +2367,10 @@ def show_retest_config(original_test):
     st.info(f"✅ **{question_count} questions** will be included in the re-test.")
     
     # Load original question bank data
-    # Use base_name instead of original_exam_name
-    exam_name = base_name
+    exam_name = original_test['exam_name']
     
-    # Find the original QB file path
+    # Find the original QB file path (you'll need to store this in test history)
+    # For now, we'll use the current session's QB if available
     qb_data = st.session_state.get('current_qb_data', {})
     
     if exam_name in qb_data:
@@ -2418,14 +2389,13 @@ def show_retest_config(original_test):
             st.session_state.original_test_id = original_test.get('test_id')
             st.session_state.retest_type = retest_option
             
-            # Start the retest with base exam name
-            # The numbering will be added in update_user_progress
+            # Start the retest
             start_quiz(
                 filtered_df,
                 len(filtered_df),
                 st.session_state.quiz_duration,
                 st.session_state.use_final_key,
-                exam_name  # Pass base name without retest suffix
+                f"{exam_name} (Re-Test)"
             )
             st.session_state.current_screen = "quiz"
             st.rerun()
@@ -2433,7 +2403,7 @@ def show_retest_config(original_test):
         st.error("Original question bank not found. Please select a test from the folder view first.")
         if st.button("Select Question Bank", use_container_width=True):
             st.session_state.current_screen = "home"
-            st.rerun()
+            st.rerun()    
 
 def show_enhanced_detailed_analysis(res_df):
     """Show detailed analysis with formatted content and question status in headings."""
@@ -2778,19 +2748,7 @@ def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
         else None
     )
     st.session_state.use_final_key = use_final_key
-    
-    # Store base exam name (without retest suffix)
-    # This will be modified in update_user_progress if it's a retest
-    if st.session_state.get('is_retest', False):
-        # Remove any existing retest suffix
-        if " (Re-Test" in exam_name:
-            base_name = exam_name.split(" (Re-Test")[0]
-            st.session_state.exam_name = base_name
-        else:
-            st.session_state.exam_name = exam_name
-    else:
-        st.session_state.exam_name = exam_name
-    
+    st.session_state.exam_name = exam_name
     st.session_state.quiz_duration = duration_minutes
     
     # Preserve retest information if available
