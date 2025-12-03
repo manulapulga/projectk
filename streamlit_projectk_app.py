@@ -90,8 +90,8 @@ def inject_custom_css():
     /* prevent widget crowding */
     .stMarkdown, .stRadio, .stButton, .stSelectbox,
     .stNumberInput, .stTextInput, .stTextArea, .stFileUploader {{
-        margin-top: 0.1rem !important;
-        margin-bottom: 0.1rem !important;
+        margin-top: 0rem !important;
+        margin-bottom: 0rem !important;
     }}
 
     /* fix vertical block spacing safely */
