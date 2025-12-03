@@ -74,6 +74,7 @@ def inject_custom_css():
     .e4man114 {{
         padding: 0.25rem 0.1rem 0.25rem !important;
         margin: 0 !important;
+        margin-top: 0.1rem !important;
     }}
     
     /* Target all containers that might have padding */
