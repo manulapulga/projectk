@@ -1010,7 +1010,6 @@ def update_achievements(progress, test_results):
 def show_clear_data_section():
     """Show section to clear performance data."""
     st.markdown("---")
-    st.subheader("🗑️ Data Management")
     # Confirmation workflow
     if not st.session_state.get('show_clear_confirmation', False):
         if st.button("🚮 Clear All My Performance Data", type="secondary", key="clear_data_init"):
