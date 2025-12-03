@@ -74,7 +74,7 @@ def inject_custom_css():
 
     /* Main content container – prevents header overlap */
     .block-container {{
-        padding-top: 0.1rem !important;   /* header clearance */
+        padding-top: 0.2rem !important;   /* header clearance */
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
         padding-bottom: 1rem !important;
@@ -128,14 +128,19 @@ def inject_custom_css():
     ==========================================================*/
 
     .stRadio > div {{
-        padding: 0rem !important;
+        background-color: {LITMUSQ_THEME['light_bg']};
+        padding: 1rem !important;
+        border-radius: 8px;
+        border: 1px solid #E2E8F0;
         width: 100% !important;
     }}
 
     .stRadio > div > label {{
         width: 100% !important;
-        margin: 0rem 0 !important;
-        padding: 0rem !important;
+        margin: 0.2rem 0 !important;
+        padding: 0.5rem !important;
+        border-radius: 6px;
+        background-color: white !important;
         transition: all 0.2s ease;
         border: 1px solid transparent !important;
     }}
@@ -333,7 +338,6 @@ def inject_custom_css():
 
     </style>
     """, unsafe_allow_html=True)
-
     
 # =============================
 # Firebase Formatted Questions Functions
