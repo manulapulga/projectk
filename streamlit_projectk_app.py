@@ -1416,7 +1416,6 @@ def show_exam_config_screen():
     st.markdown("---")
     
     # Configuration options
-    st.subheader("⚙️ Test Configuration")
     use_final_key = True
     
     with st.expander("🎛️ Advanced Options"):
