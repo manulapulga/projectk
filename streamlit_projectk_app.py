@@ -137,7 +137,7 @@ def inject_custom_css():
         margin: 0rem 0 !important;
         padding: 0rem !important;
         transition: all 0.2s ease;
-        border: 2px solid transparent !important;
+        border: 1px solid transparent !important;
     }}
 
     .stRadio > div > label:hover {{
@@ -2166,7 +2166,6 @@ def show_quiz_header_with_timer():
             top: 0;
             left: 0;
             margin-top: 3.5rem;
-            margin-bottom:0.2rem;
             width: 100%;
             height:2rem;
             background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
