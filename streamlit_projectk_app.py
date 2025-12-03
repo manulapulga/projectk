@@ -876,6 +876,12 @@ def ensure_python_types(data):
         return float(data)
     elif isinstance(data, np.ndarray):
         return ensure_python_types(data.tolist())
+    elif hasattr(np, 'string_') and isinstance(data, np.string_):
+        # For older versions of NumPy
+        return str(data)
+    elif hasattr(np, 'bytes_') and isinstance(data, np.bytes_):
+        # For NumPy 2.0+
+        return data.decode('utf-8') if isinstance(data, bytes) else str(data)
     elif pd.isna(data):
         return None
     else:
