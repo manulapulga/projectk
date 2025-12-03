@@ -1023,13 +1023,13 @@ def show_clear_data_section():
         
         col1, col2 = st.columns([1, 1])
         with col1:
-            if st.button("✅ Yes, Delete Everything", type="primary", key="confirm_clear"), use_container_width="True":
+            if st.button("✅ Yes, Delete Everything", type="primary", key="confirm_clear", use_container_width="True"):
                 success = clear_user_progress(st.session_state.username)
                 st.session_state.show_clear_confirmation = False
                 if success:
                     st.rerun()
         with col2:
-            if st.button("❌ Cancel", key="cancel_clear"), use_container_width="True":
+            if st.button("❌ Cancel", key="cancel_clear", use_container_width="True"):
                 st.session_state.show_clear_confirmation = False
                 st.rerun()
         st.markdown(
