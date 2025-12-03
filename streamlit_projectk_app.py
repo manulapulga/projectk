@@ -1260,11 +1260,12 @@ def show_student_dashboard():
             
             # Progress bar
             st.progress(int(percentage))
-            st.markdown("---")
 
     # Achievements
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     if progress.get("achievements"):
         st.subheader("🏆 Your Achievements")
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         achievement_data = {
             "first_test": {"emoji": "🎯", "name": "First Test", "desc": "Completed your first test"},
             "perfect_score": {"emoji": "🏆", "name": "Perfect Score", "desc": "Scored 100% on a test"},
