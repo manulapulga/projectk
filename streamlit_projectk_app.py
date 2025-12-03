@@ -195,6 +195,26 @@ def inject_custom_css():
         margin: 0.5rem 0 !important;
     }}
     
+    st.markdown("""
+    <style>
+    /* Make radio list plain */
+    .stRadio > div { 
+        border: none !important;
+        padding: 0 !important;
+        background: none !important;
+    }
+    
+    /* Plain radio items */
+    .stRadio label {
+        margin: 2px 0 !important;
+        padding: 0 !important;
+        background: none !important;
+        border: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    
     .main .block-container {{
         padding-top: 2rem;
     }}
