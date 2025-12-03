@@ -2921,8 +2921,8 @@ def clear_retest_state():
 def show_home_screen():
     """Display the main folder navigation."""
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
-    st.subheader("Pick Your Test")
-    
+    st.markdown("<h3 style='text-align:center;'>Pick Your Test</h3>", unsafe_allow_html=True)
+
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
         display_folder_navigation(folder_structure)
