@@ -69,6 +69,13 @@ def inject_custom_css():
     
     st.markdown("""
     <style>
+    
+    /* TARGET THE MAIN CONTAINER - CRITICAL FIX */
+    .st-emotion-cache-zy6yx3 {{
+        padding: 1rem 0.5rem 1rem !important;
+        max-width: 100% !important;
+    }}
+    
     /* Reduce default Streamlit padding */
     .main .block-container {
         padding-top: 1rem !important;
