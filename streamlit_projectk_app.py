@@ -75,8 +75,8 @@ def inject_custom_css():
     /* Main content container – prevents header overlap */
     .block-container {{
         padding-top: 0.1rem !important;   /* header clearance */
-        padding-left: 0.1rem !important;
-        padding-right: 0.1rem !important;
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
         padding-bottom: 1rem !important;
     }}
 
@@ -90,21 +90,21 @@ def inject_custom_css():
     /* prevent widget crowding */
     .stMarkdown, .stRadio, .stButton, .stSelectbox,
     .stNumberInput, .stTextInput, .stTextArea, .stFileUploader {{
-        margin-top: 0.1rem !important;
-        margin-bottom: 0.1rem !important;
+        margin-top: 0.3rem !important;
+        margin-bottom: 0.3rem !important;
     }}
 
     /* fix vertical block spacing safely */
     .stVerticalBlock {{
-        margin: 0.1rem 0 !important;
+        margin: 0.4rem 0 !important;
         padding: 0 !important;
-        gap: 0.1rem !important;
+        gap: 0.4rem !important;
     }}
 
     /* headings */
     h1, h2, h3, h4, h5, h6 {{
-        margin-top: 0.1rem !important;
-        margin-bottom: 0.1rem !important;
+        margin-top: 0.4rem !important;
+        margin-bottom: 0.4rem !important;
         padding: 0 !important;
     }}
 
@@ -113,12 +113,12 @@ def inject_custom_css():
     .stMarkdown ul,
     .stMarkdown ol,
     .stMarkdown li {{
-        margin: 0.1rem 0 !important;
+        margin: 0.2rem 0 !important;
     }}
 
     /* horizontal rule */
     hr {{
-        margin: 0.1rem 0 !important;
+        margin: 0.3rem 0 !important;
     }}
 
 
@@ -162,7 +162,7 @@ def inject_custom_css():
         color: white !important;
         border: none !important;
         border-radius: 8px !important;
-        padding: 0.1rem 1rem !important;
+        padding: 0.5rem 1rem !important;
         font-weight: 500 !important;
         transition: all 0.25s ease !important;
     }}
@@ -184,7 +184,7 @@ def inject_custom_css():
         color: {LITMUSQ_THEME['primary']};
         border: 2px solid {LITMUSQ_THEME['primary']};
         border-radius: 8px;
-        padding: 0.1rem 1rem;
+        padding: 0.5rem 1rem;
         font-weight: 500;
     }}
 
@@ -198,7 +198,7 @@ def inject_custom_css():
         background-color: {LITMUSQ_THEME['secondary']};
         color: white !important;
         border-radius: 8px;
-        padding: 0.1rem 0.1rem;
+        padding: 0.5rem 1rem;
         font-weight: 500;
         border: none !important;
     }}
@@ -217,10 +217,10 @@ def inject_custom_css():
         background-color: {LITMUSQ_THEME['light_bg']} !important;
         border: 1px solid {LITMUSQ_THEME['primary']} !important;
         border-radius: 8px !important;
-        padding: 0.1rem !important;
+        padding: 0.9rem !important;
         font-weight: 600 !important;
         color: {LITMUSQ_THEME['primary']} !important;
-        margin-bottom: 0.1rem !important;
+        margin-bottom: 0.5rem !important;
     }}
 
     .streamlit-expanderHeader:hover {{
@@ -233,7 +233,7 @@ def inject_custom_css():
         border: 1px solid #E2E8F0;
         border-top: none !important;
         border-radius: 0 0 8px 8px !important;
-        padding: 0.1rem !important;
+        padding: 1rem !important;
     }}
 
 
@@ -249,10 +249,10 @@ def inject_custom_css():
             {LITMUSQ_THEME['secondary']}
         );
         color: white;
-        padding: 0.1rem;
+        padding: 0.8rem;
         border-radius: 10px;
         text-align: center;
-        margin-bottom: 0.1rem;
+        margin-bottom: 1rem;
     }}
 
 
@@ -263,10 +263,10 @@ def inject_custom_css():
 
     .question-card {{
         background-color: {LITMUSQ_THEME['light_bg']};
-        padding: 0.1rem;
+        padding: 1.3rem;
         border-radius: 12px;
         border-left: 4px solid {LITMUSQ_THEME['primary']};
-        margin: 0.1rem 0;
+        margin: 0.8rem 0;
         box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }}
 
