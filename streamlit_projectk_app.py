@@ -947,7 +947,29 @@ def update_user_progress(test_results):
     progress = load_user_progress(username)
     
     if progress:
-        # Update basic stats with proper type conversion
+        # Check if this is a retest that should update an existing entry
+        is_retest = test_results.get("is_retest", False)
+        original_test_id = test_results.get("original_test_id")
+        
+        if is_retest and original_test_id:
+            # Find and update the original test entry
+            test_history = progress.get("test_history", [])
+            
+            for i, test in enumerate(test_history):
+                if test.get("test_id") == original_test_id:
+                    # Update the original test with retest results
+                    updated_test = update_test_with_retest(test, test_results)
+                    test_history[i] = updated_test
+                    
+                    # Recalculate overall statistics
+                    progress = recalculate_progress_statistics(progress, test_history)
+                    
+                    # Save updated progress
+                    save_user_progress(username, progress)
+                    st.success("✅ Retest results updated successfully!")
+                    return
+        
+        # If not a retest or original test not found, add as new entry
         progress["tests_taken"] = int(progress.get("tests_taken", 0)) + 1
         progress["total_score"] = float(progress.get("total_score", 0)) + float(test_results["Marks Obtained"])
         progress["average_score"] = float(progress["total_score"]) / float(progress["tests_taken"])
@@ -970,21 +992,131 @@ def update_user_progress(test_results):
             "detailed_answers": detailed_answers,
             "is_retest": bool(test_results.get("is_retest", False)),
             "original_test_id": test_results.get("original_test_id"),
-            "test_id": str(datetime.now().timestamp())
+            "retest_type": test_results.get("retest_type", ""),
+            "retest_date": datetime.now().isoformat() if test_results.get("is_retest") else None,
+            "test_id": original_test_id if is_retest else str(datetime.now().timestamp())
         }
         
         # Ensure test_history exists
         if "test_history" not in progress:
             progress["test_history"] = []
         
-        progress["test_history"].append(test_history_entry)
+        if is_retest:
+            # For retests, prepend to show most recent attempt first
+            progress["test_history"].insert(0, test_history_entry)
+        else:
+            progress["test_history"].append(test_history_entry)
         
         # Update achievements
         update_achievements(progress, test_results)
         
         # Save updated progress
         save_user_progress(username, progress)
+        
+def update_test_with_retest(original_test, retest_results):
+    """Update an existing test entry with retest results."""
+    updated_test = original_test.copy()
+    
+    # Update basic metrics with retest results
+    updated_test["score"] = float(retest_results["Marks Obtained"])
+    updated_test["percentage"] = float((retest_results["Marks Obtained"] / retest_results["Total Marks"]) * 100) if retest_results["Total Marks"] > 0 else 0.0
+    updated_test["correct_answers"] = int(retest_results["Correct"])
+    
+    # Update retest information
+    updated_test["is_retest"] = True
+    updated_test["retest_type"] = retest_results.get("retest_type", "")
+    updated_test["retest_date"] = datetime.now().isoformat()
+    
+    # Update detailed answers based on retest type
+    if "detailed_answers" in retest_results and "detailed_answers" in original_test:
+        retest_type = retest_results.get("retest_type", "All Questions")
+        updated_answers = update_detailed_answers(
+            original_test["detailed_answers"],
+            retest_results["detailed_answers"],
+            retest_type
+        )
+        updated_test["detailed_answers"] = updated_answers
+    
+    # Add retest history if not exists
+    if "retest_history" not in updated_test:
+        updated_test["retest_history"] = []
+    
+    # Add this retest attempt to history
+    retest_history_entry = {
+        "date": datetime.now().isoformat(),
+        "score": float(retest_results["Marks Obtained"]),
+        "percentage": float((retest_results["Marks Obtained"] / retest_results["Total Marks"]) * 100) if retest_results["Total Marks"] > 0 else 0.0,
+        "correct_answers": int(retest_results["Correct"]),
+        "retest_type": retest_results.get("retest_type", "")
+    }
+    updated_test["retest_history"].append(retest_history_entry)
+    
+    return updated_test
+    
+def update_detailed_answers(original_answers, retest_answers, retest_type):
+    """Update detailed answers based on retest type."""
+    updated_answers = original_answers.copy()
+    
+    # Create a mapping of question_index to retest answer
+    retest_answer_map = {}
+    for answer in retest_answers:
+        q_idx = answer.get("question_index")
+        if q_idx is not None:
+            retest_answer_map[q_idx] = answer
+    
+    # Update answers based on retest type
+    for i, answer in enumerate(updated_answers):
+        q_idx = answer.get("question_index", i)
+        
+        if q_idx in retest_answer_map:
+            retest_data = retest_answer_map[q_idx]
+            
+            # Update based on retest type
+            if retest_type == "Incorrectly Answered Questions Only":
+                # Only update if originally incorrect
+                if not answer.get("is_correct", True):
+                    answer["user_answer"] = retest_data.get("user_answer")
+                    answer["is_correct"] = retest_data.get("is_correct", False)
+                    answer["retest_attempted"] = True
+            elif retest_type == "Unanswered Questions Only":
+                # Only update if originally unanswered
+                if answer.get("user_answer") is None:
+                    answer["user_answer"] = retest_data.get("user_answer")
+                    answer["is_correct"] = retest_data.get("is_correct", False)
+                    answer["retest_attempted"] = True
+            else:  # All Questions
+                # Update all questions
+                answer["user_answer"] = retest_data.get("user_answer")
+                answer["is_correct"] = retest_data.get("is_correct", False)
+                answer["retest_attempted"] = True
+    
+    return updated_answers
 
+def recalculate_progress_statistics(progress, test_history):
+    """Recalculate overall progress statistics from test history."""
+    if not test_history:
+        progress["tests_taken"] = 0
+        progress["total_score"] = 0.0
+        progress["average_score"] = 0.0
+        return progress
+    
+    # Filter out retest entries (we only count unique tests)
+    unique_tests = []
+    seen_test_ids = set()
+    
+    for test in test_history:
+        test_id = test.get("test_id")
+        if test_id and test_id not in seen_test_ids:
+            unique_tests.append(test)
+            seen_test_ids.add(test_id)
+    
+    progress["tests_taken"] = len(unique_tests)
+    progress["total_score"] = float(sum(t["score"] for t in unique_tests))
+    progress["average_score"] = float(progress["total_score"] / progress["tests_taken"]) if progress["tests_taken"] > 0 else 0.0
+    
+    return progress
+
+    
 def update_achievements(progress, test_results):
     """Update user achievements based on test performance."""
     achievements = progress.get("achievements", [])
@@ -1089,17 +1221,24 @@ def show_student_dashboard():
         st.subheader("📋 Recent Tests")
         recent_tests = test_history[-10:]  # Show last 10 tests
         
+        # In the test history section of show_student_dashboard:
         for idx, test in enumerate(reversed(recent_tests)):
             test_date = datetime.fromisoformat(str(test.get("date", ""))).strftime("%Y-%m-%d %H:%M")
             percentage = float(test.get("percentage", 0))
+            
+            # Check if this is a retest
+            is_retest = test.get('is_retest', False)
+            retest_type = test.get('retest_type', '')
             
             # Create columns for layout
             col1, col2, col3, col4, col5, col6 = st.columns([3, 2, 2, 2, 1, 1])
             
             with col1:
                 exam_name = str(test.get('exam_name', 'Unknown Test'))
-                if test.get('is_retest', False):
-                    exam_name += " (Re-Test)"
+                if is_retest:
+                    exam_name = f"🔄 {exam_name}"
+                    if retest_type:
+                        exam_name += f" ({retest_type})"
                 st.write(f"**{exam_name}**")
             
             with col2:
@@ -1114,13 +1253,17 @@ def show_student_dashboard():
                 st.write(test_date)
             
             with col5:
-                # Take Retest button
+                # Take Retest button - only show for non-retests or show differently for retests
                 test_id = test.get('test_id', f"test_{idx}")
-                if st.button("🔄", key=f"retest_{test_id}", 
-                           help="Take Re-Test"):
-                    st.session_state.retest_config = test
-                    st.session_state.current_screen = "retest_config"
-                    st.rerun()
+                if is_retest:
+                    st.button("📊", key=f"view_{test_id}", 
+                             help="View Retest Details", disabled=True)
+                else:
+                    if st.button("🔄", key=f"retest_{test_id}", 
+                               help="Take Re-Test"):
+                        st.session_state.retest_config = test
+                        st.session_state.current_screen = "retest_config"
+                        st.rerun()
             
             with col6:
                 # Delete Entry button
@@ -2251,8 +2394,10 @@ def compute_results():
         "Percentage": float((obtained / total * 100) if total > 0 else 0),
         "detailed_answers": detailed_answers,
         "is_retest": bool(st.session_state.get('is_retest', False)),
-        "original_test_id": st.session_state.get('original_test_id', None)
+        "original_test_id": st.session_state.get('original_test_id', None),
+        "retest_type": st.session_state.get('retest_type', "All Questions")  # Add retest type
     }
+    summary["questions_used"] = st.session_state.quiz_questions.to_dict(orient="records")
     return df, summary
     
 def delete_test_entry(username, test_id):
@@ -2371,40 +2516,39 @@ def show_retest_config(original_test):
     
     # Find the original QB file path (you'll need to store this in test history)
     # For now, we'll use the current session's QB if available
-    qb_data = st.session_state.get('current_qb_data', {})
+    # Load questions used in the original test (test or retest)
+    stored_questions = original_test.get("questions_used")
     
-    if exam_name in qb_data:
-        df_exam = qb_data[exam_name]
-        
-        # Store retest configuration in session state
-        if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
-            # Filter questions based on selection
-            if question_indices:
-                filtered_df = df_exam.iloc[question_indices].reset_index(drop=True)
-            else:
-                filtered_df = df_exam
-            
-            # Set retest flags
-            st.session_state.is_retest = True
-            st.session_state.original_test_id = original_test.get('test_id')
-            st.session_state.retest_type = retest_option
-            
-            # Start the retest
-            start_quiz(
-                filtered_df,
-                len(filtered_df),
-                st.session_state.quiz_duration,
-                st.session_state.use_final_key,
-                f"{exam_name} (Re-Test)"
-            )
-            st.session_state.current_screen = "quiz"
-            st.rerun()
+    if stored_questions:
+        df_exam = pd.DataFrame(stored_questions)
     else:
-        st.error("Original question bank not found. Please select a test from the folder view first.")
-        if st.button("Select Question Bank", use_container_width=True):
-            st.session_state.current_screen = "home"
-            st.rerun()    
-
+        st.error("Stored questions not found for this test. Cannot generate re-test.")
+        return
+    
+    # Store retest configuration in session state
+    if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
+        # Filter questions based on selection
+        if question_indices:
+            filtered_df = df_exam.iloc[question_indices].reset_index(drop=True)
+        else:
+            filtered_df = df_exam
+        
+        # Set retest flags
+        st.session_state.is_retest = True
+        st.session_state.original_test_id = original_test.get('test_id')
+        st.session_state.retest_type = retest_option
+        
+        # Start the retest
+        start_quiz(
+            filtered_df,
+            len(filtered_df),
+            st.session_state.quiz_duration,
+            st.session_state.use_final_key,
+            f"{exam_name} (Re-Test: {retest_option})"
+        )
+        st.session_state.current_screen = "quiz"
+        st.rerun()
+   
 def show_enhanced_detailed_analysis(res_df):
     """Show detailed analysis with formatted content and question status in headings."""
     for i, row in res_df.iterrows():
