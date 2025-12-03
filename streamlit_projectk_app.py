@@ -1617,7 +1617,7 @@ def show_enhanced_question_interface():
     st.markdown("---")
     
     # Enhanced action buttons
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
+    col1, col2, col3, col4, col5 = st.columns(5)
     
     with col1:
         st.button(
