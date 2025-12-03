@@ -2360,20 +2360,28 @@ def show_retest_config(original_test):
     
     if 'detailed_answers' in original_test:
         for answer in original_test['detailed_answers']:
-            if not answer.get('is_correct', False):
-                incorrect_questions.append(answer['question_index'])
-            if answer.get('user_answer') is None:
+            user_answer = answer.get('user_answer')
+            is_correct = answer.get('is_correct', False)
+            
+            # Check if unanswered (user_answer is None or empty)
+            if user_answer is None or (isinstance(user_answer, str) and user_answer.strip() == ""):
                 unanswered_questions.append(answer['question_index'])
+            # Check if answered but incorrect
+            elif not is_correct:
+                incorrect_questions.append(answer['question_index'])
     
     st.subheader("📊 Original Test Analysis")
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Total Questions", total_questions)
     with col2:
         st.metric("Incorrect Answers", len(incorrect_questions))
     with col3:
         st.metric("Unanswered", len(unanswered_questions))
+    with col4:
+        correct_questions = total_questions - len(incorrect_questions) - len(unanswered_questions)
+        st.metric("Correct Answers", correct_questions)
     
     # Retest options
     retest_option = st.radio(
@@ -2384,10 +2392,9 @@ def show_retest_config(original_test):
             "Incorrectly Answered Questions Only", 
             "Unanswered Questions Only"
         ],
-        index=0,   # make new option default
+        index=0,
         key="retest_option"
     )
-
     
     # Calculate questions based on selection
     if retest_option == "All Questions":
@@ -2403,12 +2410,16 @@ def show_retest_config(original_test):
         question_indices = unanswered_questions
     
     elif retest_option == "Incorrect & Unanswered (Recommended)":
+        # Combine but remove duplicates (though there shouldn't be any now)
         combined = sorted(set(incorrect_questions + unanswered_questions))
         question_count = len(combined)
         question_indices = combined
     
-    
     st.markdown(f"✅ **{question_count} questions** will be included in the re-test.")
+    
+    # Show breakdown if Incorrect & Unanswered is selected
+    if retest_option == "Incorrect & Unanswered (Recommended)":
+        st.info(f"• {len(incorrect_questions)} incorrect questions\n• {len(unanswered_questions)} unanswered questions")
     
     # Create DataFrame from stored questions
     questions_data = original_test['questions_used']
@@ -2430,6 +2441,10 @@ def show_retest_config(original_test):
     
     # Store retest configuration in session state
     if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
+        if question_count == 0:
+            st.error("No questions selected for re-test! Choose a different option.")
+            return
+            
         # Filter questions based on selection
         if question_indices:
             filtered_df = df_questions.iloc[question_indices].reset_index(drop=True)
@@ -2445,7 +2460,6 @@ def show_retest_config(original_test):
         exam_name = original_test['exam_name']
         if original_test.get('is_retest', False):
             # This is a retest of a retest, add level indicator
-            retest_type = original_test.get('retest_type', 'full')
             exam_name = f"{exam_name}📝"
         
         # Start the retest
