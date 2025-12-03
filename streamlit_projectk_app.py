@@ -1662,27 +1662,7 @@ def show_exam_config_screen():
 # Enhanced Question Display in Quiz
 # =============================
 def show_enhanced_question_interface():
-    # --- Fixed Ribbon with Timer + Submit Button ---
-    st.markdown("""
-    <div class="quiz-fixed-ribbon">
-        <div id="quiz_timer" style="font-weight:700; font-size:18px; color:#dc2626;">
-            ⏳ Loading...
-        </div>
-    
-        <button onclick="document.getElementById('submit_test_button').click();" 
-                style="
-                    background:#1E3A8A;
-                    color:white;
-                    padding:6px 14px;
-                    border:none;
-                    border-radius:6px;
-                    font-size:14px;
-                    cursor:pointer;
-                ">
-            📤 Submit Test
-        </button>
-    </div>
-    """, unsafe_allow_html=True)
+  
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
     current_idx = st.session_state.current_idx
