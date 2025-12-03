@@ -2189,7 +2189,7 @@ def show_quiz_header_with_timer():
                 {st.session_state.exam_name}
             </div>
             # Create timer with JavaScript
-            html_code = f"""
+            html_code = f'''
             <div id="timer" style="
                 font-size: 24px;
                 font-weight: bold;
@@ -2223,7 +2223,7 @@ def show_quiz_header_with_timer():
     
                 updateTimer();
             </script>
-            """
+            '''
             components.html(html_code, height=60)
         </div>
         
