@@ -2380,20 +2380,35 @@ def show_retest_config(original_test):
     # Retest options
     retest_option = st.radio(
         "Select Re-Test Type:",
-        ["All Questions", "Incorrectly Answered Questions Only", "Unanswered Questions Only"],
+        [
+            "Incorrect & Unanswered (Recommended)",
+            "All Questions", 
+            "Incorrectly Answered Questions Only", 
+            "Unanswered Questions Only"
+        ],
+        index=0,   # make new option default
         key="retest_option"
     )
+
     
     # Calculate questions based on selection
     if retest_option == "All Questions":
         question_count = total_questions
         question_indices = list(range(total_questions))
+    
     elif retest_option == "Incorrectly Answered Questions Only":
         question_count = len(incorrect_questions)
         question_indices = incorrect_questions
-    else:  # Unanswered Questions Only
+    
+    elif retest_option == "Unanswered Questions Only":
         question_count = len(unanswered_questions)
         question_indices = unanswered_questions
+    
+    elif retest_option == "Incorrect & Unanswered (Recommended)":
+        combined = sorted(set(incorrect_questions + unanswered_questions))
+        question_count = len(combined)
+        question_indices = combined
+    
     
     st.markdown(f"✅ **{question_count} questions** will be included in the re-test.")
     
