@@ -1012,7 +1012,7 @@ def show_clear_data_section():
     st.markdown("---")
     # Confirmation workflow
     if not st.session_state.get('show_clear_confirmation', False):
-        if st.button("🚮 Clear All My Performance Data", type="secondary", key="clear_data_init"):
+        if st.button("🚮 Clear All My Performance Data", type="secondary", key="clear_data_init", use_container_width="True"):
             st.session_state.show_clear_confirmation = True
             st.rerun()
     else:
@@ -1021,7 +1021,7 @@ def show_clear_data_section():
             unsafe_allow_html=True
         )
         
-        col1, col2, col3 = st.columns([1, 1, 2])
+        col1, col2 = st.columns([1, 1])
         with col1:
             if st.button("✅ Yes, Delete Everything", type="primary", key="confirm_clear"):
                 success = clear_user_progress(st.session_state.username)
