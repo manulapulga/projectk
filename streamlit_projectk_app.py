@@ -1011,14 +1011,11 @@ def show_clear_data_section():
     """Show section to clear performance data."""
     st.markdown("---")
     st.subheader("🗑️ Data Management")
-    
     # Confirmation workflow
     if not st.session_state.get('show_clear_confirmation', False):
         if st.button("🚮 Clear All My Performance Data", type="secondary", key="clear_data_init"):
             st.session_state.show_clear_confirmation = True
             st.rerun()
-            st.write("This will permanently delete all your test history, achievements, and performance statistics. This action cannot be undone.")
-
     else:
         st.error("Are you sure you want to delete ALL your performance data? This action cannot be undone!")
         
@@ -1035,6 +1032,7 @@ def show_clear_data_section():
                 st.rerun()
         
         st.info("Note: Your login credentials will remain unchanged. Only your performance data will be deleted.")
+    st.write("This will permanently delete all your test history, achievements, and performance statistics. This action cannot be undone.")
 
 def show_student_dashboard():
     """Display student dashboard with progress analytics."""
