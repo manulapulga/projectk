@@ -2419,7 +2419,7 @@ def show_retest_config(original_test):
     
     # Show breakdown if Incorrect & Unanswered is selected
     if retest_option == "Incorrect & Unanswered (Recommended)":
-        st.markdown(f"• {len(incorrect_questions)} incorrect questions\n & {len(unanswered_questions)} unanswered questions")
+        st.markdown(f"( {len(incorrect_questions)} incorrect questions\n & {len(unanswered_questions)} unanswered questions)")
     
     # Create DataFrame from stored questions
     questions_data = original_test['questions_used']
