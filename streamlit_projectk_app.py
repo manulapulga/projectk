@@ -436,7 +436,7 @@ def show_login_screen():
     st.markdown("""
     <style>
     div[data-testid="stAppViewContainer"] {
-        padding-top: 0rem !important;
+        padding-top: 1rem !important;
     }
     .litmusq-header {
         margin-top: 1rem !important;
