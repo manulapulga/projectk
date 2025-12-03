@@ -89,8 +89,8 @@ def inject_custom_css():
     .st-emotion-cache-tn0cau,
     .e1wguzas3 {{
         padding: 5px !important;
-        margin: 100px !important;
-        gap: 1rem !important;
+        margin: 50px !important;
+        gap: 1E293Brem !important;
     }}
     
     /* Target element containers */
@@ -103,7 +103,7 @@ def inject_custom_css():
     
     /* Specifically target the first element container after CSS */
     .stElementContainer:first-of-type {{
-        margin-top: -1rem !important;
+        margin-top: 1rem !important;
         padding-top: 0 !important;
     }}
     
