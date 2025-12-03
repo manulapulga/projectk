@@ -89,7 +89,7 @@ def inject_custom_css():
     .st-emotion-cache-tn0cau,
     .e1wguzas3 {{
         padding: 0 !important;
-        margin: 0 !important;
+        margin: 10px !important;
         gap: 0.1rem !important;
     }}
     
