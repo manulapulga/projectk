@@ -66,6 +66,7 @@ LITMUSQ_THEME = {
 # =============================
 def inject_custom_css():
     # Add this to your custom CSS
+    
     st.markdown("""
     <style>
     /* Reduce default Streamlit padding */
@@ -1604,11 +1605,7 @@ def show_enhanced_question_interface():
     formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
     
     # Enhanced question card with MINIMAL spacing
-    st.markdown(f"""
-    <div class="question-card" style="margin-top: -1rem; padding-top: 0.5rem;">
-        <h3 style="margin: 0 0 0.5rem 0;">❓ Question {current_idx + 1}</h3>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"### Question No. {current_idx + 1}")
     
     # Render formatted question with less spacing
     st.markdown("<div style='margin-top: -0.5rem;'>", unsafe_allow_html=True)
