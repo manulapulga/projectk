@@ -1665,6 +1665,7 @@ def show_enhanced_question_interface():
     formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
     
     # Enhanced question card with formatted content
+    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     st.markdown(f"### Question No. {current_idx + 1}")
     
     # Render formatted question
