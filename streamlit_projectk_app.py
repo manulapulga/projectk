@@ -1130,7 +1130,7 @@ def show_student_dashboard():
             with col1:
                 exam_name = str(test.get('exam_name', 'Unknown Test'))
                 if test.get('is_retest', False):
-                    exam_name += " (Re-Test)"
+                    exam_name += "📝"
                 st.write(f"**{exam_name}**")
             
             with col2:
@@ -2447,12 +2447,6 @@ def show_retest_config(original_test):
         )
         st.session_state.current_screen = "quiz"
         st.rerun()
-    else:
-        st.error("Original question bank not found. Please select a test from the folder view first.")
-        if st.button("Select Question Bank", use_container_width=True):
-            st.session_state.current_screen = "home"
-            st.rerun()    
-
 def show_enhanced_detailed_analysis(res_df):
     """Show detailed analysis with formatted content and question status in headings."""
     for i, row in res_df.iterrows():
