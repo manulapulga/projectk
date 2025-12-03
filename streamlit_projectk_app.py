@@ -439,7 +439,7 @@ def show_login_screen():
         padding-top: 0rem !important;
     }
     .litmusq-header {
-        margin-top: 0rem !important;
+        margin-top: 2rem !important;
         padding-top: 0rem !important;
     }
     </style>
