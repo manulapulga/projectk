@@ -64,6 +64,39 @@ LITMUSQ_THEME = {
 # =============================
 # Custom CSS Injection
 # =============================
+def inject_metric_mobile_css():
+    st.markdown("""
+    <style>
+    /* MOBILE-ONLY: shrink metric text */
+    @media (max-width: 480px) {
+
+        /* Metric title (label) */
+        div[data-testid="metric-container"] > label {
+            font-size: 0.70rem !important;   /* smaller title */
+        }
+
+        /* Metric value */
+        div[data-testid="metric-container"] > div {
+            font-size: 1.0rem !important;    /* smaller numbers */
+            padding: 0 !important;
+        }
+
+        /* Metric delta (if any) */
+        div[data-testid="metric-container"] span {
+            font-size: 0.65rem !important;
+        }
+
+        /* Reduce column padding */
+        .st-emotion-cache-1y4p8pa, .st-emotion-cache-16txtl3 {
+            padding-left: 0.3rem !important;
+            padding-right: 0.3rem !important;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+inject_metric_mobile_css()
+
 def inject_mobile_css():
     st.markdown("""
     <style>
