@@ -66,7 +66,135 @@ LITMUSQ_THEME = {
 # =============================
 def inject_custom_css():
     st.markdown(f"""
-    <style>    
+    <style>
+    /* TARGET THE MAIN CONTAINER - MULTIPLE SELECTORS FOR RELIABILITY */
+    .stMainBlockContainer,
+    .block-container,
+    .st-emotion-cache-zy6yx3,
+    .e4man114 {{
+        padding: 0.25rem 0.1rem 0.25rem !important;
+        margin: 0 !important;
+    }}
+    
+    /* Target all containers that might have padding */
+    div[class*="block-container"],
+    div[class*="BlockContainer"],
+    div[data-testid="stMainBlockContainer"] {{
+        padding: 0.1rem !important;
+        margin: 0 !important;
+    }}
+    
+    /* Target the vertical block container */
+    .stVerticalBlock,
+    .st-emotion-cache-tn0cau,
+    .e1wguzas3 {{
+        padding: 0 !important;
+        margin: 0 !important;
+        gap: 0.1rem !important;
+    }}
+    
+    /* Target element containers */
+    .stElementContainer,
+    .st-emotion-cache-1vo6xi6,
+    .e1wguzas1 {{
+        padding: 0.1rem !important;
+        margin: 0 !important;
+    }}
+    
+    /* Specifically target the first element container after CSS */
+    .stElementContainer:first-of-type {{
+        margin-top: -1rem !important;
+        padding-top: 0 !important;
+    }}
+    
+    /* Reduce heading spacing */
+    [data-testid="stHeadingWithActionElements"],
+    .st-emotion-cache-ua1rfn,
+    .et2rgd22,
+    h1, h2, h3, h4, h5, h6 {{
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.1rem !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }}
+    
+    /* Reduce markdown container spacing */
+    .stMarkdown,
+    [data-testid="stMarkdownContainer"],
+    .st-emotion-cache-168ogmh,
+    .et2rgd20 {{
+        margin: 0 !important;
+        padding: 0 !important;
+    }}
+    
+    /* Reduce spacing between elements */
+    .stMarkdown p,
+    .stMarkdown ol,
+    .stMarkdown ul,
+    .stMarkdown li {{
+        margin-top: 0.1rem !important;
+        margin-bottom: 0.1rem !important;
+    }}
+    
+    /* Remove horizontal rule spacing */
+    hr {{
+        margin: 0.25rem 0 !important;
+        padding: 0 !important;
+    }}
+    
+    /* Reduce button container spacing */
+    .stButton,
+    .st-emotion-cache-8atqhb,
+    .e1mlolmg0 {{
+        margin: 0 !important;
+        padding: 0 !important;
+    }}
+    
+    /* Reduce column spacing */
+    .stColumn,
+    .st-emotion-cache-1wpb1x8,
+    .st-emotion-cache-1cmetgi,
+    .e1wguzas2 {{
+        padding: 0.05rem !important;
+        margin: 0 !important;
+    }}
+    
+    /* Reduce horizontal block spacing */
+    .stHorizontalBlock,
+    .st-emotion-cache-1permvm {{
+        gap: 0.1rem !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }}
+    
+    /* Target the layout wrapper */
+    [data-testid="stLayoutWrapper"],
+    .st-emotion-cache-18kf3ut,
+    .e1wguzas4 {{
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+    
+    /* Target the timer container specifically */
+    .st-emotion-cache-1h1pi45,
+    .stIFrame {{
+        margin: 0.1rem 0 !important;
+        padding: 0 !important;
+    }}
+    
+    /* Nuclear option - target all Streamlit elements */
+    [class*="st-"],
+    [class*="emotion-"] {{
+        margin: 0.05rem !important;
+        padding: 0.05rem !important;
+    }}
+    
+    /* But preserve certain elements */
+    .litmusq-header,
+    .question-card {{
+        margin: 0.5rem 0 !important;
+    }
+    
     .main .block-container {{
         padding-top: 2rem;
     }}
