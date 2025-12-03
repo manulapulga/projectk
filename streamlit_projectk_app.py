@@ -547,6 +547,7 @@ def show_question_editor():
     
     
     # Add back navigation - MOVED HERE AFTER current_path is defined
+    
     col1, col2 = st.columns([1, 1])
     # Only show back button if we're in a subfolder
     with col2:
@@ -1344,7 +1345,8 @@ def display_folder_navigation(folder_structure, current_path=None, level=0):
 def show_folder_view_screen():
     """Show contents of the currently selected folder."""
     current_path = st.session_state.get('current_path', [])
-    
+    st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
+    show_litmusq_header("Select Exam")
     # Home and Navigation buttons
     col1, col2 = st.columns([1, 1])
     with col1:
