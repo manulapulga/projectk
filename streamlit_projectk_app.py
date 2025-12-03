@@ -2344,10 +2344,12 @@ def compute_results():
     use_final = st.session_state.use_final_key
     user_ans = st.session_state.answers
 
+    # Determine correct answer for each question
     df["Correct Option Used"] = df.apply(lambda r: get_correct_option(r, use_final), axis=1)
     df["Your Answer"] = [user_ans.get(i, None) for i in range(len(df))]
     df["Is Correct"] = df["Your Answer"] == df["Correct Option Used"]
 
+    # Marks handling
     if "Marks" in df.columns:
         df["Marks"] = pd.to_numeric(df["Marks"], errors="coerce").fillna(0)
         df["Score"] = np.where(df["Is Correct"], df["Marks"], 0)
@@ -2356,49 +2358,58 @@ def compute_results():
         df["Score"] = np.where(df["Is Correct"], 1, 0)
 
     # Convert to Python native types
-    total = int(df["Marks"].sum())
-    obtained = int(df["Score"].sum())
-    
-    attempted = sum(1 for status in st.session_state.question_status.values() 
-                   if status['answer'] is not None)
-    correct = int(df["Is Correct"].sum())
-    
-    # Create detailed answers list for retest functionality
+    total_marks = int(df["Marks"].sum())
+    obtained_marks = int(df["Score"].sum())
+
+    attempted = sum(1 for status in st.session_state.question_status.values()
+                    if status['answer'] is not None)
+    correct_count = int(df["Is Correct"].sum())
+
+    # Create detailed answers list
     detailed_answers = []
     for i in range(len(df)):
         user_answer = user_ans.get(i, None)
         correct_answer = df.iloc[i]["Correct Option Used"]
         is_correct = df.iloc[i]["Is Correct"]
-        
+
         # Convert numpy bool to Python bool
         if isinstance(is_correct, (np.bool_, np.bool)):
             is_correct = bool(is_correct)
-        
+
         detailed_answers.append({
-            "question_index": int(i),  # Ensure integer
+            "question_index": int(i),
             "user_answer": user_answer,
             "correct_answer": correct_answer,
             "is_correct": is_correct,
             "marked": bool(st.session_state.question_status.get(i, {}).get('marked', False))
         })
 
+    # *** FINAL STANDARDIZED SUMMARY (Matches dashboard + retest) ***
     summary = {
-        "Exam Name": st.session_state.exam_name,
-        "Total Questions": int(len(df)),
-        "Attempted": int(attempted),
-        "Correct": int(correct),
-        "Total Marks": int(total),
-        "Marks Obtained": int(obtained),
-        "Answer Key Used": "Final" if use_final else "Provisional",
-        "Username": st.session_state.username,
-        "Percentage": float((obtained / total * 100) if total > 0 else 0),
+        "test_id": str(uuid.uuid4()),  # ensure unique ID
+        "exam_name": st.session_state.exam_name,
+        "date": datetime.now().isoformat(),
+        "total_questions": int(len(df)),
+        "attempted": int(attempted),
+        "correct": int(correct_count),
+        "total_marks": int(total_marks),
+        "score": int(obtained_marks),
+        "answer_key_used": "Final" if use_final else "Provisional",
+        "username": st.session_state.username,
+        "percentage": float((obtained_marks / total_marks * 100) if total_marks > 0 else 0),
         "detailed_answers": detailed_answers,
-        "is_retest": bool(st.session_state.get('is_retest', False)),
-        "original_test_id": st.session_state.get('original_test_id', None),
-        "retest_type": st.session_state.get('retest_type', "All Questions")  # Add retest type
+
+        # Retest metadata
+        "is_retest": bool(st.session_state.get("is_retest", False)),
+        "original_test_id": st.session_state.get("original_test_id", None),
+        "retest_type": st.session_state.get("retest_type", "All Questions"),
     }
+
+    # *** MOST IMPORTANT FOR RETEST ON RETEST ***
     summary["questions_used"] = st.session_state.quiz_questions.to_dict(orient="records")
+
     return df, summary
+
     
 def delete_test_entry(username, test_id):
     """Delete a specific test entry from user progress."""
