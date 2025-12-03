@@ -1457,6 +1457,9 @@ def show_exam_config_screen():
     
     df_exam = qb_data[sheet_name]
     
+    st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
+    show_litmusq_header("Select Exam")
+
     # Add Home and Back buttons
     col1, col2 = st.columns(2)
     with col1:
@@ -1467,8 +1470,6 @@ def show_exam_config_screen():
         if st.button("← Return to Test List", use_container_width=True, key="config_back"):
             st.session_state.current_screen = "folder_view"
             st.rerun()
-    st.write("")
-    st.write("")
     st.subheader(f"Configure Test: {sheet_name}")
     st.write(f"**📍:** `{' > '.join(current_path)}`")
     
