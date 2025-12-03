@@ -1732,8 +1732,8 @@ def show_enhanced_question_interface():
     
     selected_option = st.radio(
         "Choose an option:",
-        options=[None, "A", "B", "C", "D"],
-        format_func=lambda x: "— No Selection —" if x is None else f"{x}) {options_dict[x]}",
+        options=["A", "B", "C", "D", None],
+        format_func=lambda x: "Clear Response" if x is None else f"{x}) {options_dict[x]}",
         index=[None, "A", "B", "C", "D"].index(default_radio_value),
         key=f"radio_{current_idx}"
     )
