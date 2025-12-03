@@ -2188,56 +2188,17 @@ def show_quiz_header_with_timer():
             <div style="font-size: 1rem;">
                 {st.session_state.exam_name}
             </div>
-            if st.session_state.end_time and not st.session_state.submitted:
-            # Calculate remaining time
-            time_left = st.session_state.end_time - datetime.now()
-            seconds_left = int(time_left.total_seconds())
-            
-            # Auto-submit when time reaches zero
-            if seconds_left <= 0:
-                st.session_state.submitted = True
-                st.rerun()
-                return  # Exit early to prevent further rendering
-            
-            # Create timer with JavaScript
-            html_code = f"""
-            <div id="timer" style="
-                font-size: 24px;
-                font-weight: bold;
-                color: {'red' if seconds_left < 300 else 'green'};
+            <div id="header-timer" style="
+                font-size: 1rem;
+                padding: 0.3rem 1rem;
+                border-radius: 50px;
+                min-width: 120px;
                 text-align: center;
-            "></div>
-    
-            <script>
-                let timeLeft = {seconds_left};
-    
-                function updateTimer() {{
-                    if (timeLeft <= 0) {{
-                        document.getElementById('timer').innerHTML = "⏰ 00:00:00";
-                        // Trigger automatic submission when timer reaches zero
-                        const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
-                        if (submitButton) {{
-                            submitButton.click();
-                        }}
-                        return;
-                    }}
-    
-                    let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
-                    let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
-                    let s = String(timeLeft % 60).padStart(2, '0');
-    
-                    document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
-    
-                    timeLeft--;
-                    setTimeout(updateTimer, 1000);
-                }}
-    
-                updateTimer();
-            </script>
-            """
-            components.html(html_code, height=60)
-        else:
-            st.metric("⏰ Time Left", "No Limit")
+                color: {timer_color};
+                transition: all 0.3s ease;
+            ">
+                ⏰ {h}:{m}:{s}
+            </div>
         </div>
         
         <div class="content-wrapper"></div>
