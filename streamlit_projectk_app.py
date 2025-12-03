@@ -64,6 +64,47 @@ LITMUSQ_THEME = {
 # =============================
 # Custom CSS Injection
 # =============================
+def inject_mobile_css():
+    st.markdown("""
+    <style>
+    /* Reduce padding for mobile */
+    @media (max-width: 480px) {
+        .block-container {
+            padding: 0.8rem 0.5rem !important;
+        }
+
+        /* Reduce large headers */
+        h1, h2, h3, .stMarkdown h1 {
+            font-size: 1.35rem !important;
+        }
+
+        /* Columns should stack naturally */
+        .css-1kyxreq { flex-direction: column !important; }
+
+        /* Cards spacing */
+        .achievement-card {
+            padding: 0.6rem !important;
+        }
+
+        /* Reduce metric font sizes */
+        div[data-testid="metric-container"] > label {
+            font-size: 0.8rem !important;
+        }
+        div[data-testid="metric-container"] > div {
+            font-size: 1rem !important;
+        }
+
+        /* Make test history buttons bigger for touch */
+        button[kind="primary"] {
+            padding: 0.35rem 0.4rem !important;
+            font-size: 0.85rem !important;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+inject_mobile_css()
+
 def inject_custom_css():
     st.markdown(f"""
     <style>
