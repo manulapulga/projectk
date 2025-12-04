@@ -716,6 +716,7 @@ def show_login_screen():
                 if auth_success:
                     st.session_state.logged_in = True
                     st.session_state.username = username
+                    st.session_state.role = user_data.get("role", "student")
                     # Initialize user progress
                     initialize_user_progress(username)
                     st.success(f"✅ Welcome back, {username}!")
@@ -1159,7 +1160,7 @@ def render_formatted_content(content):
 def is_admin_user():
     """Check if current user is admin."""
     # You can define admin users in your login file or hardcode them
-    admin_users = ["admin", "administrator"]  # Add admin usernames here
+    return st.session_state.get("role", "").lower() == "admin"
     return st.session_state.username.lower() in [admin.lower() for admin in admin_users]
 
 def show_question_editor():
