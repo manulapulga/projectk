@@ -18,11 +18,13 @@ import json
 # =============================
 QUESTION_DATA_FOLDER = "Question_Data_Folder"
 LOGIN_FILE_PATH = "login/admin_login_details.xlsx"  # Keep for backward compatibility
+EDITOR_LOGIN_FILE_PATH = "login/editor_login_details.xlsx"  # Add this line
 USER_PROGRESS_FOLDER = "user_progress"
 FORMATTED_QUESTIONS_FILE = "formatted_questions.json"
 
 # Admin users will be loaded from Excel file, not hardcoded
 ADMIN_USERS = []  # Will be populated from Excel file
+EDITOR_USERS = []  # Add this line - Will be populated from Excel file
 
 # =============================
 # Add performance config
@@ -416,7 +418,13 @@ def register_user(full_name, email, phone, username, password):
             st.error("❌ Username already exists (admin user). Please choose a different username.")
             return False
         
-        # 🔒 2. Check Firebase for duplicate username
+        # 🔒 2. Check editor Excel usernames
+        editor_credentials = load_editor_credentials()
+        if username in editor_credentials:
+            st.error("❌ Username already exists (editor user). Please choose a different username.")
+            return False
+        
+        # 🔒 3. Check Firebase for duplicate username
         users_ref = db.collection('users')
         query = users_ref.where('username', '==', username).limit(1).get()
         
@@ -424,7 +432,7 @@ def register_user(full_name, email, phone, username, password):
             st.error("❌ Username already exists. Please choose a different one.")
             return False
         
-        # 🔒 3. Check Firebase for duplicate email
+        # 🔒 4. Check Firebase for duplicate email
         email_query = users_ref.where('email', '==', email).limit(1).get()
         if len(email_query) > 0:
             st.error("❌ Email already registered. Please use a different email.")
@@ -438,7 +446,7 @@ def register_user(full_name, email, phone, username, password):
             "username": username,
             "password": password,
             "is_approved": False,     
-            "role": "student",
+            "role": "student",  # Default role for registered users
             "created_at": datetime.now().isoformat(),
             "last_login": None,
             "is_active": True
@@ -454,7 +462,6 @@ def register_user(full_name, email, phone, username, password):
         st.error(f"Registration failed: {e}")
         return False
 
-
 def authenticate_user_all(username, password):
     """Authenticate user against either admin (Excel) or regular users (Firebase)."""
     # First check if it's an admin user (from Excel)
@@ -465,7 +472,15 @@ def authenticate_user_all(username, password):
         else:
             return False, "Invalid password", None
     
-    # If not admin, check regular users in Firebase
+    # Then check if it's an editor user (from Excel)
+    editor_credentials = load_editor_credentials()
+    if username in editor_credentials:
+        if editor_credentials[username] == password:
+            return True, "success", "editor"  # Excel = Editor
+        else:
+            return False, "Invalid password", None
+    
+    # If not admin or editor, check regular users in Firebase
     auth_success, message = authenticate_user_firebase(username, password)
     if auth_success:
         return True, "success", "regular"  # Firebase = Regular
@@ -509,7 +524,7 @@ def authenticate_user_firebase(username, password):
         return False, "System error"
 
 def get_all_users():
-    """Get all registered users from Firebase."""
+    """Get all registered users from Firebase with role information."""
     try:
         if db is None:
             return []
@@ -518,9 +533,28 @@ def get_all_users():
         docs = users_ref.stream()
         
         users = []
+        admin_credentials = load_admin_credentials()
+        editor_credentials = load_editor_credentials()
+        
         for doc in docs:
             user_data = doc.to_dict()
-            user_data['id'] = doc.id
+            username = doc.id
+            
+            # Determine user type/role
+            if username in admin_credentials:
+                user_data['user_type'] = 'admin'
+                user_data['role'] = 'admin'
+                user_data['is_approved'] = True  # Admins are auto-approved
+            elif username in editor_credentials:
+                user_data['user_type'] = 'editor'
+                user_data['role'] = 'editor'
+                user_data['is_approved'] = True  # Editors are auto-approved
+            else:
+                # Firebase users default to student unless specified otherwise
+                user_data['user_type'] = 'regular'
+                user_data['role'] = user_data.get('role', 'student')
+            
+            user_data['id'] = username
             users.append(user_data)
         
         return users
@@ -532,6 +566,14 @@ def update_user_status(username, is_active):
     """Update user active status."""
     try:
         if db is None:
+            return False
+        
+        # Check if user is an admin or editor (from Excel)
+        admin_credentials = load_admin_credentials()
+        editor_credentials = load_editor_credentials()
+        
+        if username in admin_credentials or username in editor_credentials:
+            st.error("Cannot modify admin or editor users")
             return False
         
         user_ref = db.collection('users').document(username)
@@ -556,6 +598,12 @@ def delete_user(username):
             st.error("Cannot delete admin users")
             return False
         
+        # Check if user is an editor (from Excel)
+        editor_credentials = load_editor_credentials()
+        if username in editor_credentials:
+            st.error("Cannot delete editor users")
+            return False
+        
         user_ref = db.collection('users').document(username)
         user_ref.delete()
         return True
@@ -573,6 +621,12 @@ def update_user_approval(username, is_approved):
         admin_credentials = load_admin_credentials()
         if username in admin_credentials:
             st.error("Cannot modify admin users")
+            return False
+        
+        # Check if user is an editor (from Excel)
+        editor_credentials = load_editor_credentials()
+        if username in editor_credentials:
+            st.error("Cannot modify editor users")
             return False
         
         user_ref = db.collection('users').document(username)
@@ -609,6 +663,37 @@ def load_admin_credentials():
         return admin_credentials
     except Exception as e:
         st.error(f"Failed to load admin credentials: {e}")
+        return {}
+
+# Add this new function for editor credentials
+def load_editor_credentials():
+    """Load editor username and password from Excel file."""
+    try:
+        if not os.path.exists(EDITOR_LOGIN_FILE_PATH):
+            st.error(f"Editor login file not found at {EDITOR_LOGIN_FILE_PATH}")
+            return {}
+            
+        df = pd.read_excel(EDITOR_LOGIN_FILE_PATH, engine="openpyxl")
+        df.columns = [str(col).strip().lower() for col in df.columns]
+        
+        if "username" not in df.columns or "password" not in df.columns:
+            st.error("Editor login file must contain 'Username' and 'Password' columns")
+            return {}
+        
+        editor_credentials = {}
+        for _, row in df.iterrows():
+            username = str(row["username"]).strip()
+            password = str(row["password"]).strip()
+            if username and password:
+                editor_credentials[username] = password
+                
+        # Update global EDITOR_USERS list
+        global EDITOR_USERS
+        EDITOR_USERS = list(editor_credentials.keys())
+        
+        return editor_credentials
+    except Exception as e:
+        st.error(f"Failed to load editor credentials: {e}")
         return {}
         
         
@@ -850,15 +935,19 @@ def show_login_screen():
 def is_admin_user():
     """Check if current user is admin based on session state."""
     # Check user_type in session state (set during authentication)
-    return st.session_state.get('user_type') == 'admin'
-    
-    # First check user_type in session state (fastest check)
-    if st.session_state.get('user_type') == 'admin':
-        return True
-    
-    # Fallback: check admin credentials file
-    admin_credentials = load_admin_credentials()
-    return username in admin_credentials
+    user_type = st.session_state.get('user_type')
+    return user_type == 'admin'
+
+def is_editor_user():
+    """Check if current user is editor based on session state."""
+    # Check user_type in session state (set during authentication)
+    user_type = st.session_state.get('user_type')
+    return user_type == 'editor'
+
+def is_admin_or_editor():
+    """Check if current user is admin or editor."""
+    user_type = st.session_state.get('user_type')
+    return user_type in ['admin', 'editor']
     
 def show_admin_panel():
     """Admin panel for managing users."""
@@ -900,6 +989,10 @@ def show_user_management():
     # Convert to DataFrame for display
     user_list = []
     for user in users:
+        # Get role from user data (already populated in get_all_users)
+        role = user.get('role', 'student')
+        user_type = user.get('user_type', 'regular')
+        
         user_list.append({
             "Username": user.get('username', ''),
             "Full Name": user.get('full_name', ''),
@@ -907,7 +1000,8 @@ def show_user_management():
             "Phone": user.get('phone', ''),
             "Approved": user.get('is_approved', False),
             "Active": user.get('is_active', True),
-            "Role": user.get('role', 'student'),
+            "Role": role,  # Use role from user data
+            "User Type": user_type,  # Add user type column
             "Created": user.get('created_at', ''),
             "Last Login": user.get('last_login', 'Never')
         })
@@ -1212,9 +1306,9 @@ def show_question_editor():
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("📝 Question Formatting Editor")
     
-    # Check if user is admin
-    if not is_admin_user():
-        st.error("❌ Access Denied. This section is only available for administrators.")
+    # Check if user is admin OR editor
+    if not is_admin_or_editor():  # Changed from is_admin_user()
+        st.error("❌ Access Denied. This section is only available for administrators and editors.")
         st.info("Please contact your system administrator if you need access.")
         return
     
@@ -3774,10 +3868,14 @@ def quick_actions_panel():
         if st.sidebar.button("Admin Panel", use_container_width=True, key="sidebar_admin"):
             st.session_state.current_screen = "admin_panel"
             st.rerun()
+    
+    # Editor and Admin can edit questions
+    if is_admin_or_editor():  # Changed from is_admin_user()
         if st.sidebar.button("📝 Edit Questions", use_container_width=True, key="sidebar_editor"):
             st.session_state.current_screen = "question_editor"
             st.rerun()
     
+    # All users can access these
     if st.sidebar.button("📈 Performance", use_container_width=True, key="sidebar_dashboard"):
         st.session_state.current_screen = "dashboard"
         st.rerun()
@@ -3911,19 +4009,34 @@ def main():
         user_type = st.session_state.get('user_type', 'regular')
         username = st.session_state.get('username', 'User')
         
+        # Display user info based on role
         if user_type == 'admin':
             st.sidebar.markdown(f"### Welcome, {username}")
             st.sidebar.markdown(
                 "<span style='color: #DC2626;'>Admin</span>",
                 unsafe_allow_html=True
             )
-            if db:
-                st.sidebar.markdown(
-                    "<span style='color: green;'>☁️ Cloud Connected</span>",
-                    unsafe_allow_html=True
-                )
-            else:
-                st.sidebar.warning("⚠️ Using Local Storage")
+        elif user_type == 'editor':
+            st.sidebar.markdown(f"### Welcome, {username}")
+            st.sidebar.markdown(
+                "<span style='color: #3B82F6;'>Editor</span>",  # Different color for editor
+                unsafe_allow_html=True
+            )
+        else:  # regular user
+            st.sidebar.markdown(f"### 👤 Welcome, {username}")
+            st.sidebar.markdown(
+                "<span style='color: #059669;'>Student</span>",  # Green for student
+                unsafe_allow_html=True
+            )
+            
+        # Show cloud connection status
+        if db:
+            st.sidebar.markdown(
+                "<span style='color: green;'>☁️ Cloud Connected</span>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.sidebar.warning("⚠️ Using Local Storage")
         else:
             st.sidebar.markdown(f"### 👤 Welcome, {username}")
             st.sidebar.markdown(
