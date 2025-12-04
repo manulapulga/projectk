@@ -4037,12 +4037,6 @@ def main():
             )
         else:
             st.sidebar.warning("⚠️ Using Local Storage")
-        else:
-            st.sidebar.markdown(f"### 👤 Welcome, {username}")
-            st.sidebar.markdown(
-                "<span style='color: #DC2626;'>Student</span>",
-                unsafe_allow_html=True
-            )
             
     # Quick actions panel
     quick_actions_panel()
