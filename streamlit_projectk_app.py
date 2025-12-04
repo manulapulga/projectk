@@ -871,10 +871,7 @@ def show_admin_panel():
         st.info("Please contact your system administrator if you need access.")
         return
     
-    # Initialize subtab state
-    if 'admin_subtab' not in st.session_state:
-        st.session_state.admin_subtab = "users"
-    
+
     # Create subtabs
     subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "⚙Settings"])
     
@@ -882,7 +879,7 @@ def show_admin_panel():
         show_user_management()
     
     with subtab2:
-        show_user_management()
+        show_admin_analytics()
     
     with subtab3:
         show_system_settings()
@@ -1086,7 +1083,84 @@ def show_user_management():
             else:
                 st.info("✅ All users already migrated to Firebase")
 
+def show_admin_analytics():
+    """Display admin analytics dashboard."""
+    st.subheader("📈 User Analytics")
+    
+    users = get_all_users()
+    
+    if not users:
+        st.info("No user data available.")
+        return
+    
+    # Calculate statistics
+    total_users = len(users)
+    approved_users = sum(1 for user in users if user.get('is_approved', False))
+    active_users = sum(1 for user in users if user.get('is_active', True))
+    
+    # Registration trend (last 30 days)
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    recent_users = sum(1 for user in users 
+                      if datetime.fromisoformat(user.get('created_at', '2000-01-01')) > thirty_days_ago)
+    
+    # Reduce st.metric font size
+    st.markdown("""
+        <style>
+            /* Metric label */
+            div[data-testid="stMetricLabel"] > label {
+                font-size: 0.8rem !important;
+            }
+            /* Metric value */
+            div[data-testid="stMetricValue"] {
+                font-size: 1rem !important;
+            }
+            /* Delta text */
+            div[data-testid="stMetricDelta"] {
+                font-size: 0.7rem !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+    
+    # Display metrics
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Users", total_users)
+    with col2:
+        st.metric("Approval Rate", f"{(approved_users/total_users*100):.1f}%")
+    with col3:
+        st.metric("Active Users", active_users)
+    with col4:
+        st.metric("Recent Registrations (30d)", recent_users)
 
+    
+    # User registration timeline
+    st.markdown("---")
+    st.subheader("📅 Registration Timeline")
+    
+    # Group by date
+    reg_dates = {}
+    for user in users:
+        created_date = user.get('created_at', '')[:10]  # Get YYYY-MM-DD
+        if created_date:
+            reg_dates[created_date] = reg_dates.get(created_date, 0) + 1
+    
+    if reg_dates:
+        dates = sorted(reg_dates.keys())[-30:]  # Last 30 days
+        counts = [reg_dates[d] for d in dates]
+        
+        # Create a simple bar chart
+        chart_data = pd.DataFrame({
+            'Date': dates,
+            'Registrations': counts
+        })
+        st.bar_chart(chart_data.set_index('Date'))
+    
+    # User activity heatmap (by hour)
+    st.markdown("---")
+    st.subheader("🌡️ User Activity Heatmap")
+    
+    # This would require tracking login times
+    st.info("User activity tracking coming soon!")
 
 def show_system_settings():
     """System settings for admin."""
