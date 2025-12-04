@@ -3981,20 +3981,20 @@ def main():
         username = st.session_state.get('username', 'User')
         
         if user_type == 'admin':
-            st.sidebar.markdown(f"### 👑 Welcome, **{username}**")
+            st.sidebar.markdown(f"### 👑 Welcome, {username}")
             st.sidebar.markdown(
-                "<span style='color: #DC2626; font-weight: bold;'>Admin</span>",
+                "<span style='color: #DC2626;'>Admin</span>",
                 unsafe_allow_html=True
             )
         else:
-            st.sidebar.markdown(f"### 👤 Welcome, **{username}**")
+            st.sidebar.markdown(f"### 👤 Welcome, {username}")
             st.sidebar.markdown(
-                "<span style='color: #DC2626; font-weight: bold;'>User</span>",
+                "<span style='color: #DC2626;'>User</span>",
                 unsafe_allow_html=True
             )
             if db:
                 st.sidebar.markdown(
-                    "<span style='color: green; font-weight: bold;'>☁️ Cloud Connected</span>",
+                    "<span style='color: green;'>☁️ Cloud Connected</span>",
                     unsafe_allow_html=True
                 )
             else:
