@@ -864,15 +864,7 @@ def show_admin_panel():
     """Admin panel for managing users."""
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("👑 Admin Dashboard")
-    
-    # Check if user is admin
-    current_user_type = st.session_state.get("user_type", "regular")
-
-    if current_user_type != "admin":
-        st.error("❌ Access Denied. This section is only available for administrators.")
-        st.info("Please contact your system administrator if you need access.")
-        return
-    
+  
     # Initialize subtab state
     if 'admin_subtab' not in st.session_state:
         st.session_state.admin_subtab = "users"
