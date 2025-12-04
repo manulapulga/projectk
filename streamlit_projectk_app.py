@@ -3506,7 +3506,7 @@ def show_results_screen():
 def optimize_session_state():
     """Clean up and optimize session state to prevent bloat."""
     essential_keys = {
-        'logged_in', 'username', 'current_screen', 'current_path',
+        'logged_in', 'username', 'user_type', 'current_screen', 'current_path',  # ← Added user_type
         'selected_sheet', 'current_qb_path', 'folder_structure',
         'quiz_started', 'quiz_questions', 'current_idx', 'answers',
         'submitted', 'exam_name', 'question_status', 'quiz_duration',
