@@ -827,10 +827,16 @@ def show_login_screen():
                     success = register_user(full_name, email, phone, username, password)
                     
                     if success:
-                        st.success("✅ Account created successfully! Please wait for admin approval.")
-                        st.info("You will receive an email notification once your account is approved.")
-                        # Clear form
-                        st.rerun()
+                        # Clear registration fields
+                        for key in ["full_name", "email", "phone", "reg_username", "reg_password", "reg_confirm"]:
+                            st.session_state[key] = ""
+                    
+                        st.success("🎉 Registration successful!")
+                        st.warning("⏳ Approval pending from admin.")
+                        st.info("You will be able to log in once your account is approved.")
+                    
+                        st.stop()   # Prevent rerun so messages stay visible
+                    
     
     # Footer
     st.markdown("---")
