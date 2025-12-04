@@ -771,8 +771,7 @@ def show_login_screen():
     with tab2:
         # Registration form
         st.markdown("### Create New Account")
-        st.info("After registration, your account will be pending admin approval.")
-        
+
         with st.form("registration_form"):
             col1, col2 = st.columns(2)
             
