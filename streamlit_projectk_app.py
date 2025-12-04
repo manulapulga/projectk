@@ -498,6 +498,7 @@ def authenticate_user_firebase(username, password):
         if user_data.get('password') == password:
             # Update last login
             user_ref.update({"last_login": datetime.now().isoformat()})
+            st.session_state.role = user_data.get("role", "student")
             return True, "success"
         else:
             return False, "Invalid password"
