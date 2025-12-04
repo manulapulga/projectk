@@ -498,7 +498,6 @@ def authenticate_user_firebase(username, password):
         if user_data.get('password') == password:
             # Update last login
             user_ref.update({"last_login": datetime.now().isoformat()})
-            st.session_state.role = user_data.get("role", "student")
             return True, "success"
         else:
             return False, "Invalid password"
@@ -717,7 +716,6 @@ def show_login_screen():
                 if auth_success:
                     st.session_state.logged_in = True
                     st.session_state.username = username
-                    st.session_state.role = user_data.get("role", "student")
                     # Initialize user progress
                     initialize_user_progress(username)
                     st.success(f"✅ Welcome back, {username}!")
@@ -1161,7 +1159,7 @@ def render_formatted_content(content):
 def is_admin_user():
     """Check if current user is admin."""
     # You can define admin users in your login file or hardcode them
-    return st.session_state.get("role", "").lower() == "admin"
+    admin_users = ["admin", "administrator"]  # Add admin usernames here
     return st.session_state.username.lower() in [admin.lower() for admin in admin_users]
 
 def show_question_editor():
@@ -3719,9 +3717,8 @@ def quick_actions_panel():
     if st.session_state.current_screen == "quiz":
         return
     
-    
     st.sidebar.markdown("---")
-    st.sidebar.write("Role:", st.session_state.get("role"))
+
     # Home Button - Always available (except during quiz)
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
         st.session_state.current_screen = "home"
