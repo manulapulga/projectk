@@ -3849,15 +3849,6 @@ def quick_actions_panel():
     
     st.sidebar.markdown("---")
     
-    # Show user type based on authentication source
-    user_type = st.session_state.get('user_type', 'regular')
-    
-    # Clear indicator
-    if user_type == 'admin':
-        st.sidebar.write("👑 ADMINISTRATOR")
-    else:
-        st.sidebar.write("👤 REGULAR USER")
-    
     # Home Button - Always available (except during quiz)
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
         st.session_state.current_screen = "home"
@@ -3898,6 +3889,7 @@ def initialize_state():
         "exam_name": None,
         "logged_in": False,
         "username": None,
+        "user_type": "regular",  # Add this
         "current_screen": "home",
         "current_path": [],
         "selected_sheet": None,
@@ -3996,6 +3988,10 @@ def main():
             )
         else:
             st.sidebar.markdown(f"### 👤 Welcome, **{username}**")
+            st.sidebar.markdown(
+                "<span style='color: #DC2626; font-weight: bold;'>User</span>",
+                unsafe_allow_html=True
+            )
             if db:
                 st.sidebar.markdown(
                     "<span style='color: green; font-weight: bold;'>☁️ Cloud Connected</span>",
