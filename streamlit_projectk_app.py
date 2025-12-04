@@ -775,8 +775,6 @@ def show_login_screen():
     
     with tab2:
         # Registration form
-        st.markdown("### Create New Account")
-
         with st.form("registration_form"):
             col1, col2 = st.columns(2)
             
