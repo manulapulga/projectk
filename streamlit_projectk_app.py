@@ -3842,17 +3842,6 @@ def optimized_show_folder_view():
 # Main App
 # =============================
 def main():
-    st.write("DEBUG: session keys:", list(st.session_state.keys()))
-    st.write("DEBUG: username, user_type:", st.session_state.get('username'), st.session_state.get('user_type'))
-    admin_credentials = load_admin_credentials()
-    st.write("DEBUG: admin_credentials keys:", list(admin_credentials.keys())[:10])  # shows first 10
-    if db:
-        try:
-            doc = db.collection('users').document(st.session_state.get('username', '')).get()
-            st.write("DEBUG: firebase doc exists?:", doc.exists if doc is not None else None)
-        except Exception as e:
-            st.write("DEBUG: firestore error:", e)
-    
     st.set_page_config(
         page_title="LitmusQ - Professional MCQ Platform",
         page_icon="🧪",
