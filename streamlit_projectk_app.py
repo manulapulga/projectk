@@ -975,7 +975,10 @@ def show_user_management():
                 
                 with col2:
                     st.markdown(f"**Created:** {row['Created'][:10] if row['Created'] else 'N/A'}")
-                    st.markdown(f"**Last Login:** {row['Last Login'][:19] if row['Last Login'] != 'Never' else 'Never'}")
+                    # Check if the value is a string before trying to slice it, otherwise display 'Never'
+                    last_login_value = row['Last Login']
+                    last_login_display = last_login_value[:19] if isinstance(last_login_value, str) else 'Never'
+                    st.markdown(f"**Last Login:** {last_login_display}")
                     
                     # Status indicators
                     status_col1, status_col2 = st.columns(2)
