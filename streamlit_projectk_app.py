@@ -779,14 +779,14 @@ def show_login_screen():
             col1, col2 = st.columns(2)
             
             with col1:
-                full_name = st.text_input("👤 Full Name", placeholder="Enter your full name")
-                email = st.text_input("📧 Email Address", placeholder="Enter your email")
-                phone = st.text_input("📱 Phone Number", placeholder="Enter your phone number")
+                full_name = st.text_input("👤 Full Name", placeholder="Enter your full name", key="full_name")
+                email = st.text_input("📧 Email Address", placeholder="Enter your email", key="email")
+                phone = st.text_input("📱 Phone Number", placeholder="Enter your phone number", key="phone")
             
             with col2:
-                username = st.text_input("👤 Username", placeholder="Choose a username")
-                password = st.text_input("🔒 Password", type="password", placeholder="Choose a password")
-                confirm_password = st.text_input("✅ Confirm Password", type="password", placeholder="Confirm your password")
+                username = st.text_input("👤 Username", placeholder="Choose a username", key="reg_username")
+                password = st.text_input("🔒 Password", type="password", placeholder="Choose a password", key="reg_password")
+                confirm_password = st.text_input("✅ Confirm Password", type="password", placeholder="Confirm your password", key="reg_confirm")
             
             # Terms and conditions
             agree_terms = st.checkbox("I agree to the Terms and Conditions")
