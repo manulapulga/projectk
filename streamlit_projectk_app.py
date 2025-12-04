@@ -699,8 +699,7 @@ def show_login_screen():
     
     with tab1:
         # Login form
-        st.markdown("### Login to Your Account")
-        
+
         with st.form("login_form"):
             username = st.text_input("👤 Username", placeholder="Enter your username", key="login_username")
             password = st.text_input("🔒 Password", type="password", placeholder="Enter your password", key="login_password")
