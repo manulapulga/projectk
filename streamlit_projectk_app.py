@@ -876,7 +876,7 @@ def show_admin_panel():
         st.session_state.admin_subtab = "users"
     
     # Create subtabs
-    subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "⚙Settings"])
+    subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "🛠️Settings"])
     
     with subtab1:
         show_user_management()
