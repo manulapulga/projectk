@@ -1156,18 +1156,10 @@ def render_formatted_content(content):
         return st.write(content)
 
 def is_admin_user():
-    """Check if logged-in user has admin role in Firebase."""
-    if not db:
-        return False
-    
-    try:
-        user_ref = db.collection("users").document(st.session_state.username).get()
-        if user_ref.exists:
-            data = user_ref.to_dict()
-            return data.get("role", "").lower() == "admin"
-        return False
-    except:
-        return False
+    """Check if current user is admin."""
+    # You can define admin users in your login file or hardcode them
+    admin_users = ["admin", "administrator"]  # Add admin usernames here
+    return st.session_state.username.lower() in [admin.lower() for admin in admin_users]
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
