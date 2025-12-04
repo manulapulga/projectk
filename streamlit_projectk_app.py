@@ -876,7 +876,7 @@ def show_admin_panel():
         st.session_state.admin_subtab = "users"
     
     # Create subtabs
-    subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "🔧 Settings"])
+    subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "⚙Settings"])
     
     with subtab1:
         show_user_management()
@@ -994,7 +994,7 @@ def show_user_management():
                 with action_col1:
                     # Toggle approval
                     new_approval = not row['Approved']
-                    if st.button("✅ Approve" if not row['Approved'] else ⏸️ Revoke", 
+                    if st.button("✅ Approve" if not row['Approved'] else "⏸ Revoke", 
                                key=f"approve_{row['Username']}",
                                use_container_width=True):
                         if update_user_approval(row['Username'], new_approval):
@@ -1013,7 +1013,7 @@ def show_user_management():
                 
                 with action_col3:
                     # Edit user (placeholder)
-                    if st.button("✏️ Edit", key=f"edit_{row['Username']}", use_container_width=True):
+                    if st.button(✏️ Edit", key=f"edit_{row['Username']}", use_container_width=True):
                         st.info("Edit functionality coming soon!")
                 
                 with action_col4:
