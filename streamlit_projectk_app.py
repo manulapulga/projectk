@@ -3986,12 +3986,6 @@ def main():
                 "<span style='color: #DC2626;'>Admin</span>",
                 unsafe_allow_html=True
             )
-        else:
-            st.sidebar.markdown(f"### 👤 Welcome, {username}")
-            st.sidebar.markdown(
-                "<span style='color: #DC2626;'>User</span>",
-                unsafe_allow_html=True
-            )
             if db:
                 st.sidebar.markdown(
                     "<span style='color: green;'>☁️ Cloud Connected</span>",
@@ -3999,7 +3993,13 @@ def main():
                 )
             else:
                 st.sidebar.warning("⚠️ Using Local Storage")
-    
+        else:
+            st.sidebar.markdown(f"### 👤 Welcome, {username}")
+            st.sidebar.markdown(
+                "<span style='color: #DC2626;'>User</span>",
+                unsafe_allow_html=True
+            )
+            
     # Quick actions panel
     quick_actions_panel()
     
