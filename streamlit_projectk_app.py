@@ -3864,27 +3864,11 @@ def main():
     if st.session_state.get('logged_in') and 'user_type' not in st.session_state:
         username = st.session_state.get('username')
         if username:
-            # First check Excel admin credentials
             admin_credentials = load_admin_credentials()
             if username in admin_credentials:
                 st.session_state.user_type = 'admin'
             else:
-                # Check Firebase for admin role
-                try:
-                    if db:
-                        user_ref = db.collection('users').document(username)
-                        user_doc = user_ref.get()
-                        if user_doc.exists:
-                            user_data = user_doc.to_dict()
-                            if user_data.get('role') == 'admin':
-                                st.session_state.user_type = 'admin'
-                            else:
-                                st.session_state.user_type = 'regular'
-                        else:
-                            st.session_state.user_type = 'regular'
-                except Exception as e:
-                    st.error(f"Error checking user role: {e}")
-                    st.session_state.user_type = 'regular'
+                st.session_state.user_type = 'regular'
     
     # Handle auto-submit if triggered
     handle_auto_submit()
