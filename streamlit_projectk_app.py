@@ -879,7 +879,7 @@ def show_admin_panel():
     subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "⚙Settings"])
     
     with subtab1:
-        
+        show_admin_analytics()
     
     with subtab2:
         show_admin_analytics()
