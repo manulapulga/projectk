@@ -879,13 +879,13 @@ def show_admin_panel():
     subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "⚙Settings"])
     
     with subtab1:
-        show_admin_analytics()
+        show_user_management()
     
     with subtab2:
         show_admin_analytics()
     
     with subtab3:
-        show_admin_analytics()
+        show_user_management()
 
 def show_user_management():
     """Display and manage all registered users."""
