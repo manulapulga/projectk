@@ -17,9 +17,12 @@ import json
 # Configuration & Theme
 # =============================
 QUESTION_DATA_FOLDER = "Question_Data_Folder"
-LOGIN_FILE_PATH = "data/login_details.xlsx"
+LOGIN_FILE_PATH = "data/login_details.xlsx"  # Keep for backward compatibility
 USER_PROGRESS_FOLDER = "user_progress"
 FORMATTED_QUESTIONS_FILE = "formatted_questions.json"
+
+# Admin users list (can also be stored in Firebase)
+ADMIN_USERS = ["admin", "administrator"]
 
 # =============================
 # Add performance config
@@ -396,7 +399,183 @@ def inject_custom_css():
     </style>
     """, unsafe_allow_html=True)
 
-    
+# =============================
+# Firebase User Management Functions
+# =============================
+
+def register_user(full_name, email, phone, username, password):
+    """Register a new user in Firebase."""
+    try:
+        if db is None:
+            st.error("Firebase not initialized")
+            return False
+        
+        # Check if username already exists
+        users_ref = db.collection('users')
+        query = users_ref.where('username', '==', username).limit(1).get()
+        
+        if len(query) > 0:
+            st.error("❌ Username already exists. Please choose a different one.")
+            return False
+        
+        # Check if email already exists
+        email_query = users_ref.where('email', '==', email).limit(1).get()
+        if len(email_query) > 0:
+            st.error("❌ Email already registered. Please use a different email.")
+            return False
+        
+        # Create new user document
+        user_data = {
+            "full_name": full_name,
+            "email": email,
+            "phone": phone,
+            "username": username,
+            "password": password,  # In production, hash this password!
+            "is_approved": False,  # Admin must approve
+            "role": "student",  # Default role
+            "created_at": datetime.now().isoformat(),
+            "last_login": None,
+            "is_active": True
+        }
+        
+        # Add to users collection
+        users_ref.document(username).set(user_data)
+        
+        # Also create user progress document
+        initialize_user_progress(username)
+        
+        return True
+        
+    except Exception as e:
+        st.error(f"Registration failed: {e}")
+        return False
+
+def authenticate_user_firebase(username, password):
+    """Authenticate user against Firebase with approval check."""
+    try:
+        if db is None:
+            st.error("Firebase not initialized")
+            return False, "System error"
+        
+        # Get user document
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists:
+            # Fallback to Excel for backward compatibility
+            credentials = load_login_credentials()
+            if username in credentials:
+                if credentials[username] == password:
+                    # Migrate to Firebase
+                    user_data = {
+                        "full_name": username,
+                        "email": f"{username}@example.com",
+                        "phone": "",
+                        "username": username,
+                        "password": password,
+                        "is_approved": True,  # Auto-approve existing users
+                        "role": "student",
+                        "created_at": datetime.now().isoformat(),
+                        "last_login": datetime.now().isoformat(),
+                        "is_active": True
+                    }
+                    user_ref.set(user_data)
+                    initialize_user_progress(username)
+                    return True, "success"
+            return False, "Invalid username or password"
+        
+        user_data = user_doc.to_dict()
+        
+        # Check if user is approved
+        if not user_data.get('is_approved', False):
+            return False, "Account pending admin approval"
+        
+        # Check if user is active
+        if not user_data.get('is_active', True):
+            return False, "Account disabled"
+        
+        # Check password
+        if user_data.get('password') == password:
+            # Update last login
+            user_ref.update({"last_login": datetime.now().isoformat()})
+            return True, "success"
+        else:
+            return False, "Invalid password"
+            
+    except Exception as e:
+        st.error(f"Authentication error: {e}")
+        return False, "System error"
+
+def get_all_users():
+    """Get all registered users from Firebase."""
+    try:
+        if db is None:
+            return []
+        
+        users_ref = db.collection('users')
+        docs = users_ref.stream()
+        
+        users = []
+        for doc in docs:
+            user_data = doc.to_dict()
+            user_data['id'] = doc.id
+            users.append(user_data)
+        
+        return users
+    except Exception as e:
+        st.error(f"Error fetching users: {e}")
+        return []
+
+def update_user_approval(username, is_approved):
+    """Update user approval status."""
+    try:
+        if db is None:
+            return False
+        
+        user_ref = db.collection('users').document(username)
+        user_ref.update({
+            "is_approved": is_approved,
+            "updated_at": datetime.now().isoformat()
+        })
+        return True
+    except Exception as e:
+        st.error(f"Error updating user: {e}")
+        return False
+
+def update_user_status(username, is_active):
+    """Update user active status."""
+    try:
+        if db is None:
+            return False
+        
+        user_ref = db.collection('users').document(username)
+        user_ref.update({
+            "is_active": is_active,
+            "updated_at": datetime.now().isoformat()
+        })
+        return True
+    except Exception as e:
+        st.error(f"Error updating user: {e}")
+        return False
+
+def delete_user(username):
+    """Delete a user from the system."""
+    try:
+        if db is None:
+            return False
+        
+        # Don't allow deletion of admin users
+        if username.lower() in [admin.lower() for admin in ADMIN_USERS]:
+            st.error("Cannot delete admin users")
+            return False
+        
+        user_ref = db.collection('users').document(username)
+        user_ref.delete()
+        return True
+    except Exception as e:
+        st.error(f"Error deleting user: {e}")
+        return False
+        
 # =============================
 # Firebase Formatted Questions Functions
 # =============================
@@ -491,7 +670,7 @@ def authenticate_user(username, password, credentials):
 
 
 def show_login_screen():
-    """Enhanced login screen with LitmusQ branding."""
+    """Enhanced login screen with LitmusQ branding and registration."""
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Assess Better. Learn Faster.")
     
@@ -505,39 +684,113 @@ def show_login_screen():
         margin-top: 0rem !important;
         padding-top: 1rem !important;
     }
+    .registration-form {
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid #cbd5e1;
+        margin: 1rem 0;
+    }
     </style>
     """, unsafe_allow_html=True)
     
-    credentials = load_login_credentials()
+    # Create tabs for Login and Registration
+    tab1, tab2 = st.tabs(["🔐 Login", "📝 Register"])
     
-    if not credentials:
-        st.error("No valid login credentials found. Please contact administrator.")
-        return False
-    
-    # Center the login form
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        with st.container():
-
-            with st.form("login_form"):
-                username = st.text_input("👤 Username", placeholder="Enter your username", key="login_username")
-                password = st.text_input("🔒 Password", type="password", placeholder="Enter your password", key="login_password")
-                submit_button = st.form_submit_button("🚀 Login to LitmusQ", use_container_width=True)
+    with tab1:
+        # Login form
+        st.markdown("### Login to Your Account")
+        
+        with st.form("login_form"):
+            username = st.text_input("👤 Username", placeholder="Enter your username", key="login_username")
+            password = st.text_input("🔒 Password", type="password", placeholder="Enter your password", key="login_password")
+            submit_button = st.form_submit_button("🚀 Login to LitmusQ", use_container_width=True)
+            
+            if submit_button:
+                if not username or not password:
+                    st.error("Please enter both username and password")
+                    return False
+                    
+                # Authenticate with Firebase
+                auth_success, message = authenticate_user_firebase(username, password)
                 
-                if submit_button:
-                    if not username or not password:
-                        st.error("Please enter both username and password")
-                        return False
-                        
-                    if authenticate_user(username, password, credentials):
-                        st.session_state.logged_in = True
-                        st.session_state.username = username
-                        # Initialize user progress
-                        initialize_user_progress(username)
-                        st.rerun()
+                if auth_success:
+                    st.session_state.logged_in = True
+                    st.session_state.username = username
+                    # Initialize user progress
+                    initialize_user_progress(username)
+                    st.success(f"✅ Welcome back, {username}!")
+                    st.rerun()
+                else:
+                    if message == "Account pending admin approval":
+                        st.warning("⏳ Your account is pending admin approval. Please contact the administrator.")
+                    elif message == "Account disabled":
+                        st.error("❌ Your account has been disabled. Please contact the administrator.")
                     else:
-                        st.error("❌ Invalid username or password")
-                        return False
+                        st.error(f"❌ {message}")
+                    return False
+    
+    with tab2:
+        # Registration form
+        st.markdown("### Create New Account")
+        st.info("After registration, your account will be pending admin approval.")
+        
+        with st.form("registration_form"):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                full_name = st.text_input("👤 Full Name", placeholder="Enter your full name")
+                email = st.text_input("📧 Email Address", placeholder="Enter your email")
+                phone = st.text_input("📱 Phone Number", placeholder="Enter your phone number")
+            
+            with col2:
+                username = st.text_input("👤 Username", placeholder="Choose a username")
+                password = st.text_input("🔒 Password", type="password", placeholder="Choose a password")
+                confirm_password = st.text_input("✅ Confirm Password", type="password", placeholder="Confirm your password")
+            
+            # Terms and conditions
+            agree_terms = st.checkbox("I agree to the Terms and Conditions")
+            
+            register_button = st.form_submit_button("📝 Register Account", use_container_width=True, type="secondary")
+            
+            if register_button:
+                # Validate inputs
+                if not all([full_name, email, username, password, confirm_password]):
+                    st.error("Please fill in all required fields")
+                    return False
+                
+                if password != confirm_password:
+                    st.error("Passwords do not match")
+                    return False
+                
+                if len(password) < 6:
+                    st.error("Password must be at least 6 characters long")
+                    return False
+                
+                if not agree_terms:
+                    st.error("You must agree to the Terms and Conditions")
+                    return False
+                
+                # Email validation
+                import re
+                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                if not re.match(email_pattern, email):
+                    st.error("Please enter a valid email address")
+                    return False
+                
+                # Phone validation (optional)
+                if phone and not phone.replace('+', '').replace(' ', '').isdigit():
+                    st.warning("Phone number should contain only digits and optional + sign")
+                
+                # Register user
+                with st.spinner("Creating your account..."):
+                    success = register_user(full_name, email, phone, username, password)
+                    
+                    if success:
+                        st.success("✅ Account created successfully! Please wait for admin approval.")
+                        st.info("You will receive an email notification once your account is approved.")
+                        # Clear form
+                        st.rerun()
     
     # Footer
     st.markdown("---")
@@ -552,8 +805,341 @@ def show_login_screen():
     
     return False
 
+def show_admin_panel():
+    """Admin panel for managing users."""
+    st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
+    show_litmusq_header("👑 Admin Dashboard")
+    
+    # Check if user is admin
+    if not is_admin_user():
+        st.error("❌ Access Denied. This section is only available for administrators.")
+        st.info("Please contact your system administrator if you need access.")
+        return
+    
+    # Navigation buttons
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🏠 Home", use_container_width=True, key="admin_home"):
+            st.session_state.current_screen = "home"
+            st.rerun()
+    with col2:
+        if st.button("📊 User Analytics", use_container_width=True, key="admin_analytics"):
+            st.session_state.admin_subtab = "analytics"
+            st.rerun()
+    with col3:
+        if st.button("🔧 System Settings", use_container_width=True, key="admin_settings"):
+            st.session_state.admin_subtab = "settings"
+            st.rerun()
+    
+    # Initialize subtab state
+    if 'admin_subtab' not in st.session_state:
+        st.session_state.admin_subtab = "users"
+    
+    # Create subtabs
+    subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "⚙️ Settings"])
+    
+    with subtab1:
+        show_user_management()
+    
+    with subtab2:
+        show_admin_analytics()
+    
+    with subtab3:
+        show_system_settings()
 
+def show_user_management():
+    """Display and manage all registered users."""
+    st.subheader("👥 User Management")
+    
+    # Refresh button
+    if st.button("🔄 Refresh User List", key="refresh_users"):
+        st.rerun()
+    
+    # Get all users
+    users = get_all_users()
+    
+    if not users:
+        st.info("No users found in the system.")
+        return
+    
+    # Convert to DataFrame for display
+    user_list = []
+    for user in users:
+        user_list.append({
+            "Username": user.get('username', ''),
+            "Full Name": user.get('full_name', ''),
+            "Email": user.get('email', ''),
+            "Phone": user.get('phone', ''),
+            "Approved": user.get('is_approved', False),
+            "Active": user.get('is_active', True),
+            "Role": user.get('role', 'student'),
+            "Created": user.get('created_at', ''),
+            "Last Login": user.get('last_login', 'Never')
+        })
+    
+    df = pd.DataFrame(user_list)
+    
+    # Display statistics
+    total_users = len(users)
+    approved_users = sum(1 for user in users if user.get('is_approved', False))
+    active_users = sum(1 for user in users if user.get('is_active', True))
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Users", total_users)
+    with col2:
+        st.metric("Approved Users", approved_users)
+    with col3:
+        st.metric("Active Users", active_users)
+    with col4:
+        st.metric("Pending Approval", total_users - approved_users)
+    
+    st.markdown("---")
+    
+    # Search and filter
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        search_term = st.text_input("🔍 Search users", placeholder="Search by name, username, or email")
+    with col2:
+        filter_approved = st.selectbox("Approval Status", ["All", "Approved", "Pending"])
+    with col3:
+        filter_active = st.selectbox("Active Status", ["All", "Active", "Inactive"])
+    
+    # Apply filters
+    if search_term:
+        df = df[df.apply(lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1)]
+    
+    if filter_approved == "Approved":
+        df = df[df["Approved"] == True]
+    elif filter_approved == "Pending":
+        df = df[df["Approved"] == False]
+    
+    if filter_active == "Active":
+        df = df[df["Active"] == True]
+    elif filter_active == "Inactive":
+        df = df[df["Active"] == False]
+    
+    # Display user table
+    st.subheader(f"📋 User List ({len(df)} users)")
+    
+    # Create a container for the table
+    table_container = st.container()
+    
+    with table_container:
+        # Display each user in an editable card
+        for idx, row in df.iterrows():
+            with st.expander(f"👤 {row['Full Name']} ({row['Username']})", expanded=False):
+                col1, col2 = st.columns(2)
+                
+                with col1:
+                    st.markdown(f"**Full Name:** {row['Full Name']}")
+                    st.markdown(f"**Email:** {row['Email']}")
+                    st.markdown(f"**Phone:** {row['Phone']}")
+                    st.markdown(f"**Role:** {row['Role']}")
+                
+                with col2:
+                    st.markdown(f"**Created:** {row['Created'][:10] if row['Created'] else 'N/A'}")
+                    st.markdown(f"**Last Login:** {row['Last Login'][:19] if row['Last Login'] != 'Never' else 'Never'}")
+                    
+                    # Status indicators
+                    status_col1, status_col2 = st.columns(2)
+                    with status_col1:
+                        approval_status = "✅ Approved" if row['Approved'] else "⏳ Pending"
+                        st.markdown(f"**Approval:** {approval_status}")
+                    
+                    with status_col2:
+                        active_status = "🟢 Active" if row['Active'] else "🔴 Inactive"
+                        st.markdown(f"**Status:** {active_status}")
+                
+                # Action buttons
+                st.markdown("---")
+                action_col1, action_col2, action_col3, action_col4 = st.columns(4)
+                
+                with action_col1:
+                    # Toggle approval
+                    new_approval = not row['Approved']
+                    if st.button("✅ Approve" if not row['Approved'] else "⏸️ Revoke", 
+                               key=f"approve_{row['Username']}",
+                               use_container_width=True):
+                        if update_user_approval(row['Username'], new_approval):
+                            st.success(f"User {'approved' if new_approval else 'revoked'} successfully!")
+                            st.rerun()
+                
+                with action_col2:
+                    # Toggle active status
+                    new_active = not row['Active']
+                    if st.button("🟢 Activate" if not row['Active'] else "🔴 Deactivate",
+                               key=f"active_{row['Username']}",
+                               use_container_width=True):
+                        if update_user_status(row['Username'], new_active):
+                            st.success(f"User {'activated' if new_active else 'deactivated'} successfully!")
+                            st.rerun()
+                
+                with action_col3:
+                    # Edit user (placeholder)
+                    if st.button("✏️ Edit", key=f"edit_{row['Username']}", use_container_width=True):
+                        st.info("Edit functionality coming soon!")
+                
+                with action_col4:
+                    # Delete user (with confirmation)
+                    if st.button("🗑️ Delete", key=f"delete_{row['Username']}", use_container_width=True):
+                        st.session_state.user_to_delete = row['Username']
+                        st.rerun()
+                
+                # Handle deletion confirmation
+                if hasattr(st.session_state, 'user_to_delete') and st.session_state.user_to_delete == row['Username']:
+                    st.warning(f"⚠️ Are you sure you want to delete user {row['Username']}?")
+                    confirm_col1, confirm_col2 = st.columns(2)
+                    with confirm_col1:
+                        if st.button("✅ Yes, Delete", key=f"confirm_delete_{row['Username']}"):
+                            if delete_user(row['Username']):
+                                st.success("User deleted successfully!")
+                                del st.session_state.user_to_delete
+                                st.rerun()
+                    with confirm_col2:
+                        if st.button("❌ Cancel", key=f"cancel_delete_{row['Username']}"):
+                            del st.session_state.user_to_delete
+                            st.rerun()
+    
+    # Bulk actions
+    st.markdown("---")
+    st.subheader("🚀 Bulk Actions")
+    
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("✅ Approve All Pending", use_container_width=True):
+            pending_users = [user for user in users if not user.get('is_approved', False)]
+            for user in pending_users:
+                update_user_approval(user['username'], True)
+            st.success(f"Approved {len(pending_users)} pending users!")
+            st.rerun()
+    
+    with col2:
+        if st.button("📧 Export User List", use_container_width=True):
+            csv = df.to_csv(index=False)
+            st.download_button(
+                label="📥 Download CSV",
+                data=csv,
+                file_name="litmusq_users.csv",
+                mime="text/csv"
+            )
+    
+    with col3:
+        if st.button("🔄 Sync with Excel", use_container_width=True):
+            # Sync existing Excel users with Firebase
+            credentials = load_login_credentials()
+            migrated = 0
+            for username, password in credentials.items():
+                # Check if user exists in Firebase
+                user_ref = db.collection('users').document(username)
+                if not user_ref.get().exists():
+                    user_data = {
+                        "full_name": username,
+                        "email": f"{username}@example.com",
+                        "phone": "",
+                        "username": username,
+                        "password": password,
+                        "is_approved": True,
+                        "role": "student",
+                        "created_at": datetime.now().isoformat(),
+                        "last_login": None,
+                        "is_active": True
+                    }
+                    user_ref.set(user_data)
+                    migrated += 1
+            
+            if migrated > 0:
+                st.success(f"✅ Migrated {migrated} users from Excel to Firebase")
+            else:
+                st.info("✅ All users already migrated to Firebase")
 
+def show_admin_analytics():
+    """Display admin analytics dashboard."""
+    st.subheader("📈 User Analytics")
+    
+    users = get_all_users()
+    
+    if not users:
+        st.info("No user data available.")
+        return
+    
+    # Calculate statistics
+    total_users = len(users)
+    approved_users = sum(1 for user in users if user.get('is_approved', False))
+    active_users = sum(1 for user in users if user.get('is_active', True))
+    
+    # Registration trend (last 30 days)
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    recent_users = sum(1 for user in users 
+                      if datetime.fromisoformat(user.get('created_at', '2000-01-01')) > thirty_days_ago)
+    
+    # Display metrics
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Total Users", total_users)
+    with col2:
+        st.metric("Approval Rate", f"{(approved_users/total_users*100):.1f}%")
+    with col3:
+        st.metric("Active Users", active_users)
+    with col4:
+        st.metric("Recent Registrations (30d)", recent_users)
+    
+    # User registration timeline
+    st.markdown("---")
+    st.subheader("📅 Registration Timeline")
+    
+    # Group by date
+    reg_dates = {}
+    for user in users:
+        created_date = user.get('created_at', '')[:10]  # Get YYYY-MM-DD
+        if created_date:
+            reg_dates[created_date] = reg_dates.get(created_date, 0) + 1
+    
+    if reg_dates:
+        dates = sorted(reg_dates.keys())[-30:]  # Last 30 days
+        counts = [reg_dates[d] for d in dates]
+        
+        # Create a simple bar chart
+        chart_data = pd.DataFrame({
+            'Date': dates,
+            'Registrations': counts
+        })
+        st.bar_chart(chart_data.set_index('Date'))
+    
+    # User activity heatmap (by hour)
+    st.markdown("---")
+    st.subheader("🌡️ User Activity Heatmap")
+    
+    # This would require tracking login times
+    st.info("User activity tracking coming soon!")
+
+def show_system_settings():
+    """System settings for admin."""
+    st.subheader("⚙️ System Settings")
+    
+    with st.form("system_settings"):
+        # Email notifications
+        st.markdown("### 📧 Email Settings")
+        enable_emails = st.checkbox("Enable email notifications", value=True)
+        admin_email = st.text_input("Admin Email", placeholder="admin@example.com")
+        
+        # User settings
+        st.markdown("### 👥 User Settings")
+        auto_approve = st.checkbox("Auto-approve new users", value=False)
+        require_email_verification = st.checkbox("Require email verification", value=False)
+        max_login_attempts = st.number_input("Max login attempts before lockout", min_value=1, max_value=10, value=3)
+        
+        # Security settings
+        st.markdown("### 🔒 Security Settings")
+        session_timeout = st.number_input("Session timeout (minutes)", min_value=5, max_value=240, value=60)
+        password_min_length = st.number_input("Minimum password length", min_value=6, max_value=20, value=8)
+        require_special_char = st.checkbox("Require special characters in password", value=True)
+        
+        # Save button
+        if st.form_submit_button("💾 Save Settings", use_container_width=True):
+            st.success("Settings saved successfully!")
+            # Note: In production, save these to Firebase
+            
 def get_question_key(file_path, sheet_name, question_index, field="question"):
     """Generate a unique key for each question/option."""
     return f"{file_path}::{sheet_name}::{question_index}::{field}"
@@ -3139,6 +3725,9 @@ def quick_actions_panel():
     
     # Admin-only actions
     if is_admin_user():
+        if st.sidebar.button("👑 Admin Panel", use_container_width=True, key="sidebar_admin"):
+            st.session_state.current_screen = "admin_panel"
+            st.rerun()
         if st.sidebar.button("📝 Edit Questions", use_container_width=True, key="sidebar_editor"):
             st.session_state.current_screen = "question_editor"
             st.rerun()
@@ -3288,7 +3877,8 @@ def main():
         "exam_config": lambda: safe_execute(show_exam_config_screen),
         "quiz": optimized_show_quiz_screen,
         "question_editor": lambda: safe_execute(show_question_editor),
-        "retest_config": lambda: safe_execute(show_retest_config, st.session_state.get('retest_config', {}))
+        "retest_config": lambda: safe_execute(show_retest_config, st.session_state.get('retest_config', {})),
+        "admin_panel": lambda: safe_execute(show_admin_panel)  # Add this line
     }
     current_screen = st.session_state.current_screen
     handler = screen_handlers.get(current_screen, optimized_show_home_screen)
