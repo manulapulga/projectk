@@ -829,7 +829,7 @@ def show_login_screen():
                     for key in ["full_name", "email", "phone", "reg_username", "reg_password", "reg_confirm"]:
                         st.session_state[key] = ""
 
-                    st.info("You will be able to log in once your account is approved.")
+                    st.info("User Created. You will be able to log in once your account is approved by admin.")
                 
                     st.stop()   # <-- VERY IMPORTANT: prevents form rerun and keeps messages visible
                     
