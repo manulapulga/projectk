@@ -769,10 +769,10 @@ def show_login_screen():
                     return False
     
     with tab2:
-        # Registration form - only for regular users
+        # Registration form
         st.markdown("### Create New Account")
-        # Check if username exists in admin list
-        if admin_credentials:
+        st.info("After registration, your account will be pending admin approval.")
+        
         with st.form("registration_form"):
             col1, col2 = st.columns(2)
             
@@ -789,17 +789,12 @@ def show_login_screen():
             # Terms and conditions
             agree_terms = st.checkbox("I agree to the Terms and Conditions")
             
-            register_button = st.form_submit_button("Submit", use_container_width=True, type="secondary")
+            register_button = st.form_submit_button("📝 Register Account", use_container_width=True, type="secondary")
             
             if register_button:
                 # Validate inputs
                 if not all([full_name, email, username, password, confirm_password]):
                     st.error("Please fill in all required fields")
-                    return False
-                
-                # Check if username is in admin list
-                if username in admin_credentials:
-                    st.error(f"❌ Username '{username}' is reserved for administrators. Please choose a different username.")
                     return False
                 
                 if password != confirm_password:
