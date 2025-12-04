@@ -832,7 +832,7 @@ def show_login_screen():
                             st.session_state[key] = ""
 
                         st.info("You will be able to log in once your account is approved.")
-                        st.return()   # Prevent rerun so messages stay visible
+                        st.rerun()   # Prevent rerun so messages stay visible
                     
     
     # Footer
