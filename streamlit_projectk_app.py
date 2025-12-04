@@ -3898,7 +3898,6 @@ def initialize_state():
         "exam_name": None,
         "logged_in": False,
         "username": None,
-        "user_type": "regular",  # Add this
         "current_screen": "home",
         "current_path": [],
         "selected_sheet": None,
@@ -3992,7 +3991,7 @@ def main():
         if user_type == 'admin':
             st.sidebar.markdown(f"### 👑 Welcome, **{username}**")
             st.sidebar.markdown(
-                "<span style='color: #DC2626; font-weight: bold;'>🎯 Administrator Account</span>",
+                "<span style='color: #DC2626; font-weight: bold;'>Admin</span>",
                 unsafe_allow_html=True
             )
         else:
