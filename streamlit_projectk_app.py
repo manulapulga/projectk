@@ -871,7 +871,10 @@ def show_admin_panel():
         st.info("Please contact your system administrator if you need access.")
         return
     
-
+    # Initialize subtab state
+    if 'admin_subtab' not in st.session_state:
+        st.session_state.admin_subtab = "users"
+    
     # Create subtabs
     subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "⚙Settings"])
     
@@ -3857,16 +3860,7 @@ def main():
     # Initialize session state with stability features
     initialize_state()
     
-    # RECOVERY: If user is logged in but user_type is missing, determine it
-    if st.session_state.get('logged_in') and 'user_type' not in st.session_state:
-        username = st.session_state.get('username')
-        if username:
-            admin_credentials = load_admin_credentials()
-            if username in admin_credentials:
-                st.session_state.user_type = 'admin'
-            else:
-                st.session_state.user_type = 'regular'
-    
+
     # Handle auto-submit if triggered
     handle_auto_submit()
     
