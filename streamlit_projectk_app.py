@@ -473,8 +473,8 @@ def authenticate_user_firebase(username, password):
                         "phone": "",
                         "username": username,
                         "password": password,
-                        "is_approved": True,  # Auto-approve existing users
-                        "role": "student",
+                        "is_approved": True,
+                        "role": "admin" if username.lower() in ADMIN_USERS else "student",
                         "created_at": datetime.now().isoformat(),
                         "last_login": datetime.now().isoformat(),
                         "is_active": True
@@ -487,8 +487,13 @@ def authenticate_user_firebase(username, password):
         user_data = user_doc.to_dict()
         
         # Check if user is approved
-        if not user_data.get('is_approved', False):
-            return False, "Account pending admin approval"
+        if username.lower() in ADMIN_USERS:
+            # Admin bypass
+            user_ref.update({"is_approved": True, "role": "admin"})
+        else:
+            if not user_data.get('is_approved', False):
+                return False, "Account pending admin approval"
+        
         
         # Check if user is active
         if not user_data.get('is_active', True):
