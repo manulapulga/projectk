@@ -861,7 +861,6 @@ def is_admin_user():
     return username in admin_credentials
     
 def show_admin_panel():
-    st.write("DEBUG user_type:", st.session_state.get("user_type"))
     """Admin panel for managing users."""
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("👑 Admin Dashboard")
@@ -3860,6 +3859,16 @@ def main():
     
     # Initialize session state with stability features
     initialize_state()
+    
+    # RECOVERY: If user is logged in but user_type is missing, determine it
+    if st.session_state.get('logged_in') and 'user_type' not in st.session_state:
+        username = st.session_state.get('username')
+        if username:
+            admin_credentials = load_admin_credentials()
+            if username in admin_credentials:
+                st.session_state.user_type = 'admin'
+            else:
+                st.session_state.user_type = 'regular'
     
     # Handle auto-submit if triggered
     handle_auto_submit()
