@@ -17,7 +17,7 @@ import json
 # Configuration & Theme
 # =============================
 QUESTION_DATA_FOLDER = "Question_Data_Folder"
-LOGIN_FILE_PATH = "data/admin_login_details.xlsx"  # Keep for backward compatibility
+LOGIN_FILE_PATH = "login/admin_login_details.xlsx"  # Keep for backward compatibility
 USER_PROGRESS_FOLDER = "user_progress"
 FORMATTED_QUESTIONS_FILE = "formatted_questions.json"
 
