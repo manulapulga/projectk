@@ -971,9 +971,7 @@ def show_admin_panel():
 
 def show_user_management():
     """Display and manage all registered users."""
-    st.subheader("👥 User Management")
-    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
-    
+
     # Refresh button
     if st.button("🔄 Refresh User List", key="refresh_users"):
         st.rerun()
@@ -1126,9 +1124,6 @@ def show_user_management():
                             st.rerun()
     
     # Bulk actions
-    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-    st.subheader("🚀 Bulk Actions")
-    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("✅ Approve All Pending", use_container_width=True):
