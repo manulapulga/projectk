@@ -21,8 +21,8 @@ LOGIN_FILE_PATH = "data/login_details.xlsx"  # Keep for backward compatibility
 USER_PROGRESS_FOLDER = "user_progress"
 FORMATTED_QUESTIONS_FILE = "formatted_questions.json"
 
-# Admin users list (can also be stored in Firebase)
-ADMIN_USERS = ["admin", "administrator"]
+# Admin users will be loaded from Excel file, not hardcoded
+ADMIN_USERS = []  # Will be populated from Excel file
 
 # =============================
 # Add performance config
@@ -450,8 +450,25 @@ def register_user(full_name, email, phone, username, password):
         st.error(f"Registration failed: {e}")
         return False
 
+def authenticate_user_all(username, password):
+    """Authenticate user against either admin (Excel) or regular users (Firebase)."""
+    # First check if it's an admin user (from Excel)
+    admin_credentials = load_admin_credentials()
+    if username in admin_credentials:
+        if admin_credentials[username] == password:
+            return True, "success", "admin"
+        else:
+            return False, "Invalid password", "admin"
+    
+    # If not admin, check regular users in Firebase
+    auth_success, message = authenticate_user_firebase(username, password)
+    if auth_success:
+        return True, "success", "regular"
+    else:
+        return False, message, "regular"
+        
 def authenticate_user_firebase(username, password):
-    """Authenticate user against Firebase with approval check."""
+    """Authenticate regular user against Firebase with approval check."""
     try:
         if db is None:
             st.error("Firebase not initialized")
@@ -462,26 +479,6 @@ def authenticate_user_firebase(username, password):
         user_doc = user_ref.get()
         
         if not user_doc.exists:
-            # Fallback to Excel for backward compatibility
-            credentials = load_login_credentials()
-            if username in credentials:
-                if credentials[username] == password:
-                    # Migrate to Firebase
-                    user_data = {
-                        "full_name": username,
-                        "email": f"{username}@example.com",
-                        "phone": "",
-                        "username": username,
-                        "password": password,
-                        "is_approved": True,  # Auto-approve existing users
-                        "role": "student",
-                        "created_at": datetime.now().isoformat(),
-                        "last_login": datetime.now().isoformat(),
-                        "is_active": True
-                    }
-                    user_ref.set(user_data)
-                    initialize_user_progress(username)
-                    return True, "success"
             return False, "Invalid username or password"
         
         user_data = user_doc.to_dict()
@@ -526,22 +523,6 @@ def get_all_users():
         st.error(f"Error fetching users: {e}")
         return []
 
-def update_user_approval(username, is_approved):
-    """Update user approval status."""
-    try:
-        if db is None:
-            return False
-        
-        user_ref = db.collection('users').document(username)
-        user_ref.update({
-            "is_approved": is_approved,
-            "updated_at": datetime.now().isoformat()
-        })
-        return True
-    except Exception as e:
-        st.error(f"Error updating user: {e}")
-        return False
-
 def update_user_status(username, is_active):
     """Update user active status."""
     try:
@@ -564,8 +545,9 @@ def delete_user(username):
         if db is None:
             return False
         
-        # Don't allow deletion of admin users
-        if username.lower() in [admin.lower() for admin in ADMIN_USERS]:
+        # Check if user is an admin (from Excel)
+        admin_credentials = load_admin_credentials()
+        if username in admin_credentials:
             st.error("Cannot delete admin users")
             return False
         
@@ -575,6 +557,55 @@ def delete_user(username):
     except Exception as e:
         st.error(f"Error deleting user: {e}")
         return False
+
+def update_user_approval(username, is_approved):
+    """Update user approval status."""
+    try:
+        if db is None:
+            return False
+        
+        # Check if user is an admin (from Excel)
+        admin_credentials = load_admin_credentials()
+        if username in admin_credentials:
+            st.error("Cannot modify admin users")
+            return False
+        
+        user_ref = db.collection('users').document(username)
+        user_ref.update({
+            "is_approved": is_approved,
+            "updated_at": datetime.now().isoformat()
+        })
+        return True
+    except Exception as e:
+        st.error(f"Error updating user: {e}")
+        return False
+
+def load_admin_credentials():
+    """Load admin username and password from Excel file."""
+    try:
+        df = pd.read_excel(LOGIN_FILE_PATH, engine="openpyxl")
+        df.columns = [str(col).strip().lower() for col in df.columns]
+        
+        if "username" not in df.columns or "password" not in df.columns:
+            st.error("Login file must contain 'Username' and 'Password' columns")
+            return {}
+        
+        admin_credentials = {}
+        for _, row in df.iterrows():
+            username = str(row["username"]).strip()
+            password = str(row["password"]).strip()
+            if username and password:
+                admin_credentials[username] = password
+                
+        # Update global ADMIN_USERS list
+        global ADMIN_USERS
+        ADMIN_USERS = list(admin_credentials.keys())
+        
+        return admin_credentials
+    except Exception as e:
+        st.error(f"Failed to load admin credentials: {e}")
+        return {}
+        
         
 # =============================
 # Firebase Formatted Questions Functions
@@ -674,6 +705,9 @@ def show_login_screen():
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Assess Better. Learn Faster.")
     
+    # Load admin credentials once at login screen
+    admin_credentials = load_admin_credentials()
+    
     # Add temporary CSS fix for login screen
     st.markdown("""
     <style>
@@ -699,7 +733,6 @@ def show_login_screen():
     
     with tab1:
         # Login form
-
         with st.form("login_form"):
             username = st.text_input("👤 Username", placeholder="Enter your username", key="login_username")
             password = st.text_input("🔒 Password", type="password", placeholder="Enter your password", key="login_password")
@@ -710,15 +743,21 @@ def show_login_screen():
                     st.error("Please enter both username and password")
                     return False
                     
-                # Authenticate with Firebase
-                auth_success, message = authenticate_user_firebase(username, password)
+                # Authenticate user (checks both admin and regular users)
+                auth_success, message, user_type = authenticate_user_all(username, password)
                 
                 if auth_success:
                     st.session_state.logged_in = True
                     st.session_state.username = username
-                    # Initialize user progress
-                    initialize_user_progress(username)
-                    st.success(f"✅ Welcome back, {username}!")
+                    st.session_state.user_type = user_type  # Store user type
+                    
+                    # Initialize user progress for regular users
+                    if user_type == "regular":
+                        initialize_user_progress(username)
+                        st.success(f"✅ Welcome back, {username}!")
+                    else:
+                        st.success(f"✅ Welcome, Admin {username}!")
+                    
                     st.rerun()
                 else:
                     if message == "Account pending admin approval":
@@ -728,6 +767,90 @@ def show_login_screen():
                     else:
                         st.error(f"❌ {message}")
                     return False
+    
+    with tab2:
+        # Registration form - only for regular users
+        st.markdown("### Create New Account")
+        st.info("After registration, your account will be pending admin approval.")
+        
+        # Check if username exists in admin list
+        if admin_credentials:
+            st.warning(f"⚠️ Note: The following usernames are reserved for administrators: {', '.join(admin_credentials.keys())}")
+        
+        with st.form("registration_form"):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                full_name = st.text_input("👤 Full Name", placeholder="Enter your full name")
+                email = st.text_input("📧 Email Address", placeholder="Enter your email")
+                phone = st.text_input("📱 Phone Number", placeholder="Enter your phone number")
+            
+            with col2:
+                username = st.text_input("👤 Username", placeholder="Choose a username")
+                password = st.text_input("🔒 Password", type="password", placeholder="Choose a password")
+                confirm_password = st.text_input("✅ Confirm Password", type="password", placeholder="Confirm your password")
+            
+            # Terms and conditions
+            agree_terms = st.checkbox("I agree to the Terms and Conditions")
+            
+            register_button = st.form_submit_button("📝 Register Account", use_container_width=True, type="secondary")
+            
+            if register_button:
+                # Validate inputs
+                if not all([full_name, email, username, password, confirm_password]):
+                    st.error("Please fill in all required fields")
+                    return False
+                
+                # Check if username is in admin list
+                if username in admin_credentials:
+                    st.error(f"❌ Username '{username}' is reserved for administrators. Please choose a different username.")
+                    return False
+                
+                if password != confirm_password:
+                    st.error("Passwords do not match")
+                    return False
+                
+                if len(password) < 6:
+                    st.error("Password must be at least 6 characters long")
+                    return False
+                
+                if not agree_terms:
+                    st.error("You must agree to the Terms and Conditions")
+                    return False
+                
+                # Email validation
+                import re
+                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                if not re.match(email_pattern, email):
+                    st.error("Please enter a valid email address")
+                    return False
+                
+                # Phone validation (optional)
+                if phone and not phone.replace('+', '').replace(' ', '').isdigit():
+                    st.warning("Phone number should contain only digits and optional + sign")
+                
+                # Register user
+                with st.spinner("Creating your account..."):
+                    success = register_user(full_name, email, phone, username, password)
+                    
+                    if success:
+                        st.success("✅ Account created successfully! Please wait for admin approval.")
+                        st.info("You will receive an email notification once your account is approved.")
+                        # Clear form
+                        st.rerun()
+    
+    # Footer
+    st.markdown("---")
+    col1, col2, col3 = st.columns(3)
+    with col2:
+        st.markdown(
+            "<div style='text-align: center; color: #64748B;'>"
+            "🧪 LitmusQ v1.0 • Secure MCQ Test Platform"
+            "</div>", 
+            unsafe_allow_html=True
+        )
+    
+    return False
     
     with tab2:
         # Registration form
@@ -1157,10 +1280,10 @@ def render_formatted_content(content):
         return st.write(content)
 
 def is_admin_user():
-    """Check if current user is admin."""
-    # You can define admin users in your login file or hardcode them
-    admin_users = ["admin", "administrator"]  # Add admin usernames here
-    return st.session_state.username.lower() in [admin.lower() for admin in admin_users]
+    """Check if current user is admin by checking Excel file."""
+    # Load admin credentials from Excel
+    admin_credentials = load_admin_credentials()
+    return st.session_state.username in admin_credentials
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
@@ -3718,7 +3841,14 @@ def quick_actions_panel():
         return
     
     st.sidebar.markdown("---")
-
+    
+    # Show user type
+    user_type = st.session_state.get('user_type', 'regular')
+    if user_type == 'admin':
+        st.sidebar.markdown(f"👑 **Admin User**")
+    else:
+        st.sidebar.markdown(f"👤 **Regular User**")
+    
     # Home Button - Always available (except during quiz)
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
         st.session_state.current_screen = "home"
@@ -3759,6 +3889,7 @@ def initialize_state():
         "exam_name": None,
         "logged_in": False,
         "username": None,
+        "user_type": "regular",  # Add this
         "current_screen": "home",
         "current_path": [],
         "selected_sheet": None,
@@ -3774,7 +3905,7 @@ def initialize_state():
         "show_leave_confirmation": False,
         "show_clear_confirmation": False,
         "editor_current_path": [],
-        "last_cleanup": datetime.now(),  # Add this line
+        "last_cleanup": datetime.now(),
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -3813,11 +3944,6 @@ def main():
     global db
     if 'db' not in globals():
         db = initialize_firebase()
-        if db:
-            # Success message already shown in initialize_firebase()
-            pass
-        else:
-            st.warning("⚠️ Using Local Storage (Cloud not available)")
     
     # Initialize session state with stability features
     initialize_state()
@@ -3841,17 +3967,22 @@ def main():
     
     # User is logged in - show main app
     if st.session_state.current_screen != "quiz":
-        st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
-        if db:
-            if is_admin_user():
+        user_type = st.session_state.get('user_type', 'regular')
+        if user_type == 'admin':
+            st.sidebar.markdown(f"### 👑 Welcome, **{st.session_state.username}**")
+            st.sidebar.markdown(
+                "<span style='color: green; font-weight: bold;'>🎯 Administrator Account</span>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
+            if db:
                 st.sidebar.markdown(
                     "<span style='color: green; font-weight: bold;'>☁️ Cloud Connected</span>",
                     unsafe_allow_html=True
                 )
-                st.sidebar.write("Role:", st.session_state.get("role"))
-
-        else:
-            st.sidebar.warning("⚠️ Using Local Storage")
+            else:
+                st.sidebar.warning("⚠️ Using Local Storage")
     
     # Quick actions panel
     quick_actions_panel()
@@ -3870,7 +4001,6 @@ def main():
             st.session_state.folder_structure = safe_execute(scan_folder_structure) or {}
     
     # Route to appropriate screen with error handling
-    # Add this to the screen_handlers dictionary in the main() function
     screen_handlers = {
         "home": optimized_show_home_screen,
         "dashboard": lambda: safe_execute(show_student_dashboard),
@@ -3880,7 +4010,7 @@ def main():
         "quiz": optimized_show_quiz_screen,
         "question_editor": lambda: safe_execute(show_question_editor),
         "retest_config": lambda: safe_execute(show_retest_config, st.session_state.get('retest_config', {})),
-        "admin_panel": lambda: safe_execute(show_admin_panel)  # Add this line
+        "admin_panel": lambda: safe_execute(show_admin_panel)
     }
     current_screen = st.session_state.current_screen
     handler = screen_handlers.get(current_screen, optimized_show_home_screen)
