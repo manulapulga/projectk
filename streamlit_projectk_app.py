@@ -757,7 +757,7 @@ def show_login_screen():
                     st.session_state.user_type = user_type  # Set based on authentication source
                     
                     # Initialize user progress for regular users only
-                    if st.session_state.get("user_type") != "admin":
+                    if user_type == "regular":
                         initialize_user_progress(username)
                         st.success(f"✅ Welcome back, {username}!")
                     elif user_type == "admin":
@@ -866,7 +866,9 @@ def show_admin_panel():
     show_litmusq_header("👑 Admin Dashboard")
     
     # Check if user is admin
-    if st.session_state.get("user_type") != "admin":
+    current_user_type = st.session_state.get("user_type", "regular")
+
+    if current_user_type != "admin":
         st.error("❌ Access Denied. This section is only available for administrators.")
         st.info("Please contact your system administrator if you need access.")
         return
