@@ -850,6 +850,7 @@ def show_admin_panel():
 def show_user_management():
     """Display and manage all registered users."""
     st.subheader("👥 User Management")
+    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     
     # Refresh button
     if st.button("🔄 Refresh User List", key="refresh_users"):
@@ -921,6 +922,7 @@ def show_user_management():
     
     # Display user table
     st.subheader(f"📋 User List ({len(df)} users)")
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     
     # Create a container for the table
     table_container = st.container()
@@ -952,7 +954,7 @@ def show_user_management():
                         st.markdown(f"**Status:** {active_status}")
                 
                 # Action buttons
-                st.markdown("---")
+                st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
                 action_col1, action_col2, action_col3, action_col4 = st.columns(4)
                 
                 with action_col1:
@@ -1002,9 +1004,9 @@ def show_user_management():
                             st.rerun()
     
     # Bulk actions
-    st.markdown("---")
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     st.subheader("🚀 Bulk Actions")
-    
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("✅ Approve All Pending", use_container_width=True):
