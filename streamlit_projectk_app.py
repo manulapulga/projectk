@@ -863,7 +863,7 @@ def is_admin_user():
 def show_admin_panel():
     """Admin panel for managing users."""
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
-    show_litmusq_header("👑 Admin Dashboard")
+    show_litmusq_header("Admin Dashboard")
     
     # Check if user is admin
     if not is_admin_user():
@@ -3771,7 +3771,7 @@ def quick_actions_panel():
     
     # Admin-only actions
     if is_admin_user():
-        if st.sidebar.button("👑 Admin Panel", use_container_width=True, key="sidebar_admin"):
+        if st.sidebar.button("Admin Panel", use_container_width=True, key="sidebar_admin"):
             st.session_state.current_screen = "admin_panel"
             st.rerun()
         if st.sidebar.button("📝 Edit Questions", use_container_width=True, key="sidebar_editor"):
@@ -3912,7 +3912,7 @@ def main():
         username = st.session_state.get('username', 'User')
         
         if user_type == 'admin':
-            st.sidebar.markdown(f"### 👑 Welcome, {username}")
+            st.sidebar.markdown(f"### Welcome, {username}")
             st.sidebar.markdown(
                 "<span style='color: #DC2626;'>Admin</span>",
                 unsafe_allow_html=True
