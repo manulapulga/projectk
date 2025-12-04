@@ -957,10 +957,6 @@ def show_admin_panel():
 def show_user_management():
     """Display and manage all registered users."""
 
-    # Refresh button
-    if st.button("🔄 Refresh User List", key="refresh_users"):
-        st.rerun()
-    
     # Get all users
     users = get_all_users()
     
