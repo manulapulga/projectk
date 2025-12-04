@@ -822,17 +822,18 @@ def show_login_screen():
                 if phone and not phone.replace('+', '').replace(' ', '').isdigit():
                     st.warning("Phone number should contain only digits and optional + sign")
                 
-                # Register user
-                with st.spinner("Creating your account..."):
-                    success = register_user(full_name, email, phone, username, password)
-                    
-                    if success:
-                        # Clear registration fields
-                        for key in ["full_name", "email", "phone", "reg_username", "reg_password", "reg_confirm"]:
-                            st.session_state[key] = ""
+                success = register_user(full_name, email, phone, username, password)
 
-                        st.info("You will be able to log in once your account is approved.")
-                        st.rerun()   # Prevent rerun so messages stay visible
+                if success:
+                    # Clear registration fields
+                    for key in ["full_name", "email", "phone", "reg_username", "reg_password", "reg_confirm"]:
+                        st.session_state[key] = ""
+                
+                    st.success("🎉 Registration successful!")
+                    st.warning("⏳ Your account is pending approval from the admin.")
+                    st.info("You will be able to log in once your account is approved.")
+                
+                    st.stop()   # <-- VERY IMPORTANT: prevents form rerun and keeps messages visible
                     
     
     # Footer
