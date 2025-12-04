@@ -1236,18 +1236,15 @@ def show_system_settings():
     """System settings for admin."""
     with st.form("system_settings"):
         # Email notifications
-        st.markdown("### 📧 Email Settings")
         enable_emails = st.checkbox("Enable email notifications", value=True)
         admin_email = st.text_input("Admin Email", placeholder="admin@example.com")
         
         # User settings
-        st.markdown("### 👥 User Settings")
         auto_approve = st.checkbox("Auto-approve new users", value=False)
         require_email_verification = st.checkbox("Require email verification", value=False)
         max_login_attempts = st.number_input("Max login attempts before lockout", min_value=1, max_value=10, value=3)
         
         # Security settings
-        st.markdown("### 🔒 Security Settings")
         session_timeout = st.number_input("Session timeout (minutes)", min_value=5, max_value=240, value=60)
         password_min_length = st.number_input("Minimum password length", min_value=6, max_value=20, value=8)
         require_special_char = st.checkbox("Require special characters in password", value=True)
