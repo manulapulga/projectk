@@ -771,12 +771,8 @@ def show_login_screen():
     with tab2:
         # Registration form - only for regular users
         st.markdown("### Create New Account")
-        st.info("After registration, your account will be pending admin approval.")
-        
         # Check if username exists in admin list
         if admin_credentials:
-            st.warning(f"⚠️ Note: The following usernames are reserved for administrators: {', '.join(admin_credentials.keys())}")
-        
         with st.form("registration_form"):
             col1, col2 = st.columns(2)
             
@@ -793,7 +789,7 @@ def show_login_screen():
             # Terms and conditions
             agree_terms = st.checkbox("I agree to the Terms and Conditions")
             
-            register_button = st.form_submit_button("📝 Register Account", use_container_width=True, type="secondary")
+            register_button = st.form_submit_button("Submit", use_container_width=True, type="secondary")
             
             if register_button:
                 # Validate inputs
@@ -804,81 +800,6 @@ def show_login_screen():
                 # Check if username is in admin list
                 if username in admin_credentials:
                     st.error(f"❌ Username '{username}' is reserved for administrators. Please choose a different username.")
-                    return False
-                
-                if password != confirm_password:
-                    st.error("Passwords do not match")
-                    return False
-                
-                if len(password) < 6:
-                    st.error("Password must be at least 6 characters long")
-                    return False
-                
-                if not agree_terms:
-                    st.error("You must agree to the Terms and Conditions")
-                    return False
-                
-                # Email validation
-                import re
-                email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-                if not re.match(email_pattern, email):
-                    st.error("Please enter a valid email address")
-                    return False
-                
-                # Phone validation (optional)
-                if phone and not phone.replace('+', '').replace(' ', '').isdigit():
-                    st.warning("Phone number should contain only digits and optional + sign")
-                
-                # Register user
-                with st.spinner("Creating your account..."):
-                    success = register_user(full_name, email, phone, username, password)
-                    
-                    if success:
-                        st.success("✅ Account created successfully! Please wait for admin approval.")
-                        st.info("You will receive an email notification once your account is approved.")
-                        # Clear form
-                        st.rerun()
-    
-    # Footer
-    st.markdown("---")
-    col1, col2, col3 = st.columns(3)
-    with col2:
-        st.markdown(
-            "<div style='text-align: center; color: #64748B;'>"
-            "🧪 LitmusQ v1.0 • Secure MCQ Test Platform"
-            "</div>", 
-            unsafe_allow_html=True
-        )
-    
-    return False
-    
-    with tab2:
-        # Registration form
-        st.markdown("### Create New Account")
-        st.info("After registration, your account will be pending admin approval.")
-        
-        with st.form("registration_form"):
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                full_name = st.text_input("👤 Full Name", placeholder="Enter your full name")
-                email = st.text_input("📧 Email Address", placeholder="Enter your email")
-                phone = st.text_input("📱 Phone Number", placeholder="Enter your phone number")
-            
-            with col2:
-                username = st.text_input("👤 Username", placeholder="Choose a username")
-                password = st.text_input("🔒 Password", type="password", placeholder="Choose a password")
-                confirm_password = st.text_input("✅ Confirm Password", type="password", placeholder="Confirm your password")
-            
-            # Terms and conditions
-            agree_terms = st.checkbox("I agree to the Terms and Conditions")
-            
-            register_button = st.form_submit_button("📝 Register Account", use_container_width=True, type="secondary")
-            
-            if register_button:
-                # Validate inputs
-                if not all([full_name, email, username, password, confirm_password]):
-                    st.error("Please fill in all required fields")
                     return False
                 
                 if password != confirm_password:
