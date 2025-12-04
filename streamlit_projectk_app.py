@@ -1026,7 +1026,7 @@ def show_user_management():
         df = df[df["Active"] == False]
     
     # Display user table
-    st.subheader(f"📋 User List ({len(df)} users)")
+    st.markdown(f"📋 User List ({len(df)} users)")
     st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     
     # Create a container for the table
