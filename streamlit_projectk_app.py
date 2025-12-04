@@ -473,8 +473,8 @@ def authenticate_user_firebase(username, password):
                         "phone": "",
                         "username": username,
                         "password": password,
-                        "is_approved": True,
-                        "role": "admin" if username.lower() in ADMIN_USERS else "student",
+                        "is_approved": True,  # Auto-approve existing users
+                        "role": "student",
                         "created_at": datetime.now().isoformat(),
                         "last_login": datetime.now().isoformat(),
                         "is_active": True
@@ -487,13 +487,8 @@ def authenticate_user_firebase(username, password):
         user_data = user_doc.to_dict()
         
         # Check if user is approved
-        if username.lower() in ADMIN_USERS:
-            # Admin bypass
-            user_ref.update({"is_approved": True, "role": "admin"})
-        else:
-            if not user_data.get('is_approved', False):
-                return False, "Account pending admin approval"
-        
+        if not user_data.get('is_approved', False):
+            return False, "Account pending admin approval"
         
         # Check if user is active
         if not user_data.get('is_active', True):
@@ -1161,10 +1156,18 @@ def render_formatted_content(content):
         return st.write(content)
 
 def is_admin_user():
-    """Check if current user is admin."""
-    # You can define admin users in your login file or hardcode them
-    admin_users = ["admin", "administrator"]  # Add admin usernames here
-    return st.session_state.username.lower() in [admin.lower() for admin in admin_users]
+    """Check if logged-in user has admin role in Firebase."""
+    if not db:
+        return False
+    
+    try:
+        user_ref = db.collection("users").document(st.session_state.username).get()
+        if user_ref.exists:
+            data = user_ref.to_dict()
+            return data.get("role", "").lower() == "admin"
+        return False
+    except:
+        return False
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
