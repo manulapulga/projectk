@@ -749,7 +749,7 @@ def show_login_screen():
                 if auth_success:
                     st.session_state.logged_in = True
                     st.session_state.username = username
-                    st.session_state.user_type = user_type  # Store user type
+                    st.session_state.user_type = user_type  # Store user type - THIS IS CRITICAL
                     
                     # Initialize user progress for regular users
                     if user_type == "regular":
@@ -1280,10 +1280,18 @@ def render_formatted_content(content):
         return st.write(content)
 
 def is_admin_user():
-    """Check if current user is admin by checking Excel file."""
-    # Load admin credentials from Excel
+    """Check if current user is admin by checking both session state and Excel file."""
+    username = st.session_state.get('username')
+    if not username:
+        return False
+    
+    # First check user_type in session state (fastest check)
+    if st.session_state.get('user_type') == 'admin':
+        return True
+    
+    # Fallback: check admin credentials file
     admin_credentials = load_admin_credentials()
-    return st.session_state.username in admin_credentials
+    return username in admin_credentials
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
@@ -3966,16 +3974,22 @@ def main():
         st.stop()
     
     # User is logged in - show main app
+    # ADD DEBUGGING INFO TEMPORARILY
     if st.session_state.current_screen != "quiz":
-        user_type = st.session_state.get('user_type', 'regular')
+        user_type = st.session_state.get('user_type', 'not set')
+        username = st.session_state.get('username', 'not set')
+        
+        # Debug info (you can remove this after testing)
+        # st.sidebar.markdown(f"**Debug:** user_type={user_type}, username={username}")
+        
         if user_type == 'admin':
-            st.sidebar.markdown(f"### 👑 Welcome, **{st.session_state.username}**")
+            st.sidebar.markdown(f"### 👑 Welcome, **{username}**")
             st.sidebar.markdown(
                 "<span style='color: green; font-weight: bold;'>🎯 Administrator Account</span>",
                 unsafe_allow_html=True
             )
         else:
-            st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
+            st.sidebar.markdown(f"### 👤 Welcome, **{username}**")
             if db:
                 st.sidebar.markdown(
                     "<span style='color: green; font-weight: bold;'>☁️ Cloud Connected</span>",
