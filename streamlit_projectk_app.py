@@ -938,21 +938,6 @@ def show_admin_panel():
         st.info("Please contact your system administrator if you need access.")
         return
     
-    # Navigation buttons
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("🏠 Home", use_container_width=True, key="admin_home"):
-            st.session_state.current_screen = "home"
-            st.rerun()
-    with col2:
-        if st.button("📊 User Analytics", use_container_width=True, key="admin_analytics"):
-            st.session_state.admin_subtab = "analytics"
-            st.rerun()
-    with col3:
-        if st.button("🔧 System Settings", use_container_width=True, key="admin_settings"):
-            st.session_state.admin_subtab = "settings"
-            st.rerun()
-    
     # Initialize subtab state
     if 'admin_subtab' not in st.session_state:
         st.session_state.admin_subtab = "users"
