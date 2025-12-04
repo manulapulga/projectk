@@ -3801,7 +3801,6 @@ def initialize_state():
         "exam_name": None,
         "logged_in": False,
         "username": None,
-        "user_type": "regular",  # Add this
         "current_screen": "home",
         "current_path": [],
         "selected_sheet": None,
@@ -3860,7 +3859,16 @@ def main():
     # Initialize session state with stability features
     initialize_state()
     
-
+    # RECOVERY: If user is logged in but user_type is missing, determine it
+    if st.session_state.get('logged_in') and 'user_type' not in st.session_state:
+        username = st.session_state.get('username')
+        if username:
+            admin_credentials = load_admin_credentials()
+            if username in admin_credentials:
+                st.session_state.user_type = 'admin'
+            else:
+                st.session_state.user_type = 'regular'
+    
     # Handle auto-submit if triggered
     handle_auto_submit()
     
