@@ -860,11 +860,11 @@ def is_admin_user():
     admin_credentials = load_admin_credentials()
     st.write("DEBUG: admin_credentials keys:", list(admin_credentials.keys())[:10])  # shows first 10
     if db:
-    try:
-        doc = db.collection('users').document(st.session_state.get('username', '')).get()
-        st.write("DEBUG: firebase doc exists?:", doc.exists if doc is not None else None)
-    except Exception as e:
-        st.write("DEBUG: firestore error:", e)
+        try:
+            doc = db.collection('users').document(st.session_state.get('username', '')).get()
+            st.write("DEBUG: firebase doc exists?:", doc.exists if doc is not None else None)
+        except Exception as e:
+            st.write("DEBUG: firestore error:", e)
     
     
     # Fallback: check admin credentials file
