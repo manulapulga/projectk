@@ -3927,7 +3927,7 @@ def main():
         else:
             st.sidebar.markdown(f"### 👤 Welcome, {username}")
             st.sidebar.markdown(
-                "<span style='color: #DC2626;'>User</span>",
+                "<span style='color: #DC2626;'>Student</span>",
                 unsafe_allow_html=True
             )
             
