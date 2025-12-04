@@ -1234,8 +1234,6 @@ def show_admin_analytics():
 
 def show_system_settings():
     """System settings for admin."""
-    st.subheader("⚙️ System Settings")
-    
     with st.form("system_settings"):
         # Email notifications
         st.markdown("### 📧 Email Settings")
