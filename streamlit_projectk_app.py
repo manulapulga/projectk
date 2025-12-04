@@ -1013,7 +1013,7 @@ def show_user_management():
                 
                 with action_col3:
                     # Edit user (placeholder)
-                    if st.button(✏️ Edit", key=f"edit_{row['Username']}", use_container_width=True):
+                    if st.button("✏ Edit", key=f"edit_{row['Username']}", use_container_width=True):
                         st.info("Edit functionality coming soon!")
                 
                 with action_col4:
