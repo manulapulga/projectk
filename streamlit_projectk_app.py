@@ -789,9 +789,12 @@ def show_login_screen():
                     if success:
                         st.success("✅ Account created successfully! Please wait for admin approval.")
                         st.info("You will receive an email notification once your account is approved.")
-                        # Clear form
+                    
+                        # 🔥 FIX: Force logout after registration
+                        for key in list(st.session_state.keys()):
+                            del st.session_state[key]
                         st.rerun()
-    
+                    
     # Footer
     st.markdown("---")
     col1, col2, col3 = st.columns(3)
