@@ -879,7 +879,7 @@ def show_admin_panel():
     subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "⚙Settings"])
     
     with subtab1:
-        show_user_management()
+        
     
     with subtab2:
         show_admin_analytics()
@@ -887,30 +887,7 @@ def show_admin_panel():
     with subtab3:
         show_system_settings()
 
-def show_user_management():
-    """Display and manage all registered users."""
 
-    # Get all users
-    users = get_all_users()
-    
-    if not users:
-        st.info("No users found in the system.")
-        return
-    
-    # Convert to DataFrame for display
-    user_list = []
-    for user in users:
-        user_list.append({
-            "Username": user.get('username', ''),
-            "Full Name": user.get('full_name', ''),
-            "Email": user.get('email', ''),
-            "Phone": user.get('phone', ''),
-            "Approved": user.get('is_approved', False),
-            "Active": user.get('is_active', True),
-            "Role": user.get('role', 'student'),
-            "Created": user.get('created_at', ''),
-            "Last Login": user.get('last_login', 'Never')
-        })
     
     df = pd.DataFrame(user_list)
     
@@ -1038,7 +1015,7 @@ def show_user_management():
                             st.rerun()
     
     # Bulk actions
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("✅ Approve All Pending", use_container_width=True):
             pending_users = [user for user in users if not user.get('is_approved', False)]
@@ -1057,6 +1034,34 @@ def show_user_management():
                 mime="text/csv"
             )
     
+    with col3:
+        if st.button("🔄 Sync with Excel", use_container_width=True):
+            # Sync existing Excel users with Firebase
+            credentials = load_login_credentials()
+            migrated = 0
+            for username, password in credentials.items():
+                # Check if user exists in Firebase
+                user_ref = db.collection('users').document(username)
+                if not user_ref.get().exists():
+                    user_data = {
+                        "full_name": username,
+                        "email": f"{username}@example.com",
+                        "phone": "",
+                        "username": username,
+                        "password": password,
+                        "is_approved": True,
+                        "role": "student",
+                        "created_at": datetime.now().isoformat(),
+                        "last_login": None,
+                        "is_active": True
+                    }
+                    user_ref.set(user_data)
+                    migrated += 1
+            
+            if migrated > 0:
+                st.success(f"✅ Migrated {migrated} users from Excel to Firebase")
+            else:
+                st.info("✅ All users already migrated to Firebase")
 
 def show_admin_analytics():
     """Display admin analytics dashboard."""
