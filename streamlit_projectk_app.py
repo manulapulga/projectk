@@ -3854,19 +3854,9 @@ def quick_actions_panel():
     
     # Clear indicator
     if user_type == 'admin':
-        st.sidebar.markdown(
-            "<div style='text-align: center; padding: 8px; background: linear-gradient(135deg, #DC2626, #991B1B); color: white; border-radius: 8px; margin-bottom: 10px;'>"
-            "👑 ADMINISTRATOR"
-            "</div>",
-            unsafe_allow_html=True
-        )
+        st.sidebar.write("👑 ADMINISTRATOR")
     else:
-        st.sidebar.markdown(
-            "<div style='text-align: center; padding: 8px; background: linear-gradient(135deg, #1E3A8A, #1E40AF); color: white; border-radius: 8px; margin-bottom: 10px;'>"
-            "👤 REGULAR USER"
-            "</div>",
-            unsafe_allow_html=True
-        )
+        st.sidebar.write("👤 REGULAR USER")
     
     # Home Button - Always available (except during quiz)
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
