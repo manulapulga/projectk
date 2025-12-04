@@ -402,7 +402,115 @@ def inject_custom_css():
 # =============================
 # Firebase User Management Functions
 # =============================
-
+def emergency_admin_setup():
+    """Emergency page to set admin permissions."""
+    st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
+    show_litmusq_header("⚠️ Emergency Admin Setup")
+    
+    if not st.session_state.logged_in:
+        st.error("Please login first")
+        return
+    
+    username = st.session_state.username
+    
+    if db is None:
+        st.error("Firebase not available")
+        return
+    
+    # Get current user info
+    user_ref = db.collection('users').document(username)
+    user_doc = user_ref.get()
+    
+    if user_doc.exists:
+        user_data = user_doc.to_dict()
+        
+        st.write(f"**Current User:** {username}")
+        st.write(f"**Current Role:** {user_data.get('role', 'N/A')}")
+        st.write(f"**Approved:** {user_data.get('is_approved', 'N/A')}")
+        
+        # Make admin button
+        if st.button("👑 Make Me Admin", type="primary", use_container_width=True):
+            user_ref.update({
+                "role": "admin",
+                "is_approved": True,
+                "is_active": True
+            })
+            st.success("✅ You are now an admin! Please refresh the page.")
+            st.rerun()
+    
+    # List all users
+    st.markdown("---")
+    st.subheader("All Users")
+    
+    users = get_all_users()
+    for user in users:
+        col1, col2, col3, col4 = st.columns([2, 2, 1, 1])
+        with col1:
+            st.write(f"{user.get('username')}")
+        with col2:
+            st.write(f"{user.get('role', 'student')}")
+        with col3:
+            if st.button("👑", key=f"make_admin_{user['username']}"):
+                user_ref = db.collection('users').document(user['username'])
+                user_ref.update({"role": "admin"})
+                st.success(f"Made {user['username']} admin")
+                st.rerun()
+        with col4:
+            if st.button("✅", key=f"approve_{user['username']}"):
+                user_ref = db.collection('users').document(user['username'])
+                user_ref.update({"is_approved": True})
+                st.success(f"Approved {user['username']}")
+                st.rerun()
+    
+    # Add to quick actions panel temporarily
+    st.sidebar.markdown("---")
+    if st.sidebar.button("🏠 Home", use_container_width=True):
+        st.session_state.current_screen = "home"
+        st.rerun()
+        
+def ensure_admin_user_exists():
+    """Ensure at least one admin user exists in the system."""
+    try:
+        if db is None:
+            return False
+        
+        # Check if any admin exists
+        users_ref = db.collection('users')
+        admin_query = users_ref.where('role', '==', 'admin').limit(1).get()
+        
+        if len(admin_query) == 0:
+            # No admin found, check if we have any users
+            all_users = users_ref.limit(1).get()
+            
+            if len(all_users) == 0:
+                # No users at all, create default admin
+                admin_data = {
+                    "full_name": "Administrator",
+                    "email": "admin@litmusq.com",
+                    "phone": "",
+                    "username": "admin",
+                    "password": "admin123",  # Change in production!
+                    "is_approved": True,
+                    "role": "admin",
+                    "created_at": datetime.now().isoformat(),
+                    "last_login": None,
+                    "is_active": True
+                }
+                users_ref.document("admin").set(admin_data)
+                st.sidebar.info("ℹ️ Default admin user created")
+                return True
+            else:
+                # There are users but no admin - promote first user
+                first_user = list(all_users)[0]
+                user_ref = users_ref.document(first_user.id)
+                user_ref.update({"role": "admin"})
+                st.sidebar.info(f"ℹ️ User {first_user.id} promoted to admin")
+                return True
+        return True
+    except Exception as e:
+        st.error(f"Error ensuring admin exists: {e}")
+        return False
+        
 def register_user(full_name, email, phone, username, password):
     """Register a new user in Firebase."""
     try:
@@ -424,6 +532,10 @@ def register_user(full_name, email, phone, username, password):
             st.error("❌ Email already registered. Please use a different email.")
             return False
         
+        # Determine if this is the first user (make them admin)
+        all_users = users_ref.get()
+        is_first_user = len(all_users) == 0
+        
         # Create new user document
         user_data = {
             "full_name": full_name,
@@ -431,8 +543,8 @@ def register_user(full_name, email, phone, username, password):
             "phone": phone,
             "username": username,
             "password": password,  # In production, hash this password!
-            "is_approved": False,  # Admin must approve
-            "role": "student",  # Default role
+            "is_approved": is_first_user,  # Auto-approve first user
+            "role": "admin" if is_first_user else "student",  # First user becomes admin
             "created_at": datetime.now().isoformat(),
             "last_login": None,
             "is_active": True
@@ -444,12 +556,40 @@ def register_user(full_name, email, phone, username, password):
         # Also create user progress document
         initialize_user_progress(username)
         
+        if is_first_user:
+            st.success("🎉 Congratulations! You are the first user and have been granted admin privileges.")
+        
         return True
         
     except Exception as e:
         st.error(f"Registration failed: {e}")
         return False
 
+def debug_user_status():
+    """Debug function to check user status."""
+    username = st.session_state.get('username')
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🔍 Debug Info")
+    
+    if username:
+        st.sidebar.write(f"Current user: {username}")
+        
+        try:
+            if db:
+                user_ref = db.collection('users').document(username)
+                user_doc = user_ref.get()
+                
+                if user_doc.exists:
+                    user_data = user_doc.to_dict()
+                    st.sidebar.write(f"Role: {user_data.get('role', 'N/A')}")
+                    st.sidebar.write(f"Approved: {user_data.get('is_approved', 'N/A')}")
+                    st.sidebar.write(f"Active: {user_data.get('is_active', 'N/A')}")
+                    st.sidebar.write(f"Is Admin: {is_admin_user()}")
+                else:
+                    st.sidebar.write("User not found in Firebase")
+        except Exception as e:
+            st.sidebar.write(f"Error: {e}")
+            
 def authenticate_user_firebase(username, password):
     """Authenticate user against Firebase with approval check."""
     try:
@@ -810,10 +950,22 @@ def show_admin_panel():
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("👑 Admin Dashboard")
     
-    # Check if user is admin
-    if not is_admin_user():
-        st.error("❌ Access Denied. This section is only available for administrators.")
-        st.info("Please contact your system administrator if you need access.")
+    # Check if user is admin with better error handling
+    try:
+        if not is_admin_user():
+            st.error("❌ Access Denied. This section is only available for administrators.")
+            st.info("Please contact your system administrator if you need access.")
+            
+            # Add a button to go back home
+            if st.button("🏠 Return to Home", use_container_width=True):
+                st.session_state.current_screen = "home"
+                st.rerun()
+            return
+    except Exception as e:
+        st.error(f"Error checking admin permissions: {e}")
+        st.warning("There was an error checking your permissions. Returning to home.")
+        st.session_state.current_screen = "home"
+        st.rerun()
         return
     
     # Navigation buttons
@@ -1156,10 +1308,34 @@ def render_formatted_content(content):
         return st.write(content)
 
 def is_admin_user():
-    """Check if current user is admin."""
-    # You can define admin users in your login file or hardcode them
-    admin_users = ["admin", "administrator"]  # Add admin usernames here
-    return st.session_state.username.lower() in [admin.lower() for admin in admin_users]
+    """Check if current user is admin by checking Firebase."""
+    try:
+        username = st.session_state.get('username')
+        if not username:
+            return False
+        
+        # Check if user exists in Firebase
+        if db is None:
+            # Fallback to hardcoded list if Firebase not available
+            admin_users = ["admin", "administrator"]
+            return username.lower() in [admin.lower() for admin in admin_users]
+        
+        # Check user role in Firebase
+        user_ref = db.collection('users').document(username)
+        user_doc = user_ref.get()
+        
+        if user_doc.exists:
+            user_data = user_doc.to_dict()
+            return user_data.get('role') == 'admin' or user_data.get('is_admin', False)
+        else:
+            # Fallback for users not in Firebase yet
+            admin_users = ["admin", "administrator"]
+            return username.lower() in [admin.lower() for admin in admin_users]
+    except Exception as e:
+        st.error(f"Error checking admin status: {e}")
+        # Fallback to prevent crashes
+        admin_users = ["admin", "administrator"]
+        return st.session_state.get('username', '').lower() in [admin.lower() for admin in admin_users]
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
@@ -3739,7 +3915,11 @@ def quick_actions_panel():
     if st.sidebar.button("ℹ️ About LitmusQ", use_container_width=True, key="home_guide"):
         st.session_state.current_screen = "guide"
         st.rerun()
-        
+    
+    # In quick_actions_panel(), add temporarily:
+    if st.sidebar.button("⚡ Emergency Admin", use_container_width=True, key="emergency_admin_btn"):
+        st.session_state.current_screen = "emergency_admin"
+        st.rerun()    
 # =============================
 # Enhanced Initialization
 # =============================
@@ -3818,6 +3998,10 @@ def main():
         else:
             st.warning("⚠️ Using Local Storage (Cloud not available)")
     
+    # In main() function, after Firebase initialization
+    if db and st.session_state.logged_in:
+        ensure_admin_user_exists()
+        
     # Initialize session state with stability features
     initialize_state()
     
@@ -3838,6 +4022,12 @@ def main():
         safe_execute(show_login_screen)
         st.stop()
     
+    # In main() function, after authentication check
+    if st.session_state.logged_in:
+        # Add debug info in development mode
+        if st.session_state.username != "admin":  # Don't show for admin
+            debug_user_status()
+        
     # User is logged in - show main app
     if st.session_state.current_screen != "quiz":
         st.sidebar.markdown(f"### 👤 Welcome, **{st.session_state.username}**")
@@ -3878,7 +4068,8 @@ def main():
         "quiz": optimized_show_quiz_screen,
         "question_editor": lambda: safe_execute(show_question_editor),
         "retest_config": lambda: safe_execute(show_retest_config, st.session_state.get('retest_config', {})),
-        "admin_panel": lambda: safe_execute(show_admin_panel)  # Add this line
+        "admin_panel": lambda: safe_execute(show_admin_panel),  # Add this line
+        "emergency_admin": lambda: safe_execute(emergency_admin_setup)
     }
     current_screen = st.session_state.current_screen
     handler = screen_handlers.get(current_screen, optimized_show_home_screen)
