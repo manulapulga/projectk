@@ -410,7 +410,13 @@ def register_user(full_name, email, phone, username, password):
             st.error("Firebase not initialized")
             return False
         
-        # Check if username already exists
+        # 🔒 1. Check admin Excel usernames
+        admin_credentials = load_admin_credentials()
+        if username in admin_credentials:
+            st.error("❌ Username already exists (admin user). Please choose a different username.")
+            return False
+        
+        # 🔒 2. Check Firebase for duplicate username
         users_ref = db.collection('users')
         query = users_ref.where('username', '==', username).limit(1).get()
         
@@ -418,7 +424,7 @@ def register_user(full_name, email, phone, username, password):
             st.error("❌ Username already exists. Please choose a different one.")
             return False
         
-        # Check if email already exists
+        # 🔒 3. Check Firebase for duplicate email
         email_query = users_ref.where('email', '==', email).limit(1).get()
         if len(email_query) > 0:
             st.error("❌ Email already registered. Please use a different email.")
@@ -430,18 +436,16 @@ def register_user(full_name, email, phone, username, password):
             "email": email,
             "phone": phone,
             "username": username,
-            "password": password,  # In production, hash this password!
-            "is_approved": False,  # Admin must approve
-            "role": "student",  # Default role
+            "password": password,
+            "is_approved": False,     
+            "role": "student",
             "created_at": datetime.now().isoformat(),
             "last_login": None,
             "is_active": True
         }
         
-        # Add to users collection
         users_ref.document(username).set(user_data)
         
-        # Also create user progress document
         initialize_user_progress(username)
         
         return True
@@ -449,6 +453,7 @@ def register_user(full_name, email, phone, username, password):
     except Exception as e:
         st.error(f"Registration failed: {e}")
         return False
+
 
 def authenticate_user_all(username, password):
     """Authenticate user against either admin (Excel) or regular users (Firebase)."""
