@@ -1192,6 +1192,24 @@ def show_admin_analytics():
     recent_users = sum(1 for user in users 
                       if datetime.fromisoformat(user.get('created_at', '2000-01-01')) > thirty_days_ago)
     
+    # Reduce st.metric font size
+    st.markdown("""
+        <style>
+            /* Metric label */
+            div[data-testid="stMetricLabel"] > label {
+                font-size: 0.8rem !important;
+            }
+            /* Metric value */
+            div[data-testid="stMetricValue"] {
+                font-size: 1rem !important;
+            }
+            /* Delta text */
+            div[data-testid="stMetricDelta"] {
+                font-size: 0.7rem !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+    
     # Display metrics
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -1202,6 +1220,7 @@ def show_admin_analytics():
         st.metric("Active Users", active_users)
     with col4:
         st.metric("Recent Registrations (30d)", recent_users)
+
     
     # User registration timeline
     st.markdown("---")
