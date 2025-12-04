@@ -846,7 +846,20 @@ def show_login_screen():
         )
     
     return False
-
+    
+def is_admin_user():
+    """Check if current user is admin based on session state."""
+    # Check user_type in session state (set during authentication)
+    return st.session_state.get('user_type') == 'admin'
+    
+    # First check user_type in session state (fastest check)
+    if st.session_state.get('user_type') == 'admin':
+        return True
+    
+    # Fallback: check admin credentials file
+    admin_credentials = load_admin_credentials()
+    return username in admin_credentials
+    
 def show_admin_panel():
     """Admin panel for managing users."""
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
@@ -863,7 +876,7 @@ def show_admin_panel():
         st.session_state.admin_subtab = "users"
     
     # Create subtabs
-    subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "⚙️ Settings"])
+    subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", ⚙️ Settings"])
     
     with subtab1:
         show_user_management()
@@ -1189,18 +1202,7 @@ def render_formatted_content(content):
     else:
         return st.write(content)
 
-def is_admin_user():
-    """Check if current user is admin based on session state."""
-    # Check user_type in session state (set during authentication)
-    return st.session_state.get('user_type') == 'admin'
-    
-    # First check user_type in session state (fastest check)
-    if st.session_state.get('user_type') == 'admin':
-        return True
-    
-    # Fallback: check admin credentials file
-    admin_credentials = load_admin_credentials()
-    return username in admin_credentials
+
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
