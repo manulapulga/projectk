@@ -830,12 +830,9 @@ def show_login_screen():
                         # Clear registration fields
                         for key in ["full_name", "email", "phone", "reg_username", "reg_password", "reg_confirm"]:
                             st.session_state[key] = ""
-                    
-                        st.success("🎉 Registration successful!")
-                        st.warning("⏳ Approval pending from admin.")
+
                         st.info("You will be able to log in once your account is approved.")
-                    
-                        st.stop()   # Prevent rerun so messages stay visible
+                        st.return()   # Prevent rerun so messages stay visible
                     
     
     # Footer
