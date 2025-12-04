@@ -866,7 +866,7 @@ def show_admin_panel():
     show_litmusq_header("👑 Admin Dashboard")
     
     # Check if user is admin
-    if not is_admin_user():
+    if user_type == "regular":
         st.error("❌ Access Denied. This section is only available for administrators.")
         st.info("Please contact your system administrator if you need access.")
         return
