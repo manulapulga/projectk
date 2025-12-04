@@ -3848,6 +3848,7 @@ def main():
                     "<span style='color: green; font-weight: bold;'>☁️ Cloud Connected</span>",
                     unsafe_allow_html=True
                 )
+                st.sidebar.write("Role:", st.session_state.get("role"))
 
         else:
             st.sidebar.warning("⚠️ Using Local Storage")
