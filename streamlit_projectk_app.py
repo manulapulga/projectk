@@ -3719,8 +3719,9 @@ def quick_actions_panel():
     if st.session_state.current_screen == "quiz":
         return
     
+    
     st.sidebar.markdown("---")
-
+    st.sidebar.write("Role:", st.session_state.get("role"))
     # Home Button - Always available (except during quiz)
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
         st.session_state.current_screen = "home"
