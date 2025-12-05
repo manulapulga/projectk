@@ -2237,7 +2237,7 @@ def show_folder_view_screen():
                                 pass
                         
                         # Create columns for the test card
-                        col1, col2 = st.columns([3, 1])
+                        col1, col2 = st.columns([1, 1])
                         
                         with col1:
                             # Exam name in primary color
