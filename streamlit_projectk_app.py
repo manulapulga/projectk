@@ -2245,20 +2245,13 @@ def show_folder_view_screen():
                                        unsafe_allow_html=True)
                             
                             # Display all metadata in a single line with icons
+                            # Alternative compact display (replace the metadata_html section):
                             metadata_html = f"""
-                            <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin: 0.5rem 0;">
-                                <span style="color: {LITMUSQ_THEME['success']}; font-weight: 600;">
-                                    ❓ {total_questions} Questions
-                                </span>
-                                <span style="color: {LITMUSQ_THEME['primary']}; font-weight: 600;">
-                                    ⏱️ {duration_display}
-                                </span>
-                                <span style="color: {LITMUSQ_THEME['warning']}; font-weight: 600;">
-                                    📊 {marks_per_question} Marks/Q
-                                </span>
-                                <span style="color: {LITMUSQ_THEME['secondary']}; font-weight: 600;">
-                                    ⚠️ {negative_marks_per_question} Negative/Q
-                                </span>
+                            <div style="color: {LITMUSQ_THEME['text']}; font-weight: 600; margin: 0.5rem 0;">
+                                <span style="color: {LITMUSQ_THEME['success']};">❓ {total_questions}Q</span> • 
+                                <span style="color: {LITMUSQ_THEME['primary']};">⏱️ {duration_display}</span> • 
+                                <span style="color: {LITMUSQ_THEME['warning']};">📊 {marks_per_question}M/Q</span> • 
+                                <span style="color: {LITMUSQ_THEME['secondary']};">⚠️ {negative_marks_per_question}N/Q</span>
                             </div>
                             """
                             st.markdown(metadata_html, unsafe_allow_html=True)
