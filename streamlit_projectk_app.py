@@ -2183,7 +2183,7 @@ def show_folder_view_screen():
                                             use_container_width=True,
                                             type="primary"):
                                     st.session_state.selected_sheet = sheet_name
-                                    st.session_state.current_screen = "exam_config"
+                                    st.session_state.current_screen = "quiz"
                                     st.rerun()
                         
                         st.markdown("</div>", unsafe_allow_html=True)
