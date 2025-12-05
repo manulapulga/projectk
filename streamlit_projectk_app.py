@@ -1135,7 +1135,7 @@ def show_user_management():
                             st.rerun()
     
     # Bulk actions
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     with col1:
         if st.button("✅ Approve All Pending", use_container_width=True):
             pending_users = [user for user in users if not user.get('is_approved', False)]
