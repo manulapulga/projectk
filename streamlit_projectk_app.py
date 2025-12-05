@@ -2248,7 +2248,7 @@ def show_folder_view_screen():
                             # Alternative compact display (replace the metadata_html section):
                             metadata_html = f"""
                             <div style="color: {LITMUSQ_THEME['text']}; font-weight: 600; margin: 0.5rem 0;">
-                                <span style="color: {LITMUSQ_THEME['success']};">❓ {total_questions}Q</span> • 
+                                <span style="color: {LITMUSQ_THEME['success']};">Q: {total_questions}</span> • 
                                 <span style="color: {LITMUSQ_THEME['primary']};">⏱️ {duration_display}</span> • 
                                 <span style="color: {LITMUSQ_THEME['warning']};">📊 {marks_per_question}M/Q</span> • 
                                 <span style="color: {LITMUSQ_THEME['secondary']};">⚠️ {negative_marks_per_question}N/Q</span>
