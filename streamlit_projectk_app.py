@@ -2563,6 +2563,9 @@ def show_exam_config_screen():
 # =============================
 # Enhanced Question Display in Quiz
 # =============================
+# =============================
+# Update show_enhanced_question_interface() function to properly handle empty cells
+# =============================
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
@@ -2595,23 +2598,32 @@ def show_enhanced_question_interface():
         option_d_col = 'Option D'
     
     # Get original content from appropriate columns
+    # Handle NaN values properly
     original_question = row.get(question_col, '')
     original_option_a = row.get(option_a_col, '')
     original_option_b = row.get(option_b_col, '')
     original_option_c = row.get(option_c_col, '')
     original_option_d = row.get(option_d_col, '')
     
-    # Check if Malayalam content is available or show "NA"
+    # Convert to string and check if empty
+    def check_empty(value):
+        if pd.isna(value):
+            return True
+        if isinstance(value, str) and value.strip() == '':
+            return True
+        return False
+    
+    # Check if Malayalam content is available or show "Malayalam NA"
     if current_lang == 'malayalam':
-        if pd.isna(original_question) or str(original_question).strip() == '':
+        if check_empty(original_question):
             original_question = "Malayalam NA"
-        if pd.isna(original_option_a) or str(original_option_a).strip() == '':
+        if check_empty(original_option_a):
             original_option_a = "Malayalam NA"
-        if pd.isna(original_option_b) or str(original_option_b).strip() == '':
+        if check_empty(original_option_b):
             original_option_b = "Malayalam NA"
-        if pd.isna(original_option_c) or str(original_option_c).strip() == '':
+        if check_empty(original_option_c):
             original_option_c = "Malayalam NA"
-        if pd.isna(original_option_d) or str(original_option_d).strip() == '':
+        if check_empty(original_option_d):
             original_option_d = "Malayalam NA"
     
     # Get formatted content
@@ -3125,8 +3137,11 @@ def clear_response(question_idx):
     
     st.rerun()
 
+# =============================
+# Update show_quiz_header_with_timer() function
+# =============================
 def show_quiz_header_with_timer():
-    """Show a custom header with timer for quiz interface with language toggle."""
+    """Show a custom header with timer for quiz interface with language toggle switch."""
     if st.session_state.end_time and not st.session_state.submitted:
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = max(0, int(time_left.total_seconds()))
@@ -3139,12 +3154,11 @@ def show_quiz_header_with_timer():
         # Determine color based on time remaining
         timer_color = '#ff6b6b' if seconds_left < 300 else 'white'
         
-        # Get current language for display
+        # Get current language for toggle
         current_lang = st.session_state.quiz_language
-        lang_display = "EN" if current_lang == "english" else "ML"
-        lang_tooltip = "Switch to Malayalam" if current_lang == "english" else "Switch to English"
+        is_malayalam = current_lang == 'malayalam'
         
-        # Create a custom HTML header with timer and language toggle
+        # Create a custom HTML header with timer and language toggle switch
         st.markdown(f"""
         <style>
         .fixed-quiz-header {{
@@ -3168,19 +3182,79 @@ def show_quiz_header_with_timer():
         .content-wrapper {{
             padding-top: 70px; /* Make space for fixed header */
         }}
-        .lang-toggle {{
+        
+        /* Toggle Switch Styling */
+        .toggle-switch {{
+            position: relative;
+            display: inline-block;
+            width: 120px;
+            height: 34px;
             margin-right: 15px;
-            padding: 4px 12px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            font-size: 0.9rem;
         }}
-        .lang-toggle:hover {{
-            background: rgba(255,255,255,0.3);
-            transform: scale(1.05);
+        
+        .toggle-switch input {{
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }}
+        
+        .toggle-slider {{
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #1E3A8A;
+            transition: .4s;
+            border-radius: 34px;
+            border: 2px solid white;
+        }}
+        
+        .toggle-slider:before {{
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }}
+        
+        input:checked + .toggle-slider {{
+            background-color: #DC2626;
+        }}
+        
+        input:checked + .toggle-slider:before {{
+            transform: translateX(86px);
+        }}
+        
+        .toggle-label {{
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            pointer-events: none;
+            user-select: none;
+        }}
+        
+        .toggle-english {{
+            left: 12px;
+            top: 8px;
+            opacity: {0.7 if is_malayalam else 1};
+        }}
+        
+        .toggle-malayalam {{
+            right: 10px;
+            top: 8px;
+            opacity: {1 if is_malayalam else 0.7};
+        }}
+        
+        .globe-icon {{
+            margin-right: 5px;
+            font-size: 16px;
         }}
         </style>
         
@@ -3197,13 +3271,19 @@ def show_quiz_header_with_timer():
                     text-align: center;
                     color: {timer_color};
                     transition: all 0.3s ease;
-                    margin-right: 10px;
+                    margin-right: 15px;
                 ">
                     ⏰ {h}:{m}:{s}
                 </div>
-                <div class="lang-toggle" id="lang-toggle-btn" title="{lang_tooltip}">
-                    🌐 {lang_display}
-                </div>
+                
+                <!-- Language Toggle Switch -->
+                <label class="toggle-switch" title="Switch between English and Malayalam">
+                    <input type="checkbox" id="language-toggle" {"checked" if is_malayalam else ""}>
+                    <span class="toggle-slider">
+                        <span class="toggle-label toggle-english">🌐 EN</span>
+                        <span class="toggle-label toggle-malayalam">🌐 ML</span>
+                    </span>
+                </label>
             </div>
         </div>
         
@@ -3213,14 +3293,25 @@ def show_quiz_header_with_timer():
             let timeLeft = {seconds_left};
             
             // Language toggle functionality
-            document.getElementById('lang-toggle-btn').addEventListener('click', function() {{
-                // Trigger Streamlit button click via custom event
-                const event = new CustomEvent('lang-toggle-clicked');
-                document.dispatchEvent(event);
+            const toggleSwitch = document.getElementById('language-toggle');
+            let toggleClicked = false;
+            
+            toggleSwitch.addEventListener('change', function() {{
+                if (!toggleClicked) {{
+                    toggleClicked = true;
+                    // Trigger Streamlit button click via custom event
+                    const event = new CustomEvent('lang-toggle-changed', {{ detail: {{ isMalayalam: this.checked }} }});
+                    document.dispatchEvent(event);
+                    
+                    // Reset after a short delay to prevent multiple clicks
+                    setTimeout(() => {{
+                        toggleClicked = false;
+                    }}, 100);
+                }}
             }});
             
             // Listen for the custom event and trigger button click
-            document.addEventListener('lang-toggle-clicked', function() {{
+            document.addEventListener('lang-toggle-changed', function(event) {{
                 // Find and click the hidden language toggle button
                 const langButton = document.querySelector('[data-testid="baseButton-secondary"][id*="lang_toggle"]');
                 if (langButton) {{
@@ -3268,6 +3359,10 @@ def show_quiz_header_with_timer():
         """, unsafe_allow_html=True)
     else:
         # Show header without timer if no time limit
+        # Get current language for toggle
+        current_lang = st.session_state.get('quiz_language', 'english')
+        is_malayalam = current_lang == 'malayalam'
+        
         st.markdown(f"""
         <style>
         .fixed-quiz-header {{
@@ -3289,30 +3384,145 @@ def show_quiz_header_with_timer():
         .content-wrapper {{
             padding-top: 70px;
         }}
+        
+        /* Toggle Switch Styling for no-timer header */
+        .toggle-switch {{
+            position: relative;
+            display: inline-block;
+            width: 120px;
+            height: 34px;
+        }}
+        
+        .toggle-switch input {{
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }}
+        
+        .toggle-slider {{
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #1E3A8A;
+            transition: .4s;
+            border-radius: 34px;
+            border: 2px solid white;
+        }}
+        
+        .toggle-slider:before {{
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }}
+        
+        input:checked + .toggle-slider {{
+            background-color: #DC2626;
+        }}
+        
+        input:checked + .toggle-slider:before {{
+            transform: translateX(86px);
+        }}
+        
+        .toggle-label {{
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            pointer-events: none;
+            user-select: none;
+        }}
+        
+        .toggle-english {{
+            left: 12px;
+            top: 8px;
+            opacity: {0.7 if is_malayalam else 1};
+        }}
+        
+        .toggle-malayalam {{
+            right: 10px;
+            top: 8px;
+            opacity: {1 if is_malayalam else 0.7};
+        }}
+        
+        .globe-icon {{
+            margin-right: 5px;
+            font-size: 16px;
+        }}
         </style>
         
         <div class="fixed-quiz-header">
             <div style="font-size: 1rem;">
                 {st.session_state.exam_name}
             </div>
+            
+            <!-- Language Toggle Switch for no-timer header -->
+            <label class="toggle-switch" title="Switch between English and Malayalam">
+                <input type="checkbox" id="language-toggle" {"checked" if is_malayalam else ""}>
+                <span class="toggle-slider">
+                    <span class="toggle-label toggle-english">🌐 EN</span>
+                    <span class="toggle-label toggle-malayalam">🌐 ML</span>
+                </span>
+            </label>
         </div>
         <div class="content-wrapper"></div>
+        
+        <script>
+            // Language toggle functionality for no-timer header
+            const toggleSwitch = document.getElementById('language-toggle');
+            let toggleClicked = false;
+            
+            toggleSwitch.addEventListener('change', function() {{
+                if (!toggleClicked) {{
+                    toggleClicked = true;
+                    // Trigger Streamlit button click via custom event
+                    const event = new CustomEvent('lang-toggle-changed', {{ detail: {{ isMalayalam: this.checked }} }});
+                    document.dispatchEvent(event);
+                    
+                    // Reset after a short delay to prevent multiple clicks
+                    setTimeout(() => {{
+                        toggleClicked = false;
+                    }}, 100);
+                }}
+            }});
+            
+            // Listen for the custom event and trigger button click
+            document.addEventListener('lang-toggle-changed', function(event) {{
+                // Find and click the hidden language toggle button
+                const langButton = document.querySelector('[data-testid="baseButton-secondary"][id*="lang_toggle"]');
+                if (langButton) {{
+                    langButton.click();
+                }}
+            }});
+        </script>
         """, unsafe_allow_html=True)
 
-# In show_quiz_screen function, add this at the beginning:
+# =============================
+# Update show_quiz_screen() function
+# =============================
 def show_quiz_screen():
-    """Main quiz interface with professional layout and language toggle."""
-    # Show header with timer and language toggle
+    """Main quiz interface with professional layout and language toggle switch."""
+    # Show header with timer and language toggle switch
     show_quiz_header_with_timer()
     
-    # Add hidden language toggle button in the sidebar
+    # Add hidden language toggle button in the sidebar that gets triggered by the HTML toggle
     with st.sidebar:
-        if st.button("🌐 Toggle Language", 
+        if st.button("🌐 Toggle Language (Hidden)", 
                     key="lang_toggle_hidden",
                     type="secondary",
                     help="Switch between English and Malayalam",
-                    use_container_width=True):
-            # Toggle language
+                    use_container_width=True,
+                    # Hide the button but keep it functional
+                    label_visibility="collapsed"):
+            # Toggle language when the hidden button is clicked (triggered by HTML toggle)
             current_lang = st.session_state.get('quiz_language', 'english')
             st.session_state.quiz_language = 'malayalam' if current_lang == 'english' else 'english'
             st.rerun()
