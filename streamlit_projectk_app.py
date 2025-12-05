@@ -3765,6 +3765,7 @@ def show_platform_guide():
         st.rerun()
 
     st.markdown("## 🧪 Welcome to LitmusQ!")
+    st.markdown("<br>", unsafe_allow_html=True)
 
     # Create 4 columns
     col1, col2, col3, col4 = st.columns(4)
