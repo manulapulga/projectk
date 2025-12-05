@@ -2524,44 +2524,86 @@ def show_exam_config_screen():
 # Enhanced Question Display in Quiz
 # =============================
 def show_enhanced_question_interface():
-    """Display the current question with formatted content using buttons for selection."""
+    """Display the current question and options."""
     df = st.session_state.quiz_questions
     current_idx = st.session_state.current_idx
-    
     if current_idx >= len(df):
         st.error("Invalid question index")
         return
-        
+
     row = df.iloc[current_idx]
-    
     if st.session_state.question_status[current_idx]['status'] == 'not_visited':
         update_question_status(current_idx, 'not_answered')
     
-    # Get formatted content
+    # --- LANGUAGE LOGIC ---
+    # Check if Malayalam question exists and is not blank for the current row
+    malayalam_question_content = row.get('Question in Malayalam', '').strip()
+    is_malayalam_available = bool(malayalam_question_content)
+    is_malayalam_mode = st.session_state.get('malayalam_mode', False)
+
+    # Determine the columns to use based on the toggle state and availability
+    if is_malayalam_mode and is_malayalam_available:
+        question_col = 'Question in Malayalam'
+        a_col = 'Option A in Malayalam'
+        b_col = 'Option B in Malayalam'
+        c_col = 'Option C in Malayalam'
+        d_col = 'Option D in Malayalam'
+    else:
+        # Default to English (or fallback if Malayalam is not available)
+        question_col = 'Question'
+        a_col = 'Option A'
+        b_col = 'Option B'
+        c_col = 'Option C'
+        d_col = 'Option D'
+
+    # Get formatted content (using original English columns for key generation, but retrieving the correct content)
     file_path = st.session_state.get('current_qb_path', '')
     sheet_name = st.session_state.get('selected_sheet', '')
     
+    # The 'field' argument in get_formatted_content must match the English column name to fetch/store formatting correctly
     formatted_question = get_formatted_content(
-        file_path, sheet_name, current_idx, "question", row['Question']
+        file_path, sheet_name, current_idx, "question", row[question_col]
     )
-    formatted_a = get_formatted_content(file_path, sheet_name, current_idx, "option_a", row.get('Option A', ''))
-    formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get('Option B', ''))
-    formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
-    formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
-    
+    formatted_a = get_formatted_content(file_path, sheet_name, current_idx, "option_a", row.get(a_col, ''))
+    formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get(b_col, ''))
+    formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get(c_col, ''))
+    formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get(d_col, ''))
+
     # Enhanced question card with formatted content
-    st.markdown(f"### Question No. {current_idx + 1}")
     
+    # --- Language Toggle and Question Number Display ---
+    col1, col2 = st.columns([0.7, 0.3]) # Split the header row
+
+    with col1:
+        st.markdown(f"### Question No. {current_idx + 1}")
+        
+    with col2:
+        # The toggle button is ONLY shown if the Malayalam cell is NOT blank
+        if is_malayalam_available:
+            
+            current_lang = "മലയാളം" if is_malayalam_mode else "English"
+            next_lang = "മലയാളം" if not is_malayalam_mode else "English"
+            
+            # Use st.toggle for the sliding toggle button
+            # Assigning the return value to the session state ensures it's instantly updated
+            st.session_state.malayalam_mode = st.toggle(
+                f"Switch to **{next_lang}**",
+                value=st.session_state.malayalam_mode,
+                key=f"lang_toggle_{current_idx}",
+                help=f"Currently displaying content in {current_lang}. Click to switch.",
+                label_visibility="visible"
+            )
+            
+            # Use a compact markdown display below the toggle to confirm current language
+            st.markdown(f'<div style="font-size: 0.75rem; color: #6B7280; text-align: right;">Current: {current_lang}</div>', unsafe_allow_html=True)
+
     # Render formatted question
     render_formatted_content(formatted_question)
-    
     st.markdown("---")
     st.markdown("**Select your answer:**")
-    
     current_answer = st.session_state.question_status[current_idx]['answer']
     
     # -------- RADIO BUTTON ANSWER SELECTION --------
-
     options_dict = {
         "A": formatted_a,
         "B": formatted_b,
@@ -3754,9 +3796,22 @@ def load_questions(file_path):
     try:
         # Define essential columns to load
         essential_columns = [
-            'Question', 'Option A', 'Option B', 'Option C', 'Option D',
-            'Explanation', 'Correct Option (Final Answer Key)',
-            'Correct option (Provisional Answer Key)', 'Marks', 'Subject', 'Exam Year'
+            'Question',
+            'Option A',
+            'Option B',
+            'Option C',
+            'Option D',
+            'Explanation',
+            'Correct Option (Final Answer Key)',
+            'Correct option (Provisional Answer Key)',
+            'Marks',
+            'Subject',
+            'Exam Year',
+            'Question in Malayalam',
+            'Option A in Malayalam',
+            'Option B in Malayalam',
+            'Option C in Malayalam',
+            'Option D in Malayalam'
         ]
         
         # Read only necessary columns
@@ -3999,6 +4054,7 @@ def initialize_state():
         "question_status": {},
         "live_progress_enabled": True,
         "auto_save_enabled": True,
+        "malayalam_mode": False, # False means English (default)
         "show_detailed_analysis": False,
         "calc_display": "0",
         "show_leave_confirmation": False,
