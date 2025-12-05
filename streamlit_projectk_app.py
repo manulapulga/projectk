@@ -2588,8 +2588,6 @@ def show_enhanced_question_interface():
         st.session_state.answers[current_idx] = selected_option
     
     
-    st.markdown("---")
-    
     # Enhanced action buttons
     col1, col2, col3, col4 = st.columns(4)
     
