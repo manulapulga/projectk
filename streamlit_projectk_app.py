@@ -1156,7 +1156,7 @@ def show_user_management():
             
 def show_admin_analytics():
     """Display admin analytics dashboard."""
-    st.markdown("📈 User Analytics")
+    st.markdown("📈 **User Analytics**")
     
     users = get_all_users()
     
@@ -1205,8 +1205,8 @@ def show_admin_analytics():
 
     
     # User registration timeline
-    st.markdown("📅 Registration Timeline")
-    
+    st.markdown("**📅 Registration Timeline**")
+    st.markdown("<br>", unsafe_allow_html=True)
     # Group by date
     reg_dates = {}
     for user in users:
