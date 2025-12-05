@@ -1621,21 +1621,61 @@ def show_question_editing_interface(question_row, question_index, file_path, she
 
 def get_formatted_content(file_path, sheet_name, question_index, field, original_content):
     """Get formatted content if available, otherwise return original."""
-    # For retests, we might not have the original file path
-    if hasattr(st.session_state, 'is_retest') and st.session_state.is_retest:
-        # Try to get from formatted questions cache first
-        formatted_questions = load_formatted_questions()
-        key = get_question_key(file_path, sheet_name, question_index, field)
-        formatted_content = formatted_questions.get(key, original_content)
+    # Determine which field to use based on language
+    current_lang = st.session_state.get('quiz_language', 'english')
+    
+    # Map English fields to Malayalam fields if needed
+    if current_lang == 'malayalam':
+        malayalam_field_map = {
+            'question': 'question_malayalam',
+            'option_a': 'option_a_malayalam',
+            'option_b': 'option_b_malayalam',
+            'option_c': 'option_c_malayalam',
+            'option_d': 'option_d_malayalam',
+            'explanation': 'explanation'  # Keep explanation in English if no Malayalam version
+        }
         
-        # If not found in formatted questions, use the original content
-        # (which for retests should be the stored question content)
-        return formatted_content
+        # Convert field name to Malayalam version
+        malayalam_field = malayalam_field_map.get(field, field)
+        
+        # For retests, we might not have the original file path
+        if hasattr(st.session_state, 'is_retest') and st.session_state.is_retest:
+            # Try to get from formatted questions cache first
+            formatted_questions = load_formatted_questions()
+            # Try Malayalam key first
+            key_mal = get_question_key(file_path, sheet_name, question_index, malayalam_field)
+            formatted_content = formatted_questions.get(key_mal, original_content)
+            
+            # If not found in formatted questions, use the original content
+            return formatted_content
+        else:
+            # Original behavior for non-retests
+            formatted_questions = load_formatted_questions()
+            # Try Malayalam key first
+            key_mal = get_question_key(file_path, sheet_name, question_index, malayalam_field)
+            formatted_content = formatted_questions.get(key_mal, original_content)
+            
+            # If still English, try original English key
+            if formatted_content == original_content:
+                key_eng = get_question_key(file_path, sheet_name, question_index, field)
+                formatted_content = formatted_questions.get(key_eng, original_content)
+            
+            return formatted_content
     else:
-        # Original behavior for non-retests
-        formatted_questions = load_formatted_questions()
-        key = get_question_key(file_path, sheet_name, question_index, field)
-        return formatted_questions.get(key, original_content)
+        # English version - original behavior
+        if hasattr(st.session_state, 'is_retest') and st.session_state.is_retest:
+            # Try to get from formatted questions cache first
+            formatted_questions = load_formatted_questions()
+            key = get_question_key(file_path, sheet_name, question_index, field)
+            formatted_content = formatted_questions.get(key, original_content)
+            
+            # If not found in formatted questions, use the original content
+            return formatted_content
+        else:
+            # Original behavior for non-retests
+            formatted_questions = load_formatted_questions()
+            key = get_question_key(file_path, sheet_name, question_index, field)
+            return formatted_questions.get(key, original_content)
 
 # =============================
 # Firebase User Progress & Analytics
@@ -2537,20 +2577,80 @@ def show_enhanced_question_interface():
     if st.session_state.question_status[current_idx]['status'] == 'not_visited':
         update_question_status(current_idx, 'not_answered')
     
+    # Get current language
+    current_lang = st.session_state.get('quiz_language', 'english')
+    
+    # Get the appropriate column names based on language
+    if current_lang == 'malayalam':
+        question_col = 'Question in Malayalam'
+        option_a_col = 'Option A in Malayalam'
+        option_b_col = 'Option B in Malayalam'
+        option_c_col = 'Option C in Malayalam'
+        option_d_col = 'Option D in Malayalam'
+    else:
+        question_col = 'Question'
+        option_a_col = 'Option A'
+        option_b_col = 'Option B'
+        option_c_col = 'Option C'
+        option_d_col = 'Option D'
+    
+    # Get original content from appropriate columns
+    original_question = row.get(question_col, '')
+    original_option_a = row.get(option_a_col, '')
+    original_option_b = row.get(option_b_col, '')
+    original_option_c = row.get(option_c_col, '')
+    original_option_d = row.get(option_d_col, '')
+    
+    # Check if Malayalam content is available or show "NA"
+    if current_lang == 'malayalam':
+        if pd.isna(original_question) or str(original_question).strip() == '':
+            original_question = "Malayalam NA"
+        if pd.isna(original_option_a) or str(original_option_a).strip() == '':
+            original_option_a = "Malayalam NA"
+        if pd.isna(original_option_b) or str(original_option_b).strip() == '':
+            original_option_b = "Malayalam NA"
+        if pd.isna(original_option_c) or str(original_option_c).strip() == '':
+            original_option_c = "Malayalam NA"
+        if pd.isna(original_option_d) or str(original_option_d).strip() == '':
+            original_option_d = "Malayalam NA"
+    
     # Get formatted content
     file_path = st.session_state.get('current_qb_path', '')
     sheet_name = st.session_state.get('selected_sheet', '')
     
+    # Use appropriate field names for formatting lookup
+    field_map_english = {
+        'question': 'question',
+        'option_a': 'option_a',
+        'option_b': 'option_b',
+        'option_c': 'option_c',
+        'option_d': 'option_d'
+    }
+    
+    field_map_malayalam = {
+        'question': 'question_malayalam',
+        'option_a': 'option_a_malayalam',
+        'option_b': 'option_b_malayalam',
+        'option_c': 'option_c_malayalam',
+        'option_d': 'option_d_malayalam'
+    }
+    
+    field_map = field_map_malayalam if current_lang == 'malayalam' else field_map_english
+    
     formatted_question = get_formatted_content(
-        file_path, sheet_name, current_idx, "question", row['Question']
+        file_path, sheet_name, current_idx, field_map['question'], original_question
     )
-    formatted_a = get_formatted_content(file_path, sheet_name, current_idx, "option_a", row.get('Option A', ''))
-    formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get('Option B', ''))
-    formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
-    formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
+    formatted_a = get_formatted_content(file_path, sheet_name, current_idx, field_map['option_a'], original_option_a)
+    formatted_b = get_formatted_content(file_path, sheet_name, current_idx, field_map['option_b'], original_option_b)
+    formatted_c = get_formatted_content(file_path, sheet_name, current_idx, field_map['option_c'], original_option_c)
+    formatted_d = get_formatted_content(file_path, sheet_name, current_idx, field_map['option_d'], original_option_d)
     
     # Enhanced question card with formatted content
     st.markdown(f"### Question No. {current_idx + 1}")
+    
+    # Language indicator
+    lang_indicator = "🌐 Malayalam" if current_lang == 'malayalam' else "🌐 English"
+    st.markdown(f"*Language: {lang_indicator}*")
     
     # Render formatted question
     render_formatted_content(formatted_question)
@@ -2579,7 +2679,7 @@ def show_enhanced_question_interface():
         options=["A", "B", "C", "D", None],
         format_func=lambda x: "Clear Response" if x is None else f"{x}) {options_dict[x]}",
         index=["A", "B", "C", "D", None].index(default_radio_value),
-        key=f"radio_{current_idx}"
+        key=f"radio_{current_idx}_{current_lang}"  # Include language in key to force refresh
     )
     
     # Update session state when user selects an option
@@ -2598,7 +2698,7 @@ def show_enhanced_question_interface():
             "◀ Previous",
             use_container_width=True,
             disabled=current_idx == 0,
-            key=f"prev_{current_idx}",
+            key=f"prev_{current_idx}_{current_lang}",
             type="secondary",
             on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
         )
@@ -2608,7 +2708,7 @@ def show_enhanced_question_interface():
             "Next ▶",
             use_container_width=True,
             disabled=current_idx == len(df) - 1,
-            key=f"next_{current_idx}",
+            key=f"next_{current_idx}_{current_lang}",
             type="secondary",
             on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
         )
@@ -2618,7 +2718,7 @@ def show_enhanced_question_interface():
         st.button(
             button_text,
             use_container_width=True,
-            key=f"mark_{current_idx}",
+            key=f"mark_{current_idx}_{current_lang}",
             type="secondary",
             on_click=lambda: toggle_mark_review(current_idx)
         )
@@ -2627,7 +2727,7 @@ def show_enhanced_question_interface():
         st.button(
             "📤 Submit Test",
             use_container_width=True,
-            key=f"submit_{current_idx}",
+            key=f"submit_{current_idx}_{current_lang}",
             type="secondary",
             on_click=lambda: setattr(st.session_state, 'submitted', True)
         )
@@ -3026,7 +3126,7 @@ def clear_response(question_idx):
     st.rerun()
 
 def show_quiz_header_with_timer():
-    """Show a custom header with timer for quiz interface."""
+    """Show a custom header with timer for quiz interface with language toggle."""
     if st.session_state.end_time and not st.session_state.submitted:
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = max(0, int(time_left.total_seconds()))
@@ -3038,9 +3138,13 @@ def show_quiz_header_with_timer():
         
         # Determine color based on time remaining
         timer_color = '#ff6b6b' if seconds_left < 300 else 'white'
-        timer_bg = 'rgba(255,107,107,0.3)' if seconds_left < 300 else 'rgba(255,255,255,0.2)'
         
-        # Create a custom HTML header with timer
+        # Get current language for display
+        current_lang = st.session_state.quiz_language
+        lang_display = "EN" if current_lang == "english" else "ML"
+        lang_tooltip = "Switch to Malayalam" if current_lang == "english" else "Switch to English"
+        
+        # Create a custom HTML header with timer and language toggle
         st.markdown(f"""
         <style>
         .fixed-quiz-header {{
@@ -3064,22 +3168,42 @@ def show_quiz_header_with_timer():
         .content-wrapper {{
             padding-top: 70px; /* Make space for fixed header */
         }}
+        .lang-toggle {{
+            margin-right: 15px;
+            padding: 4px 12px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }}
+        .lang-toggle:hover {{
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }}
         </style>
         
         <div class="fixed-quiz-header">
             <div style="font-size: 1rem;">
                 {st.session_state.exam_name}
             </div>
-            <div id="header-timer" style="
-                font-size: 1rem;
-                padding: 0.3rem 1rem;
-                border-radius: 50px;
-                min-width: 120px;
-                text-align: center;
-                color: {timer_color};
-                transition: all 0.3s ease;
-            ">
-                ⏰ {h}:{m}:{s}
+            <div style="display: flex; align-items: center;">
+                <div id="header-timer" style="
+                    font-size: 1rem;
+                    padding: 0.3rem 1rem;
+                    border-radius: 50px;
+                    min-width: 120px;
+                    text-align: center;
+                    color: {timer_color};
+                    transition: all 0.3s ease;
+                    margin-right: 10px;
+                ">
+                    ⏰ {h}:{m}:{s}
+                </div>
+                <div class="lang-toggle" id="lang-toggle-btn" title="{lang_tooltip}">
+                    🌐 {lang_display}
+                </div>
             </div>
         </div>
         
@@ -3087,6 +3211,22 @@ def show_quiz_header_with_timer():
         
         <script>
             let timeLeft = {seconds_left};
+            
+            // Language toggle functionality
+            document.getElementById('lang-toggle-btn').addEventListener('click', function() {{
+                // Trigger Streamlit button click via custom event
+                const event = new CustomEvent('lang-toggle-clicked');
+                document.dispatchEvent(event);
+            }});
+            
+            // Listen for the custom event and trigger button click
+            document.addEventListener('lang-toggle-clicked', function() {{
+                // Find and click the hidden language toggle button
+                const langButton = document.querySelector('[data-testid="baseButton-secondary"][id*="lang_toggle"]');
+                if (langButton) {{
+                    langButton.click();
+                }}
+            }});
 
             function updateTimer() {{
                 const timerEl = document.getElementById("header-timer");
@@ -3161,9 +3301,21 @@ def show_quiz_header_with_timer():
 
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
-    """Main quiz interface with professional layout."""
-    # Show header with timer
+    """Main quiz interface with professional layout and language toggle."""
+    # Show header with timer and language toggle
     show_quiz_header_with_timer()
+    
+    # Add hidden language toggle button in the sidebar
+    with st.sidebar:
+        if st.button("🌐 Toggle Language", 
+                    key="lang_toggle_hidden",
+                    type="secondary",
+                    help="Switch between English and Malayalam",
+                    use_container_width=True):
+            # Toggle language
+            current_lang = st.session_state.get('quiz_language', 'english')
+            st.session_state.quiz_language = 'malayalam' if current_lang == 'english' else 'english'
+            st.rerun()
     
     # Rest of your existing code...
     if not st.session_state.quiz_started:
@@ -3217,7 +3369,6 @@ def show_quiz_screen():
     
     # Show question first, then header at the bottom
     if not st.session_state.submitted:
-        
         show_enhanced_question_interface()
     else:
         show_results_screen()
@@ -3750,11 +3901,13 @@ def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df.rename(columns=mapping)
 
 def load_questions(file_path):
-    """Load questions from Excel file with memory optimization."""
+    """Load questions from Excel file with memory optimization including Malayalam columns."""
     try:
-        # Define essential columns to load
+        # Define essential columns to load (including Malayalam columns)
         essential_columns = [
             'Question', 'Option A', 'Option B', 'Option C', 'Option D',
+            'Question in Malayalam', 'Option A in Malayalam', 'Option B in Malayalam',
+            'Option C in Malayalam', 'Option D in Malayalam',
             'Explanation', 'Correct Option (Final Answer Key)',
             'Correct option (Provisional Answer Key)', 'Marks', 'Subject', 'Exam Year'
         ]
@@ -3777,8 +3930,13 @@ def load_questions(file_path):
                     # Convert to string type for better memory usage
                     df[col] = df[col].astype('string')
             
-            # Fill NA values efficiently
-            text_columns = ["Question", "Option A", "Option B", "Option C", "Option D", "Explanation"]
+            # Fill NA values efficiently for all text columns
+            text_columns = [
+                "Question", "Option A", "Option B", "Option C", "Option D",
+                "Question in Malayalam", "Option A in Malayalam", "Option B in Malayalam",
+                "Option C in Malayalam", "Option D in Malayalam",
+                "Explanation"
+            ]
             for col in text_columns:
                 if col in df.columns:
                     df[col] = df[col].fillna("")
@@ -3999,6 +4157,7 @@ def initialize_state():
         "question_status": {},
         "live_progress_enabled": True,
         "auto_save_enabled": True,
+        "quiz_language": "english",
         "show_detailed_analysis": False,
         "calc_display": "0",
         "show_leave_confirmation": False,
