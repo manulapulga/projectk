@@ -2102,12 +2102,29 @@ def display_folder_navigation(folder_structure, current_path=None, level=0):
                 st.session_state.current_path = current_path + [item_name]
                 st.session_state.current_screen = "folder_view"
                 st.rerun()
-
+def calculate_default_duration(df, time_per_question=1.5):
+    """Calculate default exam duration based on number of questions and time per question."""
+    # Check for "Time in Minute/Question" in column headers
+    time_columns = [col for col in df.columns if "Time in Minute/Question" in str(col)]
+    
+    if time_columns:
+        try:
+            time_col = time_columns[0]
+            time_values = df[time_col].dropna()
+            if not time_values.empty:
+                time_per_question = float(time_values.iloc[0])
+        except:
+            pass
+    
+    default_duration = int(len(df) * time_per_question)
+    return default_duration
+    
 def show_folder_view_screen():
     """Show contents of the currently selected folder."""
     current_path = st.session_state.get('current_path', [])
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Select Exam")
+    
     # Home and Navigation buttons
     col1, col2 = st.columns([1, 1])
     with col1:
@@ -2121,8 +2138,10 @@ def show_folder_view_screen():
             else:
                 st.session_state.current_screen = "home"
             st.rerun()
+    
     breadcrumb = " > ".join(current_path) if current_path else ""
     st.write(f"**📍:** `{breadcrumb}`")
+    
     folder_structure = st.session_state.folder_structure
     current_level = folder_structure
     for folder in current_path:
@@ -2131,7 +2150,6 @@ def show_folder_view_screen():
     has_qb = '_files' in current_level and 'QB.xlsx' in current_level['_files']
     
     if has_qb:
-
         qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
         try:
             questions_data = load_questions(qb_path)
@@ -2173,20 +2191,73 @@ def show_folder_view_screen():
                             with stats_col1:
                                 st.markdown(f"<p style='color: {LITMUSQ_THEME['success']}; font-weight: 600; margin: 0.5rem 0;'>❓ {len(df)} Questions</p>", 
                                            unsafe_allow_html=True)
+                            
+                            # Add a button to directly start test with default values
                             with stats_col2:
                                 # Create unique key using current path, sheet name, and index
                                 current_path_str = '_'.join(current_path) if current_path else 'root'
-                                unique_key = f"select_{current_path_str}_{sheet_name}_{idx}"
+                                unique_key = f"direct_start_{current_path_str}_{sheet_name}_{idx}"
                                 
-                                if st.button("**Start Test**", 
-                                            key=unique_key,
+                                if st.button("**Quick Start Test**", 
+                                            key=f"quick_{unique_key}",
                                             use_container_width=True,
-                                            type="primary"):
+                                            type="secondary"):
+                                    # Set default configuration values
                                     st.session_state.selected_sheet = sheet_name
+                                    
+                                    # Set default configuration values (same as exam_config defaults)
+                                    st.session_state.num_questions = min(100, len(df))
+                                    st.session_state.use_final_key = True
+                                    
+                                    # Calculate default duration based on time per question
+                                    time_per_question = 1.5  # Default value
+                                    # Check for "Time in Minute/Question" in column headers
+                                    time_columns = [col for col in df.columns if "Time in Minute/Question" in str(col)]
+                                    if time_columns:
+                                        try:
+                                            time_col = time_columns[0]
+                                            time_values = df[time_col].dropna()
+                                            if not time_values.empty:
+                                                time_per_question = float(time_values.iloc[0])
+                                        except:
+                                            pass
+                                    
+                                    default_duration = int(len(df) * time_per_question)
+                                    st.session_state.exam_duration = default_duration
+                                    
+                                    # Set other default settings
+                                    st.session_state.shuffle_questions = False
+                                    st.session_state.show_live_progress = True
+                                    st.session_state.enable_auto_save = True
+                                    st.session_state.full_screen_mode = True
+                                    
+                                    # Set live progress and auto-save settings
+                                    st.session_state.live_progress_enabled = True
+                                    st.session_state.auto_save_enabled = True
+                                    
+                                    # Start the quiz directly with default values
+                                    start_quiz(df, 
+                                               min(100, len(df)),  # Default number of questions
+                                               default_duration,   # Default duration
+                                               True,               # Use final key
+                                               sheet_name)         # Exam name
+                                    
                                     st.session_state.current_screen = "quiz"
                                     st.rerun()
                         
-                        st.markdown("</div>", unsafe_allow_html=True)
+                        # Original "Start Test" button for going to exam_config
+                        col3, col4 = st.columns([1, 1])
+                        with col3:
+                            # Original button - goes to exam_config
+                            if st.button("**Configure & Start Test**", 
+                                        key=f"config_{unique_key}",
+                                        use_container_width=True,
+                                        type="primary"):
+                                st.session_state.selected_sheet = sheet_name
+                                st.session_state.current_screen = "exam_config"
+                                st.rerun()
+                        
+                        st.markdown("---")  # Separator between tests
                 
                 else:
                     st.error("No sheets found in the question bank file.")
