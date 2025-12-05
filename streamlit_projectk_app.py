@@ -1153,39 +1153,10 @@ def show_user_management():
                 file_name="litmusq_users.csv",
                 mime="text/csv"
             )
-    
-    with col3:
-        if st.button("🔄 Sync with Excel", use_container_width=True):
-            # Sync existing Excel users with Firebase
-            credentials = load_login_credentials()
-            migrated = 0
-            for username, password in credentials.items():
-                # Check if user exists in Firebase
-                user_ref = db.collection('users').document(username)
-                if not user_ref.get().exists():
-                    user_data = {
-                        "full_name": username,
-                        "email": f"{username}@example.com",
-                        "phone": "",
-                        "username": username,
-                        "password": password,
-                        "is_approved": True,
-                        "role": "student",
-                        "created_at": datetime.now().isoformat(),
-                        "last_login": None,
-                        "is_active": True
-                    }
-                    user_ref.set(user_data)
-                    migrated += 1
             
-            if migrated > 0:
-                st.success(f"✅ Migrated {migrated} users from Excel to Firebase")
-            else:
-                st.info("✅ All users already migrated to Firebase")
-
 def show_admin_analytics():
     """Display admin analytics dashboard."""
-    st.subheader("📈 User Analytics")
+    st.markdown("📈 User Analytics")
     
     users = get_all_users()
     
@@ -1234,8 +1205,7 @@ def show_admin_analytics():
 
     
     # User registration timeline
-    st.markdown("---")
-    st.subheader("📅 Registration Timeline")
+    st.markdown("📅 Registration Timeline")
     
     # Group by date
     reg_dates = {}
@@ -1255,12 +1225,6 @@ def show_admin_analytics():
         })
         st.bar_chart(chart_data.set_index('Date'))
     
-    # User activity heatmap (by hour)
-    st.markdown("---")
-    st.subheader("🌡️ User Activity Heatmap")
-    
-    # This would require tracking login times
-    st.info("User activity tracking coming soon!")
 
 def show_system_settings():
     """System settings for admin."""
