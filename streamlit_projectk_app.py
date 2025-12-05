@@ -2590,7 +2590,7 @@ def show_enhanced_question_interface():
     
     st.markdown("---")
     
-    # Enhanced action buttons
+    # Enhanced action buttons (REMOVED SUBMIT BUTTON)
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -2624,71 +2624,43 @@ def show_enhanced_question_interface():
         )
     
     with col4:
+        # Clear Response button instead of Submit
         st.button(
-            "📤 Submit Test",
+            "🗑️ Clear Response",
             use_container_width=True,
-            key=f"submit_{current_idx}",
+            key=f"clear_{current_idx}",
             type="secondary",
-            on_click=lambda: setattr(st.session_state, 'submitted', True)
+            on_click=lambda: clear_response(current_idx)
         )
         
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
-    if st.session_state.end_time and not st.session_state.submitted:
-        # Calculate remaining time
-        time_left = st.session_state.end_time - datetime.now()
-        seconds_left = int(time_left.total_seconds())
-        
-        # Auto-submit when time reaches zero
-        if seconds_left <= 0:
-            st.session_state.submitted = True
-            st.rerun()
-            return  # Exit early to prevent further rendering
-        
-        # Create timer with JavaScript
-        html_code = f"""
-        <div id="timer" style="
-            font-size: 24px;
-            font-weight: bold;
-            color: {'red' if seconds_left < 300 else 'green'};
-            text-align: center;
-        "></div>
-
-        <script>
-            let timeLeft = {seconds_left};
-
-            function updateTimer() {{
-                if (timeLeft <= 0) {{
-                    document.getElementById('timer').innerHTML = "⏰ 00:00:00";
-                    // Trigger automatic submission when timer reaches zero
-                    const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
-                    if (submitButton) {{
-                        submitButton.click();
-                    }}
-                    return;
-                }}
-
-                let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
-                let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
-                let s = String(timeLeft % 60).padStart(2, '0');
-
-                document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
-
-                timeLeft--;
-                setTimeout(updateTimer, 1000);
-            }}
-
-            updateTimer();
-        </script>
-        """
-        components.html(html_code, height=60)
-    else:
-        st.metric("⏰ Time Left", "No Limit")
-
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    st.markdown("---")
-
+    # JavaScript to handle header submit button
+    st.markdown("""
+    <script>
+    // Function to find and click the Streamlit submit button
+    function triggerSubmit() {
+        // Look for any button that might be the submit button
+        const buttons = document.querySelectorAll('button');
+        for (const btn of buttons) {
+            const btnText = btn.textContent || btn.innerText;
+            if (btnText.includes('Submit') || btnText.includes('SUBMIT')) {
+                btn.click();
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // Add event listener for the header submit button
+    document.addEventListener('click', function(e) {
+        if (e.target && (e.target.id === 'submit-test-btn' || e.target.closest('#submit-test-btn'))) {
+            triggerSubmit();
+        }
+    });
+    </script>
+    """, unsafe_allow_html=True)
+    
 # =============================
 # Professional Test Interface
 # =============================
@@ -3038,9 +3010,8 @@ def show_quiz_header_with_timer():
         
         # Determine color based on time remaining
         timer_color = '#ff6b6b' if seconds_left < 300 else 'white'
-        timer_bg = 'rgba(255,107,107,0.3)' if seconds_left < 300 else 'rgba(255,255,255,0.2)'
         
-        # Create a custom HTML header with timer
+        # Create a custom HTML header with timer AND submit button
         st.markdown(f"""
         <style>
         .fixed-quiz-header {{
@@ -3048,9 +3019,9 @@ def show_quiz_header_with_timer():
             top: 0;
             left: 0;
             margin-top: 3.5rem;
-            margin-bottom:0.2rem;
+            margin-bottom: 0.2rem;
             width: 100%;
-            height:2rem;
+            height: 2rem;
             background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
             color: white;
             padding: 0.8rem 1rem;
@@ -3061,25 +3032,72 @@ def show_quiz_header_with_timer():
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }}
+        .header-left {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }}
+        .header-center {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }}
+        .header-right {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            justify-content: flex-end;
+        }}
+        .header-submit-button {{
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }}
+        .header-submit-button:hover {{
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: white;
+        }}
         .content-wrapper {{
             padding-top: 70px; /* Make space for fixed header */
         }}
         </style>
         
         <div class="fixed-quiz-header">
-            <div style="font-size: 1rem;">
-                {st.session_state.exam_name}
+            <div class="header-left">
+                <div style="font-size: 1rem;">
+                    {st.session_state.exam_name}
+                </div>
             </div>
-            <div id="header-timer" style="
-                font-size: 1rem;
-                padding: 0.3rem 1rem;
-                border-radius: 50px;
-                min-width: 120px;
-                text-align: center;
-                color: {timer_color};
-                transition: all 0.3s ease;
-            ">
-                ⏰ {h}:{m}:{s}
+            
+            <div class="header-center">
+                <div id="header-timer" style="
+                    font-size: 1rem;
+                    padding: 0.3rem 1rem;
+                    border-radius: 50px;
+                    min-width: 120px;
+                    text-align: center;
+                    color: {timer_color};
+                    transition: all 0.3s ease;
+                    background: rgba(0, 0, 0, 0.2);
+                ">
+                    ⏰ {h}:{m}:{s}
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="header-submit-button" id="submit-test-btn" 
+                        style="font-size: 0.85rem; padding: 0.25rem 0.7rem;">
+                    📤 Submit Test
+                </button>
             </div>
         </div>
         
@@ -3101,10 +3119,7 @@ def show_quiz_header_with_timer():
                     timerEl.style.color = "red";
                     
                     // Trigger automatic submission when timer reaches zero
-                    const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
-                    if (submitButton) {{
-                        submitButton.click();
-                    }}
+                    document.getElementById('auto-submit-trigger')?.click();
                     return;
                 }}
 
@@ -3123,11 +3138,35 @@ def show_quiz_header_with_timer():
                 setTimeout(updateTimer, 1000);
             }}
 
+            // Handle submit button click
+            document.getElementById('submit-test-btn')?.addEventListener('click', function() {
+                // Trigger the hidden Streamlit submit button
+                const hiddenSubmitBtn = document.querySelector('button[title*="Submit Test (Hidden)"]');
+                if (hiddenSubmitBtn) {
+                    hiddenSubmitBtn.click();
+                } else {
+                    // Fallback: look for any submit button
+                    const submitBtns = document.querySelectorAll('button');
+                    for (const btn of submitBtns) {
+                        const btnText = btn.textContent || btn.innerText;
+                        if (btnText.includes('Submit') && !btnText.includes('Hidden')) {
+                            btn.click();
+                            break;
+                        }
+                    }
+                }
+            });
+
             updateTimer();
         </script>
+        
+        <!-- Hidden button for auto-submit -->
+        <div style="display: none;">
+            <button id="auto-submit-trigger"></button>
+        </div>
         """, unsafe_allow_html=True)
     else:
-        # Show header without timer if no time limit
+        # Show header without timer if no time limit, but still with submit button
         st.markdown(f"""
         <style>
         .fixed-quiz-header {{
@@ -3146,26 +3185,86 @@ def show_quiz_header_with_timer():
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }}
+        .header-left {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }}
+        .header-center {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }}
+        .header-right {{
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            justify-content: flex-end;
+        }}
+        .header-submit-button {{
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 4px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }}
+        .header-submit-button:hover {{
+            background-color: rgba(255, 255, 255, 0.3);
+            border-color: white;
+        }}
         .content-wrapper {{
             padding-top: 70px;
         }}
         </style>
         
         <div class="fixed-quiz-header">
-            <div style="font-size: 1rem;">
-                {st.session_state.exam_name}
+            <div class="header-left">
+                <div style="font-size: 1rem;">
+                    {st.session_state.exam_name}
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <div style="font-size: 1rem; color: rgba(255,255,255,0.8);">
+                    No Time Limit
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <button class="header-submit-button" id="submit-test-btn" 
+                        style="font-size: 0.85rem; padding: 0.25rem 0.7rem;">
+                    📤 Submit Test
+                </button>
             </div>
         </div>
+        
         <div class="content-wrapper"></div>
+        
+        <script>
+            // Handle submit button click for no-time-limit mode
+            document.getElementById('submit-test-btn')?.addEventListener('click', function() {{
+                // Trigger Streamlit submit button
+                const streamlitSubmitBtn = document.querySelector('button[data-testid="baseButton-secondary"][title*="Submit"]');
+                if (streamlitSubmitBtn) {{
+                    streamlitSubmitBtn.click();
+                }}
+            }});
+        </script>
         """, unsafe_allow_html=True)
 
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
     """Main quiz interface with professional layout."""
-    # Show header with timer
+    # Show header with timer AND submit button
     show_quiz_header_with_timer()
     
-    # Rest of your existing code...
     if not st.session_state.quiz_started:
         st.error("Quiz not properly initialized. Returning to home.")
         st.session_state.current_screen = "home"
@@ -3185,21 +3284,15 @@ def show_quiz_screen():
             st.session_state.submitted = True
             st.rerun()
             return
-        
-        # Set up auto-refresh with reduced frequency
-        if seconds_left <= 0:
-            # Time's up - auto-submit immediately
-            st.session_state.submitted = True
-            st.rerun()
-        elif seconds_left < 5:  # Last minute: every 5 seconds
-            st_autorefresh(interval=1000, key="timer_refresh_last_minute")
-        elif seconds_left < 300:  # Last 5 minutes: every 60 seconds
-            st_autorefresh(interval=60000, key="timer_refresh_last_5min")
-        elif seconds_left < 1800:  # Last 30 minutes: every 5 minutes
-            st_autorefresh(interval=300000, key="timer_refresh_last_30min")
-        else:  # More than 30 minutes: every 10 minutes
-            st_autorefresh(interval=1000000, key="timer_refresh_long_exam")
     
+    # Create a hidden submit button that can be triggered by JavaScript
+    st.markdown("<div style='display: none;'>", unsafe_allow_html=True)
+    if st.button("📤 Submit Test (Hidden)", key="hidden_submit"):
+        st.session_state.submitted = True
+        st.rerun()
+    st.markdown("</div>", unsafe_allow_html=True)
+    
+    # Rest of your existing code...
     if st.session_state.get('show_leave_confirmation', False):
         st.sidebar.warning("Leave test? Progress will be lost.")
         col1, col2 = st.sidebar.columns(2)
@@ -3217,7 +3310,6 @@ def show_quiz_screen():
     
     # Show question first, then header at the bottom
     if not st.session_state.submitted:
-        
         show_enhanced_question_interface()
     else:
         show_results_screen()
