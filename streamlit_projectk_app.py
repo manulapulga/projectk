@@ -2236,6 +2236,7 @@ def show_folder_view_screen():
                             except:
                                 pass
                         
+                        # Create columns for the test card
                         col1, col2 = st.columns([3, 1])
                         
                         with col1:
@@ -2261,48 +2262,48 @@ def show_folder_view_screen():
                             </div>
                             """
                             st.markdown(metadata_html, unsafe_allow_html=True)
-                            
-                            # Add a button to directly start test with default values
-                            with stats_col2:
-                                # Create unique key using current path, sheet name, and index
-                                current_path_str = '_'.join(current_path) if current_path else 'root'
-                                unique_key = f"direct_start_{current_path_str}_{sheet_name}_{idx}"
-                                
-                                if st.button("**Quick Start Test**", 
-                                            key=f"quick_{unique_key}",
-                                            use_container_width=True,
-                                            type="secondary"):
-                                    # Set default configuration values
-                                    st.session_state.selected_sheet = sheet_name
-                                    
-                                    # Set default configuration values (same as exam_config defaults)
-                                    st.session_state.num_questions = min(100, len(df))
-                                    st.session_state.use_final_key = True
-                                    
-                                    # Set duration
-                                    st.session_state.exam_duration = total_duration_minutes
-                                    
-                                    # Set other default settings
-                                    st.session_state.shuffle_questions = False
-                                    st.session_state.show_live_progress = True
-                                    st.session_state.enable_auto_save = True
-                                    st.session_state.full_screen_mode = True
-                                    
-                                    # Set live progress and auto-save settings
-                                    st.session_state.live_progress_enabled = True
-                                    st.session_state.auto_save_enabled = True
-                                    
-                                    # Start the quiz directly with default values
-                                    start_quiz(df, 
-                                               min(100, len(df)),  # Default number of questions
-                                               total_duration_minutes,   # Calculated duration
-                                               True,               # Use final key
-                                               sheet_name)         # Exam name
-                                    
-                                    st.session_state.current_screen = "quiz"
-                                    st.rerun()
                         
-                        # Original "Start Test" button for going to exam_config
+                        with col2:
+                            # Create unique key using current path, sheet name, and index
+                            current_path_str = '_'.join(current_path) if current_path else 'root'
+                            unique_key = f"direct_start_{current_path_str}_{sheet_name}_{idx}"
+                            
+                            # Quick Start Test button (direct to quiz)
+                            if st.button("**Quick Start Test**", 
+                                        key=f"quick_{unique_key}",
+                                        use_container_width=True,
+                                        type="secondary"):
+                                # Set default configuration values
+                                st.session_state.selected_sheet = sheet_name
+                                
+                                # Set default configuration values (same as exam_config defaults)
+                                st.session_state.num_questions = min(100, len(df))
+                                st.session_state.use_final_key = True
+                                
+                                # Set duration
+                                st.session_state.exam_duration = total_duration_minutes
+                                
+                                # Set other default settings
+                                st.session_state.shuffle_questions = False
+                                st.session_state.show_live_progress = True
+                                st.session_state.enable_auto_save = True
+                                st.session_state.full_screen_mode = True
+                                
+                                # Set live progress and auto-save settings
+                                st.session_state.live_progress_enabled = True
+                                st.session_state.auto_save_enabled = True
+                                
+                                # Start the quiz directly with default values
+                                start_quiz(df, 
+                                           min(100, len(df)),  # Default number of questions
+                                           total_duration_minutes,   # Calculated duration
+                                           True,               # Use final key
+                                           sheet_name)         # Exam name
+                                
+                                st.session_state.current_screen = "quiz"
+                                st.rerun()
+                        
+                        # Configure & Start Test button (goes to exam_config)
                         col3, col4 = st.columns([1, 1])
                         with col3:
                             # Original button - goes to exam_config
@@ -2328,7 +2329,6 @@ def show_folder_view_screen():
         display_folder_navigation(subfolders, current_path)
     elif not has_qb:
         st.info("ℹ️ This folder is empty. Add subfolders or a QB.xlsx file.")
-        
 # =============================
 # Enhanced Exam Configuration
 # =============================
