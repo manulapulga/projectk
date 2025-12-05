@@ -2179,6 +2179,63 @@ def show_folder_view_screen():
                     for idx, sheet_name in enumerate(sheet_names):
                         df = questions_data[sheet_name]
                         
+                        # Extract metadata from the DataFrame
+                        total_questions = len(df)
+                        
+                        # 1. Calculate Duration
+                        time_per_question = 1.5  # Default
+                        time_columns = [col for col in df.columns if "Time in Minute/Question" in str(col)]
+                        if time_columns:
+                            try:
+                                time_col = time_columns[0]
+                                time_values = df[time_col].dropna()
+                                if not time_values.empty:
+                                    time_per_question = float(time_values.iloc[0])
+                            except:
+                                pass
+                        
+                        total_duration_minutes = int(total_questions * time_per_question)
+                        duration_display = f"{total_duration_minutes} min"
+                        if total_duration_minutes > 60:
+                            hours = total_duration_minutes // 60
+                            minutes = total_duration_minutes % 60
+                            duration_display = f"{hours}h {minutes}m"
+                        
+                        # 2. Get Marks/Question
+                        marks_per_question = "1"  # Default
+                        marks_columns = [col for col in df.columns if "Marks/Question" in str(col) or "Marks Per Question" in str(col)]
+                        if not marks_columns:
+                            # Also check for just "Marks" column
+                            marks_columns = [col for col in df.columns if "Marks" in str(col)]
+                        
+                        if marks_columns:
+                            try:
+                                marks_col = marks_columns[0]
+                                marks_values = df[marks_col].dropna()
+                                if not marks_values.empty:
+                                    # Try to get unique value (assuming all questions have same marks)
+                                    unique_marks = marks_values.unique()
+                                    if len(unique_marks) == 1:
+                                        marks_per_question = str(unique_marks[0])
+                            except:
+                                pass
+                        
+                        # 3. Get Negative Marks/Question
+                        negative_marks_per_question = "0"  # Default
+                        negative_columns = [col for col in df.columns if "Negative Marks/Question" in str(col) or "Negative Marks Per Question" in str(col)]
+                        
+                        if negative_columns:
+                            try:
+                                negative_col = negative_columns[0]
+                                negative_values = df[negative_col].dropna()
+                                if not negative_values.empty:
+                                    # Try to get unique value
+                                    unique_negative = negative_values.unique()
+                                    if len(unique_negative) == 1:
+                                        negative_marks_per_question = str(unique_negative[0])
+                            except:
+                                pass
+                        
                         col1, col2 = st.columns([3, 1])
                         
                         with col1:
@@ -2186,11 +2243,24 @@ def show_folder_view_screen():
                             st.markdown(f"<h4 style='color: {LITMUSQ_THEME['primary']}; margin: 0;'>{sheet_name}</h4>", 
                                        unsafe_allow_html=True)
                             
-                            # Compact stats with attractive colors
-                            stats_col1, stats_col2 = st.columns(2)
-                            with stats_col1:
-                                st.markdown(f"<p style='color: {LITMUSQ_THEME['success']}; font-weight: 600; margin: 0.5rem 0;'>❓ {len(df)} Questions</p>", 
-                                           unsafe_allow_html=True)
+                            # Display all metadata in a single line with icons
+                            metadata_html = f"""
+                            <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin: 0.5rem 0;">
+                                <span style="color: {LITMUSQ_THEME['success']}; font-weight: 600;">
+                                    ❓ {total_questions} Questions
+                                </span>
+                                <span style="color: {LITMUSQ_THEME['primary']}; font-weight: 600;">
+                                    ⏱️ {duration_display}
+                                </span>
+                                <span style="color: {LITMUSQ_THEME['warning']}; font-weight: 600;">
+                                    📊 {marks_per_question} Marks/Q
+                                </span>
+                                <span style="color: {LITMUSQ_THEME['secondary']}; font-weight: 600;">
+                                    ⚠️ {negative_marks_per_question} Negative/Q
+                                </span>
+                            </div>
+                            """
+                            st.markdown(metadata_html, unsafe_allow_html=True)
                             
                             # Add a button to directly start test with default values
                             with stats_col2:
@@ -2209,21 +2279,8 @@ def show_folder_view_screen():
                                     st.session_state.num_questions = min(100, len(df))
                                     st.session_state.use_final_key = True
                                     
-                                    # Calculate default duration based on time per question
-                                    time_per_question = 1.5  # Default value
-                                    # Check for "Time in Minute/Question" in column headers
-                                    time_columns = [col for col in df.columns if "Time in Minute/Question" in str(col)]
-                                    if time_columns:
-                                        try:
-                                            time_col = time_columns[0]
-                                            time_values = df[time_col].dropna()
-                                            if not time_values.empty:
-                                                time_per_question = float(time_values.iloc[0])
-                                        except:
-                                            pass
-                                    
-                                    default_duration = int(len(df) * time_per_question)
-                                    st.session_state.exam_duration = default_duration
+                                    # Set duration
+                                    st.session_state.exam_duration = total_duration_minutes
                                     
                                     # Set other default settings
                                     st.session_state.shuffle_questions = False
@@ -2238,22 +2295,24 @@ def show_folder_view_screen():
                                     # Start the quiz directly with default values
                                     start_quiz(df, 
                                                min(100, len(df)),  # Default number of questions
-                                               default_duration,   # Default duration
+                                               total_duration_minutes,   # Calculated duration
                                                True,               # Use final key
                                                sheet_name)         # Exam name
                                     
                                     st.session_state.current_screen = "quiz"
                                     st.rerun()
                         
-
-                                # Original button - goes to exam_config
-                                if st.button("**Configure & Start Test**", 
-                                            key=f"config_{unique_key}",
-                                            use_container_width=True,
-                                            type="primary"):
-                                    st.session_state.selected_sheet = sheet_name
-                                    st.session_state.current_screen = "exam_config"
-                                    st.rerun()
+                        # Original "Start Test" button for going to exam_config
+                        col3, col4 = st.columns([1, 1])
+                        with col3:
+                            # Original button - goes to exam_config
+                            if st.button("**Configure & Start Test**", 
+                                        key=f"config_{unique_key}",
+                                        use_container_width=True,
+                                        type="primary"):
+                                st.session_state.selected_sheet = sheet_name
+                                st.session_state.current_screen = "exam_config"
+                                st.rerun()
                         
                         st.markdown("---")  # Separator between tests
                 
@@ -2269,7 +2328,7 @@ def show_folder_view_screen():
         display_folder_navigation(subfolders, current_path)
     elif not has_qb:
         st.info("ℹ️ This folder is empty. Add subfolders or a QB.xlsx file.")
-
+        
 # =============================
 # Enhanced Exam Configuration
 # =============================
