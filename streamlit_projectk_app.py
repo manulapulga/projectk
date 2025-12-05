@@ -2303,9 +2303,6 @@ def show_folder_view_screen():
                                 st.session_state.current_screen = "quiz"
                                 st.rerun()
                         
-                        # Configure & Start Test button (goes to exam_config)
-                        col3, col4 = st.columns([1, 1])
-                        with col3:
                             # Original button - goes to exam_config
                             if st.button("**Configure & Start Test**", 
                                         key=f"config_{unique_key}",
