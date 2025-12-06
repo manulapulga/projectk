@@ -2280,14 +2280,16 @@ def show_folder_view_screen():
                                 st.session_state.current_screen = "quiz"
                                 st.rerun()
                         
+                            """
                             # Original button - goes to exam_config
                             if st.button("**Configure & Start Test**", 
-                                        key=f"config_{unique_key}",
-                                        use_container_width=True,
-                                        type="primary"):
+                                         key=f"config_{unique_key}",
+                                         use_container_width=True,
+                                         type="primary"):
                                 st.session_state.selected_sheet = sheet_name
                                 st.session_state.current_screen = "exam_config"
                                 st.rerun()
+                            """
                         
                         st.markdown("---")  # Separator between tests
                 
