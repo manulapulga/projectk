@@ -407,8 +407,8 @@ def inject_quiz_question_fix():
     <style>
     /* Pull the question container to the left */
     .st-emotion-cache-yhxpuo {
-        padding-left: 0.2rem !important;
-        margin-left: -0.8rem !important;  /* Negative margin to pull left */
+        padding-left: 1rem !important;
+        margin-left: 1rem !important;  /* Negative margin to pull left */
         width: calc(100% + 0.8rem) !important;
         max-width: calc(100% + 0.8rem) !important;
     }
