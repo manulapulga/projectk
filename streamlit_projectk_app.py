@@ -3579,53 +3579,35 @@ def show_results_screen():
     if hasattr(st.session_state, 'retest_type'):
         summary['retest_type'] = st.session_state.retest_type
     
-    # Save progress only once
+    # Update user progress
+    # Save progress only once per test
     if not st.session_state.get("progress_saved", False):
         update_user_progress(summary)
         st.session_state.progress_saved = True
 
-    # Clear retest state after saving
+    # Clear retest state after saving results
     clear_retest_state()
+    
 
-    # ---------------------------------------------------------
-    # 📱 MOBILE-FRIENDLY SUMMARY (REPLACES st.metric BLOCKS)
-    # ---------------------------------------------------------
-    summary_html = f"""
-        <div style="text-align: center; margin: 1rem 0;">
-            <div style="color: {LITMUSQ_THEME['text']}; 
-                        font-weight: 600; 
-                        line-height: 1.8;
-                        font-size: 1.05rem;">
+    
+    # Summary cards with enhanced styling
 
-                <span style="color:{LITMUSQ_THEME['primary']};">
-                    📘 Total: {summary['Total Questions']}
-                </span> •
 
-                <span style="color:{LITMUSQ_THEME['warning']};">
-                    ✏️ Attempted: {summary['Attempted']}
-                </span> •
-
-                <span style="color:{LITMUSQ_THEME['success']};">
-                    ✅ Correct: {summary['Correct']}
-                </span> •
-
-                <span style="color:{LITMUSQ_THEME['secondary']};">
-                    🧮 Score: {summary['Marks Obtained']}/{summary['Total Marks']}
-                </span>
-
-            </div>
-        </div>
-    """
-    st.markdown(summary_html, unsafe_allow_html=True)
-
-    # ---------------------------------------------------------
-    # Score Visualization
-    # ---------------------------------------------------------
+    st.metric("Total Questions", summary["Total Questions"])
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.metric("Attempted", summary["Attempted"])
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.metric("Correct Answers", summary["Correct"])
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.metric("Final Score", f"{summary['Marks Obtained']}/{summary['Total Marks']}")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Score visualization
     percentage = summary['Percentage']
     st.subheader(f"Overall Score: {percentage:.1f}%")
     st.progress(int(percentage))
-
-    # Performance Gauge
+    
+    # Performance gauge
     if percentage >= 80:
         performance = "Excellent! 🎉"
         color = LITMUSQ_THEME['success']
@@ -3635,65 +3617,47 @@ def show_results_screen():
     else:
         performance = "Needs Improvement 📚"
         color = LITMUSQ_THEME['secondary']
-
-    st.markdown(
-        f"<h3 style='color: {color}; text-align:center; margin-top:0.5rem;'>{performance}</h3>",
-        unsafe_allow_html=True,
-    )
+    
+    st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
     st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-
-    # ---------------------------------------------------------
-    # Download Button
-    # ---------------------------------------------------------
     st.download_button(
         label="📥 Download Results",
         data=res_df.to_csv(index=False),
-        file_name=f\"{summary['Exam Name']}_results_{st.session_state.username}.csv\",
+        file_name=f"{summary['Exam Name']}_results_{st.session_state.username}.csv",
         mime="text/csv",
         use_container_width=True,
         key="download_results"
     )
-
-    # ---------------------------------------------------------
-    # Navigation Buttons
-    # ---------------------------------------------------------
+# Navigation options - Add Home button
     if st.button("🏠 Home", use_container_width=True, key="results_home"):
         st.session_state.current_screen = "home"
         st.rerun()
-
     if st.button("← Back to Config", use_container_width=True, key="results_back"):
         st.session_state.current_screen = "exam_config"
         st.rerun()
-
     if st.button("📊 View Analysis", use_container_width=True, key="results_analysis"):
         st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
         st.rerun()
-
     if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
         df_exam = st.session_state.quiz_questions
         start_quiz(
-            df_exam,
+            df_exam, 
             len(df_exam),
             st.session_state.quiz_duration,
-            st.session_state.use_final_key,
+            st.session_state.use_final_key, 
             st.session_state.exam_name
         )
         st.session_state.current_screen = "quiz"
         st.rerun()
-
     if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
         st.session_state.current_screen = "dashboard"
-        st.rerun()
-
-    # ---------------------------------------------------------
-    # Detailed Analysis
-    # ---------------------------------------------------------
+        st.rerun()    
+    # Detailed analysis
     if st.session_state.get('show_detailed_analysis', False):
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         st.subheader("📋 Question-wise Review")
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         show_enhanced_detailed_analysis(res_df)
-
         
 # =============================
 # Session State Optimization
