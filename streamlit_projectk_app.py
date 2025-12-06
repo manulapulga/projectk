@@ -1644,32 +1644,57 @@ def get_user_progress_doc_id(username):
     return f"user_{username}"
 
 def initialize_user_progress(username):
-    """Initialize user progress data in Firebase."""
+    """Create lightweight user profile document."""
     try:
-        if db is None:
-            st.error("Firebase not initialized")
-            return
-        
-        doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
-        doc = doc_ref.get()
-        
-        if not doc.exists:
-            default_progress = {
+        profile_ref = db.collection("user_progress")\
+                        .document(username)\
+                        .collection("meta")\
+                        .document("profile")
+
+        if not profile_ref.get().exists:
+            profile_ref.set({
                 "username": username,
                 "tests_taken": 0,
                 "total_score": 0,
                 "average_score": 0,
-                "test_history": [],
                 "achievements": [],
                 "weak_areas": [],
                 "strong_areas": [],
                 "join_date": datetime.now().isoformat(),
                 "last_updated": datetime.now().isoformat()
-            }
-            doc_ref.set(default_progress)
-            st.success(f"✅ Initialized progress for {username}")
+            })
     except Exception as e:
-        st.error(f"Error initializing user progress: {e}")
+        st.error(f"❌ Error initializing user progress: {e}")
+        
+def save_test_result(username, test_entry):
+    """Save individual test attempt in /tests/ subcollection."""
+    try:
+        tests_ref = db.collection("user_progress")\
+                      .document(username)\
+                      .collection("tests")\
+                      .document(test_entry["test_id"])
+
+        tests_ref.set(test_entry)
+        return True
+    except Exception as e:
+        st.error(f"❌ Error saving test result: {e}")
+        return False
+
+def update_user_profile(username, updated_data):
+    """Update lightweight user profile (small doc)."""
+    try:
+        updated_data["last_updated"] = datetime.now().isoformat()
+
+        profile_ref = db.collection("user_progress")\
+                        .document(username)\
+                        .collection("meta")\
+                        .document("profile")
+
+        profile_ref.set(updated_data, merge=True)
+        return True
+    except Exception as e:
+        st.error(f"❌ Error updating user profile: {e}")
+        return False
 
 def save_user_progress(username, progress_data):
     """Save user progress to Firebase with proper type conversion."""
@@ -1745,121 +1770,119 @@ def ensure_python_types(data):
         return data
         
 def load_user_progress(username):
-    """Load user progress from Firebase and ensure Python types."""
+    """Load ONLY lightweight profile data."""
     try:
-        if db is None:
-            st.error("Firebase not initialized")
-            return None
-        
-        doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
-        doc = doc_ref.get()
-        
+        profile_ref = db.collection("user_progress")\
+                        .document(username)\
+                        .collection("meta")\
+                        .document("profile")
+
+        doc = profile_ref.get()
         if doc.exists:
-            data = doc.to_dict()
-            # Ensure all data is in Python native types
-            return ensure_python_types(data)
+            return doc.to_dict()
+        return {}
     except Exception as e:
-        st.error(f"Error loading progress: {e}")
-    return None
+        st.error(f"❌ Error loading user profile: {e}")
+        return {}
+        
+def load_test_history(username):
+    """Load all test attempts (separate documents)."""
+    try:
+        tests_ref = db.collection("user_progress")\
+                      .document(username)\
+                      .collection("tests")
+
+        tests = []
+        for doc in tests_ref.stream():
+            entry = doc.to_dict()
+            tests.append(entry)
+
+        # Sort newest first
+        tests.sort(key=lambda x: x.get("date", ""), reverse=True)
+        return tests
+
+    except Exception as e:
+        st.error(f"❌ Error loading test history: {e}")
+        return []
+        
 
 def clear_user_progress(username):
-    """Clear all performance data for the user from Firebase."""
+    """Delete ALL user test documents + reset profile."""
     try:
-        if db is None:
-            st.error("Firebase not initialized")
-            return False
-        
-        doc_ref = db.collection('user_progress').document(get_user_progress_doc_id(username))
-        doc = doc_ref.get()
-        
-        if doc.exists:
-            # Reset to default progress instead of deleting
-            default_progress = {
-                "username": username,
-                "tests_taken": 0,
-                "total_score": 0,
-                "average_score": 0,
-                "test_history": [],
-                "achievements": [],
-                "weak_areas": [],
-                "strong_areas": [],
-                "join_date": datetime.now().isoformat(),
-                "last_updated": datetime.now().isoformat()
-            }
-            doc_ref.set(default_progress)
-            st.success("✅ All your performance data has been cleared successfully!")
-            return True
-        else:
-            # Initialize if document doesn't exist
-            initialize_user_progress(username)
-            st.info("ℹ️ No performance data found to clear.")
-            return True
+        # Delete all test docs
+        tests_ref = db.collection("user_progress")\
+                      .document(username)\
+                      .collection("tests")
+
+        for doc in tests_ref.stream():
+            doc.reference.delete()
+
+        # Reset lightweight profile
+        initialize_user_progress(username)
+        return True
+
     except Exception as e:
-        st.error(f"❌ Error clearing performance data: {e}")
+        st.error(f"❌ Failed to clear data: {e}")
         return False
 
+
 def update_user_progress(test_results):
-    """Update user progress with new test results."""
     username = st.session_state.username
-    progress = load_user_progress(username)
-    
-    if progress:
-        # Update basic stats with proper type conversion
-        progress["tests_taken"] = int(progress.get("tests_taken", 0)) + 1
-        progress["total_score"] = float(progress.get("total_score", 0)) + float(test_results["Marks Obtained"])
-        progress["average_score"] = float(progress["total_score"]) / float(progress["tests_taken"])
-        
-        # Store detailed question data for each test
-        if 'detailed_answers' in test_results:
-            detailed_answers = test_results['detailed_answers']
-        else:
-            detailed_answers = []
-        
-        # Get the actual questions used in this test
-        questions_used = []
-        df = st.session_state.quiz_questions
-        
-        for i in range(len(df)):
-            row = df.iloc[i]
-            questions_used.append({
-                "question_index": int(i),
-                "question_text": str(row.get('Question', '')),
-                "option_a": str(row.get('Option A', '')),
-                "option_b": str(row.get('Option B', '')),
-                "option_c": str(row.get('Option C', '')),
-                "option_d": str(row.get('Option D', '')),
-                "correct_option": str(test_results.get('detailed_answers', [{}])[i].get('correct_answer', '') if i < len(test_results.get('detailed_answers', [])) else ''),
-                "explanation": str(row.get('Explanation', ''))
-            })
-        
-        # Add to test history with proper types
-        test_history_entry = {
-            "exam_name": str(test_results["Exam Name"]),
-            "date": datetime.now().isoformat(),
-            "score": float(test_results["Marks Obtained"]),
-            "total_marks": float(test_results["Total Marks"]),
-            "percentage": float((test_results["Marks Obtained"] / test_results["Total Marks"]) * 100) if test_results["Total Marks"] > 0 else 0.0,
-            "correct_answers": int(test_results["Correct"]),
-            "total_questions": int(test_results["Total Questions"]),
-            "detailed_answers": detailed_answers,
-            "questions_used": questions_used,  # Store the actual questions
-            "is_retest": bool(test_results.get("is_retest", False)),
-            "original_test_id": test_results.get("original_test_id"),
-            "retest_type": test_results.get("retest_type", "full"),  # Store retest type
-            "test_id": str(datetime.now().timestamp())
-        }
-        
-        # Ensure test_history exists
-        if "test_history" not in progress:
-            progress["test_history"] = []
-        
-        progress["test_history"].append(test_history_entry)
-        
-        # Update achievements
-        update_achievements(progress, test_results)
-        
-        # Save updated progress
-        save_user_progress(username, progress)
+
+    # --- Load current profile ---
+    profile_ref = db.collection("user_progress")\
+                    .document(username)\
+                    .collection("meta")\
+                    .document("profile")
+    profile = profile_ref.get().to_dict() or {}
+
+    # --- Update small profile stats ---
+    tests_taken = int(profile.get("tests_taken", 0)) + 1
+    total_score = float(profile.get("total_score", 0)) + float(test_results["Marks Obtained"])
+    avg_score = total_score / tests_taken
+
+    # Update profile
+    update_user_profile(username, {
+        "tests_taken": tests_taken,
+        "total_score": total_score,
+        "average_score": avg_score
+    })
+
+    # --- Build heavy test entry (stored separately) ---
+    df = st.session_state.quiz_questions
+    detailed_questions = []
+
+    for i in range(len(df)):
+        row = df.iloc[i]
+        detailed_questions.append({
+            "q_index": i,
+            "question": str(row.get('Question', '')),
+            "option_a": str(row.get('Option A', '')),
+            "option_b": str(row.get('Option B', '')),
+            "option_c": str(row.get('Option C', '')),
+            "option_d": str(row.get('Option D', '')),
+            "explanation": str(row.get('Explanation', ''))
+        })
+
+    test_entry = {
+        "test_id": str(datetime.now().timestamp()),
+        "date": datetime.now().isoformat(),
+        "exam_name": str(test_results["Exam Name"]),
+        "score": float(test_results["Marks Obtained"]),
+        "total_marks": float(test_results["Total Marks"]),
+        "percentage": float((test_results["Marks Obtained"] / test_results["Total Marks"]) * 100),
+        "correct": int(test_results["Correct"]),
+        "total_questions": int(test_results["Total Questions"]),
+        "detailed_answers": test_results.get("detailed_answers", []),
+        "questions_used": detailed_questions,
+        "is_retest": bool(test_results.get("is_retest", False)),
+        "original_test_id": test_results.get("original_test_id"),
+        "retest_type": test_results.get("retest_type", "full")
+    }
+
+    # Save heavy test data separately
+    save_test_result(username, test_entry)
+
 
 def update_achievements(progress, test_results):
     """Update user achievements based on test performance."""
@@ -3313,7 +3336,7 @@ def delete_test_entry(username, test_id):
         
         if test_to_delete:
             # Update progress statistics with proper types
-            progress["test_history"] = updated_history
+            test_history = load_test_history(username) = updated_history
             progress["tests_taken"] = int(len(updated_history))
             
             # Recalculate total score and average
