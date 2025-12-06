@@ -3336,7 +3336,7 @@ def delete_test_entry(username, test_id):
         
         if test_to_delete:
             # Update progress statistics with proper types
-            test_history = load_test_history(username) = updated_history
+            test_history = load_test_history(username)
             progress["tests_taken"] = int(len(updated_history))
             
             # Recalculate total score and average
