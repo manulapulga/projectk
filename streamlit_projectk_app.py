@@ -3365,6 +3365,7 @@ def delete_test_entry(username, test_id):
         
 def show_retest_config(original_test):
     """Show configuration for retest based on original test."""
+    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header(f"Configure Re-Test: {original_test['exam_name']}")
     
     # Navigation buttons
