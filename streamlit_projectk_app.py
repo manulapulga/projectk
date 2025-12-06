@@ -1254,26 +1254,25 @@ def get_question_key(file_path, sheet_name, question_index, field="question"):
     return f"{file_path}::{sheet_name}::{question_index}::{field}"
 
 def render_formatted_content(content, sl_no=None):
-    """Render formatted content with HTML/CSS styling, including Sl No prefix."""
+    """Render formatted content with HTML/CSS styling, with optional Sl No prefix."""
     if not content or not isinstance(content, str):
         return content or ""
     
-    # Build prefix (use only if sl_no provided)
+    # Prefix only if Sl No is provided
     prefix_html = ""
     if sl_no is not None:
-        prefix_html = f"<b>Q. {sl_no}</b> — "
-    
-    # If content contains HTML tags, render as HTML
+        prefix_html = f"<b>Q. {sl_no}</b> "
+
+    # If HTML detected, treat as HTML
     if any(tag in content for tag in ['<b>', '<strong>', '<i>', '<em>', '<u>', '<br>', '<span', '<div', '<p>']):
         final_html = f'<div class="formatted-content">{prefix_html}{content}</div>'
         return st.markdown(final_html, unsafe_allow_html=True)
+    
+    # Plain text fallback
+    if sl_no is not None:
+        return st.markdown(f"**Q. {sl_no}** {content}")
     else:
-        # For plain text, prefix manually
-        final_text = f"**Q. {sl_no}** — {content}" if sl_no else content
-        return st.markdown(final_text)
-
-
-
+        return st.markdown(content)
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
@@ -2536,9 +2535,6 @@ def show_enhanced_question_interface():
     formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
     
     # Enhanced question card with formatted content
-    st.markdown(f"**Q. {current_idx + 1}**")
-    
-    
     # Render formatted question
     sl_no = row.get("Sl No", current_idx + 1)
     render_formatted_content(formatted_question, sl_no)
