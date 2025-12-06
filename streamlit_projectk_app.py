@@ -2072,7 +2072,7 @@ def scan_folder_structure():
     return folder_structure
 
 def display_folder_navigation(folder_structure, current_path=None, level=0):
-    """Display folder structure as clickable navigation."""
+    """Display folder structure as clickable navigation - SIMPLIFIED VERSION."""
     if current_path is None:
         current_path = []
     
@@ -2080,28 +2080,24 @@ def display_folder_navigation(folder_structure, current_path=None, level=0):
         if item_name == '_files':
             continue
             
-        folder_key = "->".join(current_path + [item_name])
         has_children = any(k != '_files' for k in item_content.keys())
         has_qb = '_files' in item_content and 'QB.xlsx' in item_content['_files']
         
-        # Use columns for better layout
-        col1, col2 = st.columns([1, 20])
-        with col1:
-            if has_qb:
-                st.markdown(f"<span style='color: {LITMUSQ_THEME['secondary']}; font-size: 1.2rem;'></span>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<span style='color: {LITMUSQ_THEME['primary']}; font-size: 1.2rem;'></span>", unsafe_allow_html=True)
-        with col2:
-            # Use custom button styling
-            if st.button(
-                item_name, 
-                key=f"nav_{folder_key}", 
-                use_container_width=True,
-                help="Click to explore this folder" + (" (Contains Question Bank)" if has_qb else "")
-            ):
-                st.session_state.current_path = current_path + [item_name]
-                st.session_state.current_screen = "folder_view"
-                st.rerun()
+        # SIMPLIFIED: Use the same approach as question editor
+        button_label = f"{item_name}"
+        if has_qb:
+            button_label = f"{item_name} 📚"
+        
+        if st.button(
+            button_label, 
+            key=f"nav_{'->'.join(current_path + [item_name])}", 
+            use_container_width=True,
+            help=f"Click to {'open question bank' if has_qb else 'explore folder'}"
+        ):
+            st.session_state.current_path = current_path + [item_name]
+            st.session_state.current_screen = "folder_view"
+            st.rerun()
+            
 def calculate_default_duration(df, time_per_question=1.5):
     """Calculate default exam duration based on number of questions and time per question."""
     # Check for "Time in Minute/Question" in column headers
