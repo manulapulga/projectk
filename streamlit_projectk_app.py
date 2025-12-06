@@ -3871,7 +3871,18 @@ def show_home_screen():
     show_litmusq_header("Online Tests")
     
     # Home and Navigation buttons
-
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("🏠 Home", use_container_width=True, key="folder_home"):
+            st.session_state.current_screen = "home"
+            st.rerun()
+    with col2:
+        if st.button("← Back", use_container_width=True, key="folder_back"):
+            if len(current_path) > 0:
+                st.session_state.current_path = current_path[:-1]
+            else:
+                st.session_state.current_screen = "home"
+            st.rerun()
     
     # Get current path - MUST BE DEFINED BEFORE USING IT
     current_path = st.session_state.get('editor_current_path', [])
