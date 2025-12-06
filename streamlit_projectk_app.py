@@ -398,6 +398,16 @@ def inject_custom_css():
         }}
     }}
     
+    .st-emotion-cache-yhxpuo {
+    font-family: "Source Sans", sans-serif;
+    font-size: 1rem;
+    margin-bottom: -1rem;
+    color: inherit;
+    max-width: 100%;
+    width: 100%;
+    overflow-wrap: break-word;
+    
+    
     </style>
     """, unsafe_allow_html=True)
 
