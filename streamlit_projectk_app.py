@@ -1966,9 +1966,6 @@ def show_student_dashboard():
     # Recent Test History
     test_history = progress.get("test_history", [])
     if test_history:
-        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-        st.markdown("📋**Recent Tests**")
-        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         recent_tests = test_history[-10:]  # Show last 10 tests
         
         for idx, test in enumerate(reversed(recent_tests)):
