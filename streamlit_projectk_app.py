@@ -2532,8 +2532,9 @@ def show_enhanced_question_interface():
     
     # Render formatted question
     render_formatted_content(formatted_question)
-    
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("**Select your answer:**")
     
     current_answer = st.session_state.question_status[current_idx]['answer']
