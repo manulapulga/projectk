@@ -3869,7 +3869,19 @@ def show_home_screen():
     """Display the main folder navigation."""
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Online Tests")
-    st.subheader("Select Question Bank")
+    # Home and Navigation buttons
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("🏠 Home", use_container_width=True, key="folder_home"):
+            st.session_state.current_screen = "home"
+            st.rerun()
+    with col2:
+        if st.button("← Back", use_container_width=True, key="folder_back"):
+            if len(current_path) > 0:
+                st.session_state.current_path = current_path[:-1]
+            else:
+                st.session_state.current_screen = "home"
+            st.rerun()
     st.markdown("<br>", unsafe_allow_html=True)
     
     # Get current path - MUST BE DEFINED BEFORE USING IT
