@@ -154,7 +154,7 @@ def inject_custom_css():
     /* Main content container – prevents header overlap */
     .block-container {{
         padding-top: 0.1rem !important;   /* header clearance */
-        padding-left: 0.5rem !important;
+        padding-left: 1rem !important;
         padding-right: 0.5rem !important;
         padding-bottom: 0.1rem !important;
     }}
@@ -331,7 +331,6 @@ def inject_custom_css():
     .question-card {{
         background-color: {LITMUSQ_THEME['light_bg']};
         padding: 1.3rem;
-        padding-left: 10px;
         border-radius: 12px;
         border-left: 4px solid {LITMUSQ_THEME['primary']};
         margin: 0.8rem 0;
