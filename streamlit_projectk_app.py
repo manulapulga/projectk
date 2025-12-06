@@ -395,25 +395,13 @@ def inject_custom_css():
 
         .question-card {{
             padding: 1rem !important;
+            padding-left: 2rem !important;
         }}
     }}
     
     </style>
     """, unsafe_allow_html=True)
 
-def inject_quiz_question_fix():
-    """Target the exact class from your inspect."""
-    st.markdown("""
-    <style>
-    /* Pull the question container to the left */
-    .st-emotion-cache-yhxpuo {
-        padding-left: 20px !important;
-        margin-left: 1rem !important;  /* Negative margin to pull left */
-        width: calc(100% + 0.8rem) !important;
-        max-width: calc(100% + 0.8rem) !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
 # =============================
 # Firebase User Management Functions
 # =============================
