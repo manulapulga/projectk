@@ -1885,7 +1885,7 @@ def update_achievements(progress, test_results):
 
 def show_clear_data_section():
     """Show section to clear performance data."""
-    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+    st.markdown("---")
     # Confirmation workflow
     if not st.session_state.get('show_clear_confirmation', False):
         if st.button("🚮 Clear All My Performance Data", type="secondary", key="clear_data_init", use_container_width="True"):
@@ -3374,6 +3374,8 @@ def show_retest_config(original_test):
             elif not is_correct:
                 incorrect_questions.append(answer['question_index'])
     
+    st.subheader("📊 Original Test Analysis")
+    
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Total Questions", total_questions)
@@ -3441,7 +3443,6 @@ def show_retest_config(original_test):
     
     df_questions = pd.DataFrame(questions_list)
     
-    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     # Store retest configuration in session state
     if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
         if question_count == 0:
@@ -3572,7 +3573,7 @@ def show_enhanced_detailed_analysis(res_df):
 def show_results_screen():
     """Display enhanced results after quiz completion."""
     res_df, summary = compute_results()
-    st.markdown("<div style='margin-top: 2.5rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Test Results")
     
     # Add retest type to summary if applicable
@@ -3588,46 +3589,6 @@ def show_results_screen():
     # Clear retest state after saving results
     clear_retest_state()
     
-
-    
-    # Summary cards with enhanced styling
-
-
-    st.metric("Total Questions", summary["Total Questions"])
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.metric("Attempted", summary["Attempted"])
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.metric("Correct Answers", summary["Correct"])
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.metric("Final Score", f"{summary['Marks Obtained']}/{summary['Total Marks']}")
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    # Score visualization
-    percentage = summary['Percentage']
-    st.subheader(f"Overall Score: {percentage:.1f}%")
-    st.progress(int(percentage))
-    
-    # Performance gauge
-    if percentage >= 80:
-        performance = "Excellent! 🎉"
-        color = LITMUSQ_THEME['success']
-    elif percentage >= 60:
-        performance = "Good! 👍"
-        color = LITMUSQ_THEME['warning']
-    else:
-        performance = "Needs Improvement 📚"
-        color = LITMUSQ_THEME['secondary']
-    
-    st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
-    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-    st.download_button(
-        label="📥 Download Results",
-        data=res_df.to_csv(index=False),
-        file_name=f"{summary['Exam Name']}_results_{st.session_state.username}.csv",
-        mime="text/csv",
-        use_container_width=True,
-        key="download_results"
-    )
 # Navigation options - Add Home button
     if st.button("🏠 Home", use_container_width=True, key="results_home"):
         st.session_state.current_screen = "home"
@@ -3651,7 +3612,52 @@ def show_results_screen():
         st.rerun()
     if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
         st.session_state.current_screen = "dashboard"
-        st.rerun()    
+        st.rerun()
+    
+    # Summary cards with enhanced styling
+    st.markdown("---")
+    st.subheader("📊 Performance Summary")
+    
+
+    st.metric("Total Questions", summary["Total Questions"])
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.metric("Attempted", summary["Attempted"])
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.metric("Correct Answers", summary["Correct"])
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.metric("Final Score", f"{summary['Marks Obtained']}/{summary['Total Marks']}")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Score visualization
+    percentage = summary['Percentage']
+    st.subheader(f"Overall Score: {percentage:.1f}%")
+    st.progress(int(percentage))
+    
+    # Performance gauge
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        if percentage >= 80:
+            performance = "Excellent! 🎉"
+            color = LITMUSQ_THEME['success']
+        elif percentage >= 60:
+            performance = "Good! 👍"
+            color = LITMUSQ_THEME['warning']
+        else:
+            performance = "Needs Improvement 📚"
+            color = LITMUSQ_THEME['secondary']
+        
+        st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
+    
+    with col2:
+        st.download_button(
+            label="📥 Download Results",
+            data=res_df.to_csv(index=False),
+            file_name=f"{summary['Exam Name']}_results_{st.session_state.username}.csv",
+            mime="text/csv",
+            use_container_width=True,
+            key="download_results"
+        )
+    
     # Detailed analysis
     if st.session_state.get('show_detailed_analysis', False):
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
