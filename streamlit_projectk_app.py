@@ -3882,7 +3882,6 @@ def show_home_screen():
             else:
                 st.session_state.current_screen = "home"
             st.rerun()
-    st.markdown("<br>", unsafe_allow_html=True)
     
     # Get current path - MUST BE DEFINED BEFORE USING IT
     current_path = st.session_state.get('editor_current_path', [])
@@ -3894,7 +3893,6 @@ def show_home_screen():
         breadcrumb = "Home"
     
     st.write(f"**📍:** `{breadcrumb}`")
-    st.markdown("<br>", unsafe_allow_html=True)
     
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
