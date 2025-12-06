@@ -2492,26 +2492,23 @@ def show_exam_config_screen():
         default_duration = int(len(df_exam) * time_per_question)
         
         # Move both inputs inside the expander
-        col1, col2 = st.columns(2)
-        with col1:
-            num_questions = st.number_input(
-                "❓ Number of Questions", 
-                min_value=1, 
-                max_value=len(df_exam),
-                value=min(100, len(df_exam)), 
-                step=1,
-                key="num_questions"
-            )
+        num_questions = st.number_input(
+            "❓ Number of Questions", 
+            min_value=1, 
+            max_value=len(df_exam),
+            value=min(100, len(df_exam)), 
+            step=1,
+            key="num_questions"
+        )
         
-        with col2:
-            exam_duration = st.number_input(
-                "⏰ Duration (minutes)", 
-                min_value=0, 
-                max_value=600, 
-                value=default_duration, 
-                help=f"Set to 0 for no time limit (Based on {time_per_question} min/question = {default_duration} min)",
-                key="exam_duration_input"
-            )
+        exam_duration = st.number_input(
+            "⏰ Duration (minutes)", 
+            min_value=0, 
+            max_value=600, 
+            value=default_duration, 
+            help=f"Set to 0 for no time limit (Based on {time_per_question} min/question = {default_duration} min)",
+            key="exam_duration_input"
+        )
         
         # Store the time per question for reference
         st.session_state.time_per_question = time_per_question
