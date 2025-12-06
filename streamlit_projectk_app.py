@@ -12,19 +12,18 @@ import streamlit.components.v1 as components
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
+import traceback
 
 # =============================
 # Configuration & Theme
 # =============================
 QUESTION_DATA_FOLDER = "Question_Data_Folder"
-LOGIN_FILE_PATH = "login/admin_login_details.xlsx"  # Keep for backward compatibility
-EDITOR_LOGIN_FILE_PATH = "login/editor_login_details.xlsx"  # Add this line
+LOGIN_FILE_PATH = "data/login_details.xlsx"  # Keep for backward compatibility
 USER_PROGRESS_FOLDER = "user_progress"
 FORMATTED_QUESTIONS_FILE = "formatted_questions.json"
 
 # Admin users will be loaded from Excel file, not hardcoded
 ADMIN_USERS = []  # Will be populated from Excel file
-EDITOR_USERS = []  # Add this line - Will be populated from Excel file
 
 # =============================
 # Add performance config
@@ -156,12 +155,12 @@ def inject_custom_css():
         padding-top: 0.1rem !important;   /* header clearance */
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
-        padding-bottom: 0.1rem !important;
+        padding-bottom: 1rem !important;
     }}
 
     /* Vertical spacing between Streamlit elements */
     .stElementContainer {{
-        margin-top: 0.1rem !important;
+        margin-top: 0.2rem !important;
         margin-bottom: 0.2rem !important;
         padding: 0 !important;
     }}
@@ -418,13 +417,7 @@ def register_user(full_name, email, phone, username, password):
             st.error("❌ Username already exists (admin user). Please choose a different username.")
             return False
         
-        # 🔒 2. Check editor Excel usernames
-        editor_credentials = load_editor_credentials()
-        if username in editor_credentials:
-            st.error("❌ Username already exists (editor user). Please choose a different username.")
-            return False
-        
-        # 🔒 3. Check Firebase for duplicate username
+        # 🔒 2. Check Firebase for duplicate username
         users_ref = db.collection('users')
         query = users_ref.where('username', '==', username).limit(1).get()
         
@@ -432,7 +425,7 @@ def register_user(full_name, email, phone, username, password):
             st.error("❌ Username already exists. Please choose a different one.")
             return False
         
-        # 🔒 4. Check Firebase for duplicate email
+        # 🔒 3. Check Firebase for duplicate email
         email_query = users_ref.where('email', '==', email).limit(1).get()
         if len(email_query) > 0:
             st.error("❌ Email already registered. Please use a different email.")
@@ -446,7 +439,7 @@ def register_user(full_name, email, phone, username, password):
             "username": username,
             "password": password,
             "is_approved": False,     
-            "role": "student",  # Default role for registered users
+            "role": "student",
             "created_at": datetime.now().isoformat(),
             "last_login": None,
             "is_active": True
@@ -462,6 +455,7 @@ def register_user(full_name, email, phone, username, password):
         st.error(f"Registration failed: {e}")
         return False
 
+
 def authenticate_user_all(username, password):
     """Authenticate user against either admin (Excel) or regular users (Firebase)."""
     # First check if it's an admin user (from Excel)
@@ -472,15 +466,7 @@ def authenticate_user_all(username, password):
         else:
             return False, "Invalid password", None
     
-    # Then check if it's an editor user (from Excel)
-    editor_credentials = load_editor_credentials()
-    if username in editor_credentials:
-        if editor_credentials[username] == password:
-            return True, "success", "editor"  # Excel = Editor
-        else:
-            return False, "Invalid password", None
-    
-    # If not admin or editor, check regular users in Firebase
+    # If not admin, check regular users in Firebase
     auth_success, message = authenticate_user_firebase(username, password)
     if auth_success:
         return True, "success", "regular"  # Firebase = Regular
@@ -524,7 +510,7 @@ def authenticate_user_firebase(username, password):
         return False, "System error"
 
 def get_all_users():
-    """Get all registered users from Firebase with role information."""
+    """Get all registered users from Firebase."""
     try:
         if db is None:
             return []
@@ -533,28 +519,9 @@ def get_all_users():
         docs = users_ref.stream()
         
         users = []
-        admin_credentials = load_admin_credentials()
-        editor_credentials = load_editor_credentials()
-        
         for doc in docs:
             user_data = doc.to_dict()
-            username = doc.id
-            
-            # Determine user type/role
-            if username in admin_credentials:
-                user_data['user_type'] = 'admin'
-                user_data['role'] = 'admin'
-                user_data['is_approved'] = True  # Admins are auto-approved
-            elif username in editor_credentials:
-                user_data['user_type'] = 'editor'
-                user_data['role'] = 'editor'
-                user_data['is_approved'] = True  # Editors are auto-approved
-            else:
-                # Firebase users default to student unless specified otherwise
-                user_data['user_type'] = 'regular'
-                user_data['role'] = user_data.get('role', 'student')
-            
-            user_data['id'] = username
+            user_data['id'] = doc.id
             users.append(user_data)
         
         return users
@@ -566,14 +533,6 @@ def update_user_status(username, is_active):
     """Update user active status."""
     try:
         if db is None:
-            return False
-        
-        # Check if user is an admin or editor (from Excel)
-        admin_credentials = load_admin_credentials()
-        editor_credentials = load_editor_credentials()
-        
-        if username in admin_credentials or username in editor_credentials:
-            st.error("Cannot modify admin or editor users")
             return False
         
         user_ref = db.collection('users').document(username)
@@ -598,12 +557,6 @@ def delete_user(username):
             st.error("Cannot delete admin users")
             return False
         
-        # Check if user is an editor (from Excel)
-        editor_credentials = load_editor_credentials()
-        if username in editor_credentials:
-            st.error("Cannot delete editor users")
-            return False
-        
         user_ref = db.collection('users').document(username)
         user_ref.delete()
         return True
@@ -621,12 +574,6 @@ def update_user_approval(username, is_approved):
         admin_credentials = load_admin_credentials()
         if username in admin_credentials:
             st.error("Cannot modify admin users")
-            return False
-        
-        # Check if user is an editor (from Excel)
-        editor_credentials = load_editor_credentials()
-        if username in editor_credentials:
-            st.error("Cannot modify editor users")
             return False
         
         user_ref = db.collection('users').document(username)
@@ -663,37 +610,6 @@ def load_admin_credentials():
         return admin_credentials
     except Exception as e:
         st.error(f"Failed to load admin credentials: {e}")
-        return {}
-
-# Add this new function for editor credentials
-def load_editor_credentials():
-    """Load editor username and password from Excel file."""
-    try:
-        if not os.path.exists(EDITOR_LOGIN_FILE_PATH):
-            st.error(f"Editor login file not found at {EDITOR_LOGIN_FILE_PATH}")
-            return {}
-            
-        df = pd.read_excel(EDITOR_LOGIN_FILE_PATH, engine="openpyxl")
-        df.columns = [str(col).strip().lower() for col in df.columns]
-        
-        if "username" not in df.columns or "password" not in df.columns:
-            st.error("Editor login file must contain 'Username' and 'Password' columns")
-            return {}
-        
-        editor_credentials = {}
-        for _, row in df.iterrows():
-            username = str(row["username"]).strip()
-            password = str(row["password"]).strip()
-            if username and password:
-                editor_credentials[username] = password
-                
-        # Update global EDITOR_USERS list
-        global EDITOR_USERS
-        EDITOR_USERS = list(editor_credentials.keys())
-        
-        return editor_credentials
-    except Exception as e:
-        st.error(f"Failed to load editor credentials: {e}")
         return {}
         
         
@@ -931,28 +847,11 @@ def show_login_screen():
         )
     
     return False
-    
-def is_admin_user():
-    """Check if current user is admin based on session state."""
-    # Check user_type in session state (set during authentication)
-    user_type = st.session_state.get('user_type')
-    return user_type == 'admin'
 
-def is_editor_user():
-    """Check if current user is editor based on session state."""
-    # Check user_type in session state (set during authentication)
-    user_type = st.session_state.get('user_type')
-    return user_type == 'editor'
-
-def is_admin_or_editor():
-    """Check if current user is admin or editor."""
-    user_type = st.session_state.get('user_type')
-    return user_type in ['admin', 'editor']
-    
 def show_admin_panel():
     """Admin panel for managing users."""
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
-    show_litmusq_header("Admin Dashboard")
+    show_litmusq_header("👑 Admin Dashboard")
     
     # Check if user is admin
     if not is_admin_user():
@@ -965,7 +864,7 @@ def show_admin_panel():
         st.session_state.admin_subtab = "users"
     
     # Create subtabs
-    subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "🛠️Settings"])
+    subtab1, subtab2, subtab3 = st.tabs(["👥 User Management", "📈 Analytics", "⚙️ Settings"])
     
     with subtab1:
         show_user_management()
@@ -989,10 +888,6 @@ def show_user_management():
     # Convert to DataFrame for display
     user_list = []
     for user in users:
-        # Get role from user data (already populated in get_all_users)
-        role = user.get('role', 'student')
-        user_type = user.get('user_type', 'regular')
-        
         user_list.append({
             "Username": user.get('username', ''),
             "Full Name": user.get('full_name', ''),
@@ -1000,8 +895,7 @@ def show_user_management():
             "Phone": user.get('phone', ''),
             "Approved": user.get('is_approved', False),
             "Active": user.get('is_active', True),
-            "Role": role,  # Use role from user data
-            "User Type": user_type,  # Add user type column
+            "Role": user.get('role', 'student'),
             "Created": user.get('created_at', ''),
             "Last Login": user.get('last_login', 'Never')
         })
@@ -1069,10 +963,7 @@ def show_user_management():
                 
                 with col2:
                     st.markdown(f"**Created:** {row['Created'][:10] if row['Created'] else 'N/A'}")
-                    # Check if the value is a string before trying to slice it, otherwise display 'Never'
-                    last_login_value = row['Last Login']
-                    last_login_display = last_login_value[:19] if isinstance(last_login_value, str) else 'Never'
-                    st.markdown(f"**Last Login:** {last_login_display}")
+                    st.markdown(f"**Last Login:** {row['Last Login'][:19] if row['Last Login'] != 'Never' else 'Never'}")
                     
                     # Status indicators
                     status_col1, status_col2 = st.columns(2)
@@ -1091,7 +982,7 @@ def show_user_management():
                 with action_col1:
                     # Toggle approval
                     new_approval = not row['Approved']
-                    if st.button("✅ Approve" if not row['Approved'] else "⏸ Revoke", 
+                    if st.button("✅ Approve" if not row['Approved'] else "⏸️ Revoke", 
                                key=f"approve_{row['Username']}",
                                use_container_width=True):
                         if update_user_approval(row['Username'], new_approval):
@@ -1110,7 +1001,7 @@ def show_user_management():
                 
                 with action_col3:
                     # Edit user (placeholder)
-                    if st.button("📝 Edit", key=f"edit_{row['Username']}", use_container_width=True):
+                    if st.button("✏️ Edit", key=f"edit_{row['Username']}", use_container_width=True):
                         st.info("Edit functionality coming soon!")
                 
                 with action_col4:
@@ -1135,7 +1026,7 @@ def show_user_management():
                             st.rerun()
     
     # Bulk actions
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("✅ Approve All Pending", use_container_width=True):
             pending_users = [user for user in users if not user.get('is_approved', False)]
@@ -1153,10 +1044,39 @@ def show_user_management():
                 file_name="litmusq_users.csv",
                 mime="text/csv"
             )
+    
+    with col3:
+        if st.button("🔄 Sync with Excel", use_container_width=True):
+            # Sync existing Excel users with Firebase
+            credentials = load_login_credentials()
+            migrated = 0
+            for username, password in credentials.items():
+                # Check if user exists in Firebase
+                user_ref = db.collection('users').document(username)
+                if not user_ref.get().exists():
+                    user_data = {
+                        "full_name": username,
+                        "email": f"{username}@example.com",
+                        "phone": "",
+                        "username": username,
+                        "password": password,
+                        "is_approved": True,
+                        "role": "student",
+                        "created_at": datetime.now().isoformat(),
+                        "last_login": None,
+                        "is_active": True
+                    }
+                    user_ref.set(user_data)
+                    migrated += 1
             
+            if migrated > 0:
+                st.success(f"✅ Migrated {migrated} users from Excel to Firebase")
+            else:
+                st.info("✅ All users already migrated to Firebase")
+
 def show_admin_analytics():
     """Display admin analytics dashboard."""
-    st.markdown("📈 **User Analytics**")
+    st.subheader("📈 User Analytics")
     
     users = get_all_users()
     
@@ -1205,8 +1125,9 @@ def show_admin_analytics():
 
     
     # User registration timeline
-    st.markdown("**📅 Registration Timeline**")
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.subheader("📅 Registration Timeline")
+    
     # Group by date
     reg_dates = {}
     for user in users:
@@ -1225,6 +1146,12 @@ def show_admin_analytics():
         })
         st.bar_chart(chart_data.set_index('Date'))
     
+    # User activity heatmap (by hour)
+    st.markdown("---")
+    st.subheader("🌡️ User Activity Heatmap")
+    
+    # This would require tracking login times
+    st.info("User activity tracking coming soon!")
 
 def show_system_settings():
     """System settings for admin."""
@@ -1263,16 +1190,27 @@ def render_formatted_content(content):
     else:
         return st.write(content)
 
-
+def is_admin_user():
+    """Check if current user is admin based on session state."""
+    # Check user_type in session state (set during authentication)
+    return st.session_state.get('user_type') == 'admin'
+    
+    # First check user_type in session state (fastest check)
+    if st.session_state.get('user_type') == 'admin':
+        return True
+    
+    # Fallback: check admin credentials file
+    admin_credentials = load_admin_credentials()
+    return username in admin_credentials
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
-    show_litmusq_header("📝 Question Editor")
+    show_litmusq_header("📝 Question Formatting Editor")
     
-    # Check if user is admin OR editor
-    if not is_admin_or_editor():  # Changed from is_admin_user()
-        st.error("❌ Access Denied. This section is only available for administrators and editors.")
+    # Check if user is admin
+    if not is_admin_user():
+        st.error("❌ Access Denied. This section is only available for administrators.")
         st.info("Please contact your system administrator if you need access.")
         return
     
@@ -1297,7 +1235,6 @@ def show_question_editor():
         breadcrumb = "Home"
     
     st.write(f"**📍:** `{breadcrumb}`")
-    st.markdown("<br>", unsafe_allow_html=True)
     
     
     # Add back navigation - MOVED HERE AFTER current_path is defined
@@ -2103,48 +2040,27 @@ def display_folder_navigation(folder_structure, current_path=None, level=0):
                 st.session_state.current_path = current_path + [item_name]
                 st.session_state.current_screen = "folder_view"
                 st.rerun()
-def calculate_default_duration(df, time_per_question=1.5):
-    """Calculate default exam duration based on number of questions and time per question."""
-    # Check for "Time in Minute/Question" in column headers
-    time_columns = [col for col in df.columns if "Time in Minute/Question" in str(col)]
-    
-    if time_columns:
-        try:
-            time_col = time_columns[0]
-            time_values = df[time_col].dropna()
-            if not time_values.empty:
-                time_per_question = float(time_values.iloc[0])
-        except:
-            pass
-    
-    default_duration = int(len(df) * time_per_question)
-    return default_duration
-    
+
 def show_folder_view_screen():
     """Show contents of the currently selected folder."""
     current_path = st.session_state.get('current_path', [])
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Select Exam")
-    
     # Home and Navigation buttons
-    if st.button("🏠 Home", use_container_width=True, key="folder_home"):
-        st.session_state.current_screen = "home"
-        st.rerun()
-    if st.button("← Back", use_container_width=True, key="folder_back"):
-
-        # If breadcrumb length <= 1 → treat as Home
-        if len(current_path) <= 1:
-            st.session_state.current_path = []   # reset to root
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        if st.button("🏠 Home", use_container_width=True, key="folder_home"):
             st.session_state.current_screen = "home"
-        else:
-            st.session_state.current_path = current_path[:-1]
-
-        st.rerun()
-
-    
+            st.rerun()
+    with col2:
+        if st.button("← Back", use_container_width=True, key="folder_back"):
+            if len(current_path) > 0:
+                st.session_state.current_path = current_path[:-1]
+            else:
+                st.session_state.current_screen = "home"
+            st.rerun()
     breadcrumb = " > ".join(current_path) if current_path else ""
     st.write(f"**📍:** `{breadcrumb}`")
-    
     folder_structure = st.session_state.folder_structure
     current_level = folder_structure
     for folder in current_path:
@@ -2153,6 +2069,7 @@ def show_folder_view_screen():
     has_qb = '_files' in current_level and 'QB.xlsx' in current_level['_files']
     
     if has_qb:
+
         qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
         try:
             questions_data = load_questions(qb_path)
@@ -2162,141 +2079,52 @@ def show_folder_view_screen():
                 
                 sheet_names = list(questions_data.keys())
                 if sheet_names:
-                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <div style="text-align: center; margin: 2rem 0;">
+                        <h2 style="color: {LITMUSQ_THEME['primary']}; 
+                                   font-weight: 700; 
+                                   margin-bottom: 0.5rem;">
+                            🧪 Select Test
+                        </h2>
+                        <div style="height: 2px; 
+                                    background: {LITMUSQ_THEME['primary']}; 
+                                    margin: 0 auto; 
+                                    width: 50%; 
+                                    opacity: 0.7;">
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
                     # Mobile-friendly card layout for each test
                     for idx, sheet_name in enumerate(sheet_names):
                         df = questions_data[sheet_name]
                         
-                        # Extract metadata from the DataFrame
-                        total_questions = len(df)
-                        
-                        # 1. Calculate Duration
-                        time_per_question = 1.5  # Default
-                        time_columns = [col for col in df.columns if "Time in Minute/Question" in str(col)]
-                        if time_columns:
-                            try:
-                                time_col = time_columns[0]
-                                time_values = df[time_col].dropna()
-                                if not time_values.empty:
-                                    time_per_question = float(time_values.iloc[0])
-                            except:
-                                pass
-                        
-                        total_duration_minutes = int(total_questions * time_per_question)
-                        duration_display = f"{total_duration_minutes} min"
-                        if total_duration_minutes > 60:
-                            hours = total_duration_minutes // 60
-                            minutes = total_duration_minutes % 60
-                            duration_display = f"{hours}h {minutes}m"
-                        
-                        # 2. Get Marks/Question
-                        marks_per_question = "1"  # Default
-                        marks_columns = [col for col in df.columns if "Marks/Question" in str(col) or "Marks Per Question" in str(col)]
-                        if not marks_columns:
-                            # Also check for just "Marks" column
-                            marks_columns = [col for col in df.columns if "Marks" in str(col)]
-                        
-                        if marks_columns:
-                            try:
-                                marks_col = marks_columns[0]
-                                marks_values = df[marks_col].dropna()
-                                if not marks_values.empty:
-                                    # Try to get unique value (assuming all questions have same marks)
-                                    unique_marks = marks_values.unique()
-                                    if len(unique_marks) == 1:
-                                        marks_per_question = str(unique_marks[0])
-                            except:
-                                pass
-                        
-                        # 3. Get Negative Marks/Question
-                        negative_marks_per_question = "0"  # Default
-                        negative_columns = [col for col in df.columns if "Negative Marks/Question" in str(col) or "Negative Marks Per Question" in str(col)]
-                        
-                        if negative_columns:
-                            try:
-                                negative_col = negative_columns[0]
-                                negative_values = df[negative_col].dropna()
-                                if not negative_values.empty:
-                                    # Try to get unique value
-                                    unique_negative = negative_values.unique()
-                                    if len(unique_negative) == 1:
-                                        negative_marks_per_question = str(unique_negative[0])
-                            except:
-                                pass
-                        
-                        # Create columns for the test card
-                        col1, col2 = st.columns([1, 1])
+                        col1, col2 = st.columns([3, 1])
                         
                         with col1:
                             # Exam name in primary color
                             st.markdown(f"<h4 style='color: {LITMUSQ_THEME['primary']}; margin: 0;'>{sheet_name}</h4>", 
                                        unsafe_allow_html=True)
                             
-                            # Display all metadata in a single line with icons
-                            # Alternative compact display (replace the metadata_html section):
-                            metadata_html = f"""
-                            <div style="text-align: center;">
-                                <div style="color: {LITMUSQ_THEME['text']}; font-weight: 600; margin: 0.5rem 0;">
-                                    <span style="color: {LITMUSQ_THEME['success']};">Q: {total_questions}</span> • 
-                                    <span style="color: {LITMUSQ_THEME['primary']};">⏱️ {duration_display}</span> • 
-                                    <span style="color: {LITMUSQ_THEME['warning']};">📊 {marks_per_question}M/Q</span> • 
-                                    <span style="color: {LITMUSQ_THEME['secondary']};">⚠️ {negative_marks_per_question}N/Q</span>
-                                </div>
-                            </div>
-                            """
-                            
-                            st.markdown(metadata_html, unsafe_allow_html=True)
+                            # Compact stats with attractive colors
+                            stats_col1, stats_col2 = st.columns(2)
+                            with stats_col1:
+                                st.markdown(f"<p style='color: {LITMUSQ_THEME['success']}; font-weight: 600; margin: 0.5rem 0;'>❓ {len(df)} Questions</p>", 
+                                           unsafe_allow_html=True)
+                            with stats_col2:
+                                # Create unique key using current path, sheet name, and index
+                                current_path_str = '_'.join(current_path) if current_path else 'root'
+                                unique_key = f"select_{current_path_str}_{sheet_name}_{idx}"
+                                
+                                if st.button("**Start Test**", 
+                                            key=unique_key,
+                                            use_container_width=True,
+                                            type="primary"):
+                                    st.session_state.selected_sheet = sheet_name
+                                    st.session_state.current_screen = "exam_config"
+                                    st.rerun()
                         
-                        with col2:
-                            # Create unique key using current path, sheet name, and index
-                            current_path_str = '_'.join(current_path) if current_path else 'root'
-                            unique_key = f"direct_start_{current_path_str}_{sheet_name}_{idx}"
-                            
-                            # Quick Start Test button (direct to quiz)
-                            if st.button("**Quick Start Test**", 
-                                        key=f"quick_{unique_key}",
-                                        use_container_width=True,
-                                        type="secondary"):
-                                # Set default configuration values
-                                st.session_state.selected_sheet = sheet_name
-                                
-                                # Set default configuration values (same as exam_config defaults)
-                                st.session_state.num_questions = min(100, len(df))
-                                st.session_state.use_final_key = True
-                                
-                                # Set duration
-                                st.session_state.exam_duration = total_duration_minutes
-                                
-                                # Set other default settings
-                                st.session_state.shuffle_questions = False
-                                st.session_state.show_live_progress = True
-                                st.session_state.enable_auto_save = True
-                                st.session_state.full_screen_mode = True
-                                
-                                # Set live progress and auto-save settings
-                                st.session_state.live_progress_enabled = True
-                                st.session_state.auto_save_enabled = True
-                                
-                                # Start the quiz directly with default values
-                                start_quiz(df, 
-                                           min(100, len(df)),  # Default number of questions
-                                           total_duration_minutes,   # Calculated duration
-                                           True,               # Use final key
-                                           sheet_name)         # Exam name
-                                
-                                st.session_state.current_screen = "quiz"
-                                st.rerun()
-                        
-                            # Original button - goes to exam_config
-                            if st.button("**Configure & Start Test**", 
-                                        key=f"config_{unique_key}",
-                                        use_container_width=True,
-                                        type="primary"):
-                                st.session_state.selected_sheet = sheet_name
-                                st.session_state.current_screen = "exam_config"
-                                st.rerun()
-                        
-                        st.markdown("---")  # Separator between tests
+                        st.markdown("</div>", unsafe_allow_html=True)
                 
                 else:
                     st.error("No sheets found in the question bank file.")
@@ -2310,6 +2138,7 @@ def show_folder_view_screen():
         display_folder_navigation(subfolders, current_path)
     elif not has_qb:
         st.info("ℹ️ This folder is empty. Add subfolders or a QB.xlsx file.")
+
 # =============================
 # Enhanced Exam Configuration
 # =============================
@@ -3676,7 +3505,7 @@ def show_results_screen():
 def optimize_session_state():
     """Clean up and optimize session state to prevent bloat."""
     essential_keys = {
-        'logged_in', 'username', 'user_type', 'current_screen', 'current_path',  # ← Added user_type
+        'logged_in', 'username', 'current_screen', 'current_path',
         'selected_sheet', 'current_qb_path', 'folder_structure',
         'quiz_started', 'quiz_questions', 'current_idx', 'answers',
         'submitted', 'exam_name', 'question_status', 'quiz_duration',
@@ -3855,37 +3684,13 @@ def clear_retest_state():
 def show_home_screen():
     """Display the main folder navigation."""
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
-    show_litmusq_header("Online Tests")
-    
-    # Home and Navigation buttons
-    if st.button("🏠 Home", use_container_width=True, key="folder_home"):
-        st.session_state.current_screen = "home"
-        st.rerun()
-    if st.button("← Back", use_container_width=True, key="folder_back"):
-        if len(current_path) > 0:
-            st.session_state.current_path = current_path[:-1]
-        else:
-            st.session_state.current_screen = "home"
-        st.rerun()
+    show_litmusq_header("Select Exam")
 
-    # Get current path - MUST BE DEFINED BEFORE USING IT
-    current_path = st.session_state.get('editor_current_path', [])
-    
-    # Display current location breadcrumb
-    if current_path:
-        breadcrumb = "Home > " + " > ".join(current_path)
-    else:
-        breadcrumb = "Home"
-    
-    st.write(f"**📍:** `{breadcrumb}`")
-    
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
         display_folder_navigation(folder_structure)
     else:
         st.info("No folder structure found. Make sure 'Question_Data_Folder' exists with proper structure.")
-        
-        
 
 def show_platform_guide():
     """Actual platform guide implementation."""
@@ -3898,7 +3703,6 @@ def show_platform_guide():
         st.rerun()
 
     st.markdown("## 🧪 Welcome to LitmusQ!")
-    st.markdown("<br>", unsafe_allow_html=True)
 
     # Create 4 columns
     col1, col2, col3, col4 = st.columns(4)
@@ -3963,17 +3767,13 @@ def quick_actions_panel():
     
     # Admin-only actions
     if is_admin_user():
-        if st.sidebar.button("Admin Panel", use_container_width=True, key="sidebar_admin"):
+        if st.sidebar.button("👑 Admin Panel", use_container_width=True, key="sidebar_admin"):
             st.session_state.current_screen = "admin_panel"
             st.rerun()
-    
-    # Editor and Admin can edit questions
-    if is_admin_or_editor():  # Changed from is_admin_user()
         if st.sidebar.button("📝 Edit Questions", use_container_width=True, key="sidebar_editor"):
             st.session_state.current_screen = "question_editor"
             st.rerun()
     
-    # All users can access these
     if st.sidebar.button("📈 Performance", use_container_width=True, key="sidebar_dashboard"):
         st.session_state.current_screen = "dashboard"
         st.rerun()
@@ -4041,6 +3841,21 @@ def optimized_show_folder_view():
 # Main App
 # =============================
 def main():
+    # =============================
+    # DEBUG: Catch initialization errors
+    # =============================
+    debug_container = st.empty()
+    
+    try:
+        st.set_page_config(
+            page_title="LitmusQ - Professional MCQ Platform",
+            page_icon="🧪",
+            layout="wide",
+            initial_sidebar_state="expanded"
+        )
+        debug_container.success("✅ Page config set successfully")
+    except Exception as e:
+        debug_container.error(f"❌ Page config error: {e}")
     st.set_page_config(
         page_title="LitmusQ - Professional MCQ Platform",
         page_icon="🧪",
@@ -4063,27 +3878,11 @@ def main():
     if st.session_state.get('logged_in') and 'user_type' not in st.session_state:
         username = st.session_state.get('username')
         if username:
-            # First check Excel admin credentials
             admin_credentials = load_admin_credentials()
             if username in admin_credentials:
                 st.session_state.user_type = 'admin'
             else:
-                # Check Firebase for admin role
-                try:
-                    if db:
-                        user_ref = db.collection('users').document(username)
-                        user_doc = user_ref.get()
-                        if user_doc.exists:
-                            user_data = user_doc.to_dict()
-                            if user_data.get('role') == 'admin':
-                                st.session_state.user_type = 'admin'
-                            else:
-                                st.session_state.user_type = 'regular'
-                        else:
-                            st.session_state.user_type = 'regular'
-                except Exception as e:
-                    st.error(f"Error checking user role: {e}")
-                    st.session_state.user_type = 'regular'
+                st.session_state.user_type = 'regular'
     
     # Handle auto-submit if triggered
     handle_auto_submit()
@@ -4107,34 +3906,25 @@ def main():
         user_type = st.session_state.get('user_type', 'regular')
         username = st.session_state.get('username', 'User')
         
-        # Display user info based on role
         if user_type == 'admin':
-            st.sidebar.markdown(f"### Welcome, {username}")
+            st.sidebar.markdown(f"### 👑 Welcome, {username}")
             st.sidebar.markdown(
                 "<span style='color: #DC2626;'>Admin</span>",
                 unsafe_allow_html=True
             )
-        elif user_type == 'editor':
-            st.sidebar.markdown(f"### Welcome, {username}")
-            st.sidebar.markdown(
-                "<span style='color: #3B82F6;'>Editor</span>",  # Different color for editor
-                unsafe_allow_html=True
-            )
-        else:  # regular user
+            if db:
+                st.sidebar.markdown(
+                    "<span style='color: green;'>☁️ Cloud Connected</span>",
+                    unsafe_allow_html=True
+                )
+            else:
+                st.sidebar.warning("⚠️ Using Local Storage")
+        else:
             st.sidebar.markdown(f"### 👤 Welcome, {username}")
             st.sidebar.markdown(
-                "<span style='color: #059669;'>Student</span>",  # Green for student
+                "<span style='color: #DC2626;'>User</span>",
                 unsafe_allow_html=True
             )
-            
-        # Show cloud connection status
-        if db:
-            st.sidebar.markdown(
-                "<span style='color: green;'>☁️ Cloud Connected</span>",
-                unsafe_allow_html=True
-            )
-        else:
-            st.sidebar.warning("⚠️ Using Local Storage")
             
     # Quick actions panel
     quick_actions_panel()
