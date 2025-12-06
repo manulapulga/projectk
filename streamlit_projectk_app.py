@@ -1268,7 +1268,7 @@ def render_formatted_content(content):
 def show_question_editor():
     """Admin interface for editing question formatting."""
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
-    show_litmusq_header("📝 Question Formatting Editor")
+    show_litmusq_header("📝 Question Editor")
     
     # Check if user is admin OR editor
     if not is_admin_or_editor():  # Changed from is_admin_user()
@@ -1280,7 +1280,7 @@ def show_question_editor():
     formatted_questions = load_formatted_questions()
     
     # Folder selection
-    st.subheader("Select Question Bank")
+    st.markdown("Select Question Bank")
     folder_structure = st.session_state.get('folder_structure', {})
     
     if not folder_structure:
@@ -1292,11 +1292,12 @@ def show_question_editor():
     
     # Display current location breadcrumb
     if current_path:
-        breadcrumb = "Home > " + " > ".join(current_path)
+        breadcrumb = "Root > " + " > ".join(current_path)
     else:
-        breadcrumb = "Home"
+        breadcrumb = "Root"
     
     st.write(f"**📍:** `{breadcrumb}`")
+    st.markdown("<br>", unsafe_allow_html=True)
     
     
     # Add back navigation - MOVED HERE AFTER current_path is defined
@@ -3867,8 +3868,9 @@ def clear_retest_state():
 def show_home_screen():
     """Display the main folder navigation."""
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
-    show_litmusq_header("Select Exam")
-
+    show_litmusq_header("Online Tests")
+    st.markdown("Select Exam")
+    st.markdown(f"**📍:** Root")
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
         display_folder_navigation(folder_structure)
