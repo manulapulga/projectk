@@ -398,52 +398,7 @@ def inject_custom_css():
         }}
     }}
     
-    /* =========================================================
-       QUIZ QUESTION SPECIFIC FIXES
-    ==========================================================*/
-    
-    /* Target the specific markdown container for questions */
-    div[data-testid="stMarkdownContainer"] {{
-        padding-left: 0.5rem !important;
-        margin-left: 0rem !important;
-        width: 100% !important;
-        max-width: 100% !important;
-    }}
-    
-    /* Make sure paragraphs inside have minimal margin */
-    div[data-testid="stMarkdownContainer"] p,
-    div[data-testid="stMarkdownContainer"] ol,
-    div[data-testid="stMarkdownContainer"] ul,
-    div[data-testid="stMarkdownContainer"] li {{
-        margin-left: 0rem !important;
-        padding-left: 0rem !important;
-        text-align: left !important;
-    }}
-    
-    /* Specifically fix ordered/unordered list alignment */
-    div[data-testid="stMarkdownContainer"] ol,
-    div[data-testid="stMarkdownContainer"] ul {{
-        padding-left: 1.5rem !important;  /* Just enough for bullets/numbers */
-    }}
-    
-    /* Fix for the question display area */
-    .stMarkdown {{
-        padding-left: 0rem !important;
-        margin-left: 0rem !important;
-        width: 100% !important;
-    }}
-    
-    /* Ensure question text starts from left edge */
-    .stMarkdown > div {{
-        margin-left: 0rem !important;
-        padding-left: 0rem !important;
-    }}
-    
-    /* For quiz screen only - override all containers */
-    .quiz-screen div[data-testid="stMarkdownContainer"] {{
-        padding-left: 0.2rem !important;
-        margin-left: 0rem !important;
-    }}
+
     </style>
     """, unsafe_allow_html=True)
 
@@ -801,7 +756,7 @@ def save_formatted_questions(formatted_data):
 # =============================
 def show_litmusq_header(subtitle="Professional MCQ Assessment Platform"):
     st.markdown(f"""
-    <div class="litmusq-header">
+    <div class="litmusq-header" style="text-align: center;">
         <h1 style="margin: 0; font-size: 3rem; font-weight: 700;">🧪 LitmusQ</h1>
         <p style="margin: 0; opacity: 0.9; font-size: 1.2rem;">{subtitle}</p>
     </div>
