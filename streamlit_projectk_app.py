@@ -1896,7 +1896,7 @@ def show_clear_data_section():
             "<p style='color: #d9534f; font-weight: 600;'>⚠️ Are you sure you want to delete ALL your performance data? This action cannot be undone!</p>",
             unsafe_allow_html=True
         )
-        
+        st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
         col1, col2 = st.columns([1, 1])
         with col1:
             if st.button("✅ Yes, Delete Everything", type="primary", key="confirm_clear", use_container_width="True"):
