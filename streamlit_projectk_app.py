@@ -4701,17 +4701,9 @@ def main():
     inject_custom_css()
     
     # Initialize Firebase
-    try:
-        global db
-        if 'db' not in globals() or db is None:
-            db = initialize_firebase()
-            if db:
-                st.sidebar.success("✅ Firebase connected")
-            else:
-                st.sidebar.warning("⚠️ Using local storage only")
-    except Exception as e:
-        st.sidebar.error(f"❌ Firebase error: {e}")
-        db = None
+    global db
+    if 'db' not in globals():
+        db = initialize_firebase()
     
     # Initialize session state with stability features
     initialize_state()
