@@ -1280,7 +1280,7 @@ def show_question_editor():
     formatted_questions = load_formatted_questions()
     
     # Folder selection
-    st.markdown("Select Question Bank")
+    st.subheader("Select Question Bank")
     folder_structure = st.session_state.get('folder_structure', {})
     
     if not folder_structure:
@@ -3869,7 +3869,7 @@ def show_home_screen():
     """Display the main folder navigation."""
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Online Tests")
-    st.markdown("Select Question Bank")
+    st.subheader("Select Question Bank")
     
     # Display current location breadcrumb
     if current_path:
