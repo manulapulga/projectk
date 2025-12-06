@@ -197,7 +197,7 @@ def inject_custom_css():
 
     /* horizontal rule */
     hr {{
-        margin: 1rem 0 !important;
+        margin: 0.5rem 0 !important;
     }}
 
 
