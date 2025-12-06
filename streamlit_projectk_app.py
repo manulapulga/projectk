@@ -2540,7 +2540,7 @@ def show_enhanced_question_interface():
     
     # Enhanced question card with formatted content
     # Render formatted question
-    sl_no = row.get("Sl No", i + 1)
+    sl_no = row.get("Sl No", current_idx + 1)
     render_formatted_content(formatted_question, sl_no)
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
