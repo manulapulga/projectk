@@ -156,12 +156,12 @@ def inject_custom_css():
         padding-top: 0.1rem !important;   /* header clearance */
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
-        padding-bottom: 1rem !important;
+        padding-bottom: 0.1rem !important;
     }}
 
     /* Vertical spacing between Streamlit elements */
     .stElementContainer {{
-        margin-top: 0.2rem !important;
+        margin-top: 0.1rem !important;
         margin-bottom: 0.2rem !important;
         padding: 0 !important;
     }}
