@@ -3642,12 +3642,14 @@ def show_results_screen():
             st.rerun()
     
     with col3:
-        # Toggle analysis view - FIXED
-        if st.button("📊 View Analysis", use_container_width=True, key="results_analysis"):
-            st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
-            # Keep the current screen as "quiz" (results are shown as part of quiz)
+        analysis_visible = st.session_state.get('show_detailed_analysis', False)
+        button_label = "🙈 Hide Analysis" if analysis_visible else "📊 View Analysis"
+    
+        if st.button(button_label, use_container_width=True, key="results_analysis"):
+            st.session_state.show_detailed_analysis = not analysis_visible
             st.session_state.current_screen = "quiz"
             st.rerun()
+
     
     with col4:
         if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
