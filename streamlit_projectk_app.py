@@ -2338,7 +2338,19 @@ def show_exam_config_screen():
     st.subheader(f"Configure Test: {sheet_name}")
     st.write(f"**📍:** `{' > '.join(current_path)}`")
     st.markdown("<div style='margin-top: 0.2;'></div>", unsafe_allow_html=True)
-    st.metric("Total No. of Questions", len(df_exam))
+    # Alternative compact display (replace the metadata_html section):
+    metadata_html = f"""
+    <div style="text-align: center;">
+        <div style="color: {LITMUSQ_THEME['text']}; font-weight: 600; margin: 0.5rem 0;">
+            <span style="color: {LITMUSQ_THEME['success']};">Q: {total_questions}</span> • 
+            <span style="color: {LITMUSQ_THEME['primary']};">⏱️ {duration_display}</span> • 
+            <span style="color: {LITMUSQ_THEME['warning']};">📊 {marks_per_question}M/Q</span> • 
+            <span style="color: {LITMUSQ_THEME['secondary']};">⚠️ {negative_marks_per_question}N/Q</span>
+        </div>
+    </div>
+    """
+    
+    st.markdown(metadata_html, unsafe_allow_html=True)
     
     # Enhanced metrics with expandable cards
     col1, col2 = st.columns(2)
