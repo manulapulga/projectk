@@ -331,6 +331,7 @@ def inject_custom_css():
     .question-card {{
         background-color: {LITMUSQ_THEME['light_bg']};
         padding: 1.3rem;
+        padding-left: 10px;
         border-radius: 12px;
         border-left: 4px solid {LITMUSQ_THEME['primary']};
         margin: 0.8rem 0;
@@ -395,7 +396,6 @@ def inject_custom_css():
 
         .question-card {{
             padding: 1rem !important;
-            padding-left: 2rem !important;
         }}
     }}
     
