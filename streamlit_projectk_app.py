@@ -4614,16 +4614,6 @@ def quick_actions_panel():
     if st.sidebar.button("ℹ️ About LitmusQ", use_container_width=True, key="home_guide"):
         st.session_state.current_screen = "guide"
         st.rerun()
-        
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### 🐛 Debug")
-    
-    if st.sidebar.button("Test Firebase", key="test_firebase"):
-        test_firebase_connection()
-    
-    if st.sidebar.button("Show Session State", key="show_session"):
-        st.write(st.session_state)    
-        
 # =============================
 # Enhanced Initialization
 # =============================
