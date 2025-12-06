@@ -833,17 +833,8 @@ def save_paused_quiz():
         st.write(f"Debug: Saving paused quiz with ID: {record_id}")
         
         # Save to Firebase
-        # Save to global collection
         pause_ref = db.collection('paused_quizzes').document(record_id)
         pause_ref.set(cleaned_data, merge=True)
-        
-        # Save to user subcollection (REQUIRED)
-        user_pause_ref = db.collection('users') \
-            .document(username) \
-            .collection('paused_quizzes') \
-            .document(record_id)
-        user_pause_ref.set(cleaned_data, merge=True)
-
         
         st.write(f"✅ Paused quiz saved with ID: {record_id}")
         return True
@@ -4623,6 +4614,16 @@ def quick_actions_panel():
     if st.sidebar.button("ℹ️ About LitmusQ", use_container_width=True, key="home_guide"):
         st.session_state.current_screen = "guide"
         st.rerun()
+        
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🐛 Debug")
+    
+    if st.sidebar.button("Test Firebase", key="test_firebase"):
+        test_firebase_connection()
+    
+    if st.sidebar.button("Show Session State", key="show_session"):
+        st.write(st.session_state)    
+        
 # =============================
 # Enhanced Initialization
 # =============================
