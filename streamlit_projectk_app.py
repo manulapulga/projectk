@@ -3614,8 +3614,8 @@ def show_results_screen():
         st.rerun()
     
     # Summary cards with enhanced styling
-    st.markdown("---")
     st.subheader("📊 Performance Summary")
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     
 
     st.metric("Total Questions", summary["Total Questions"])
