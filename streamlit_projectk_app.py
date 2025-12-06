@@ -1270,7 +1270,7 @@ def render_formatted_content(content, sl_no=None):
     
     # Plain text fallback
     if sl_no is not None:
-        return st.markdown(f"**Q. {sl_no}** {content}")
+        return st.markdown(f"**Q. {sl_no}.** {content}")
     else:
         return st.markdown(content)
 
