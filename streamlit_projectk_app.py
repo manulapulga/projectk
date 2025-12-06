@@ -1297,6 +1297,8 @@ def show_question_editor():
         breadcrumb = "Home"
     
     st.write(f"**📍:** `{breadcrumb}`")
+        st.markdown("<div style='margin-top: 0.2;'></div>", unsafe_allow_html=True)
+
 
     # Add back navigation - MOVED HERE AFTER current_path is defined
     
