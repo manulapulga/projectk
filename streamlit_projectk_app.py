@@ -1301,17 +1301,19 @@ def show_question_editor():
 
 
     # Add back navigation - MOVED HERE AFTER current_path is defined
-    
+
     if current_path:  # Only show if we have a path
         if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
             st.session_state.editor_current_path = current_path[:-1]
             st.rerun()
-    else:
-        st.button("⬅️ Back", use_container_width=True, disabled=True, key="editor_back_disabled")
+    
+    # Remove the else part so no disabled button appears
+    # (nothing is shown when at root)
     
     if st.button("🏠 Back to Root", use_container_width=True, key="back_to_root"):
         st.session_state.editor_current_path = []
         st.rerun()
+    
     
     # Display folder navigation for editor
     def get_current_level(structure, path):
