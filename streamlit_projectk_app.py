@@ -1302,8 +1302,7 @@ def show_question_editor():
 
     # Add back navigation - MOVED HERE AFTER current_path is defined
 
-    if current_path:  # Only show if we have a path
-        if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
+    if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
             st.session_state.editor_current_path = current_path[:-1]
             st.rerun()
     
