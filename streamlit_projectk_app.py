@@ -1885,7 +1885,7 @@ def update_achievements(progress, test_results):
 
 def show_clear_data_section():
     """Show section to clear performance data."""
-    st.markdown("---")
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     # Confirmation workflow
     if not st.session_state.get('show_clear_confirmation', False):
         if st.button("🚮 Clear All My Performance Data", type="secondary", key="clear_data_init", use_container_width="True"):
@@ -3374,8 +3374,6 @@ def show_retest_config(original_test):
             elif not is_correct:
                 incorrect_questions.append(answer['question_index'])
     
-    st.subheader("📊 Original Test Analysis")
-    
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Total Questions", total_questions)
@@ -3443,6 +3441,7 @@ def show_retest_config(original_test):
     
     df_questions = pd.DataFrame(questions_list)
     
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     # Store retest configuration in session state
     if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
         if question_count == 0:
@@ -3573,7 +3572,7 @@ def show_enhanced_detailed_analysis(res_df):
 def show_results_screen():
     """Display enhanced results after quiz completion."""
     res_df, summary = compute_results()
-    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 2.5rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Test Results")
     
     # Add retest type to summary if applicable
@@ -3589,36 +3588,7 @@ def show_results_screen():
     # Clear retest state after saving results
     clear_retest_state()
     
-# Navigation options - Add Home button
-    if st.button("🏠 Home", use_container_width=True, key="results_home"):
-        st.session_state.current_screen = "home"
-        st.rerun()
-    if st.button("← Back to Config", use_container_width=True, key="results_back"):
-        st.session_state.current_screen = "exam_config"
-        st.rerun()
-    if st.button("📊 View Analysis", use_container_width=True, key="results_analysis"):
-        st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
-        st.rerun()
-    if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
-        df_exam = st.session_state.quiz_questions
-        start_quiz(
-            df_exam, 
-            len(df_exam),
-            st.session_state.quiz_duration,
-            st.session_state.use_final_key, 
-            st.session_state.exam_name
-        )
-        st.session_state.current_screen = "quiz"
-        st.rerun()
-    if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
-        st.session_state.current_screen = "dashboard"
-        st.rerun()
-    
     # Summary cards with enhanced styling
-    st.markdown("---")
-    st.subheader("📊 Performance Summary")
-    
-
     st.metric("Total Questions", summary["Total Questions"])
     st.markdown('</div>', unsafe_allow_html=True)
     st.metric("Attempted", summary["Attempted"])
@@ -3634,34 +3604,73 @@ def show_results_screen():
     st.progress(int(percentage))
     
     # Performance gauge
-    col1, col2 = st.columns([2, 1])
+    if percentage >= 80:
+        performance = "Excellent! 🎉"
+        color = LITMUSQ_THEME['success']
+    elif percentage >= 60:
+        performance = "Good! 👍"
+        color = LITMUSQ_THEME['warning']
+    else:
+        performance = "Needs Improvement 📚"
+        color = LITMUSQ_THEME['secondary']
+    
+    st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
+    
+    # Download button
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+    st.download_button(
+        label="📥 Download Results",
+        data=res_df.to_csv(index=False),
+        file_name=f"{summary['Exam Name']}_results_{st.session_state.username}.csv",
+        mime="text/csv",
+        use_container_width=True,
+        key="download_results"
+    )
+    
+    # Navigation buttons in columns
+    col1, col2, col3, col4, col5 = st.columns(5)
+    
     with col1:
-        if percentage >= 80:
-            performance = "Excellent! 🎉"
-            color = LITMUSQ_THEME['success']
-        elif percentage >= 60:
-            performance = "Good! 👍"
-            color = LITMUSQ_THEME['warning']
-        else:
-            performance = "Needs Improvement 📚"
-            color = LITMUSQ_THEME['secondary']
-        
-        st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
+        if st.button("🏠 Home", use_container_width=True, key="results_home"):
+            st.session_state.current_screen = "home"
+            st.session_state.show_detailed_analysis = False  # Reset the flag
+            st.rerun()
     
     with col2:
-        st.download_button(
-            label="📥 Download Results",
-            data=res_df.to_csv(index=False),
-            file_name=f"{summary['Exam Name']}_results_{st.session_state.username}.csv",
-            mime="text/csv",
-            use_container_width=True,
-            key="download_results"
-        )
+        if st.button("← Back to Config", use_container_width=True, key="results_back"):
+            st.session_state.current_screen = "exam_config"
+            st.rerun()
     
-    # Detailed analysis
+    with col3:
+        # Toggle analysis view - FIXED
+        if st.button("📊 View Analysis", use_container_width=True, key="results_analysis"):
+            st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
+            # Keep the current screen as "quiz" (results are shown as part of quiz)
+            st.session_state.current_screen = "quiz"
+            st.rerun()
+    
+    with col4:
+        if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
+            df_exam = st.session_state.quiz_questions
+            start_quiz(
+                df_exam, 
+                len(df_exam),
+                st.session_state.quiz_duration,
+                st.session_state.use_final_key, 
+                st.session_state.exam_name
+            )
+            st.session_state.current_screen = "quiz"
+            st.rerun()
+    
+    with col5:
+        if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
+            st.session_state.current_screen = "dashboard"
+            st.rerun()
+    
+    # Detailed analysis - FIXED: This should appear below the navigation buttons
     if st.session_state.get('show_detailed_analysis', False):
-        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-        st.subheader("📋 Question-wise Review")
+        st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
+        st.markdown("### 📋 Question-wise Review")
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         show_enhanced_detailed_analysis(res_df)
         
