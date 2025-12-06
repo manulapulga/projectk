@@ -772,12 +772,8 @@ def save_paused_quiz():
         username = st.session_state.get('username')
         exam_name = st.session_state.get('exam_name')
         
-        if not username:
-            st.error("Missing username")
-            return False
-        
-        if not exam_name:
-            st.error("Missing exam name")
+        if not username or not exam_name:
+            st.error("Missing username or exam name")
             return False
         
         # Create a valid unique record ID
@@ -793,16 +789,15 @@ def save_paused_quiz():
         else:
             record_id = st.session_state.pause_record_id
         
-        st.write(f"📝 Attempting to save paused quiz with ID: {record_id}")
+        # Validate record_id
+        if not record_id or len(record_id.strip()) == 0:
+            st.error("Invalid record ID")
+            return False
         
         # Calculate remaining time
         time_left = 0
         if st.session_state.end_time:
             time_left = max(0, int((st.session_state.end_time - datetime.now()).total_seconds()))
-        
-        # Get current answers count for debugging
-        answers_count = len(st.session_state.answers) if st.session_state.answers else 0
-        st.write(f"📊 Answers to save: {answers_count}")
         
         # Prepare quiz data
         paused_data = {
@@ -835,21 +830,14 @@ def save_paused_quiz():
         cleaned_data = ensure_python_types(cleaned_data)
         
         # Debug: Show what we're saving
-        st.write("📦 Data being saved:")
-        st.json({k: str(v)[:100] + "..." if len(str(v)) > 100 else v for k, v in cleaned_data.items()})
+        st.write(f"Debug: Saving paused quiz with ID: {record_id}")
         
         # Save to Firebase
         pause_ref = db.collection('paused_quizzes').document(record_id)
         pause_ref.set(cleaned_data, merge=True)
         
-        # Verify the save by reading it back
-        doc = pause_ref.get()
-        if doc.exists:
-            st.success(f"✅ Paused quiz saved successfully with ID: {record_id}")
-            return True
-        else:
-            st.error("❌ Failed to verify save - document not found after saving")
-            return False
+        st.write(f"✅ Paused quiz saved with ID: {record_id}")
+        return True
         
     except Exception as e:
         st.error(f"❌ Error saving paused quiz: {str(e)}")
