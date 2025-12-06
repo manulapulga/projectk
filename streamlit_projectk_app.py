@@ -1297,8 +1297,7 @@ def show_question_editor():
         breadcrumb = "Home"
     
     st.write(f"**📍:** `{breadcrumb}`")
-    st.markdown("<br>", unsafe_allow_html=True)
-    
+
     
     # Add back navigation - MOVED HERE AFTER current_path is defined
     
@@ -2144,8 +2143,7 @@ def show_folder_view_screen():
     
     breadcrumb = " > ".join(current_path) if current_path else ""
     st.write(f"**📍:** `{breadcrumb}`")
-    st.markdown("<br>", unsafe_allow_html=True)
-    
+
     folder_structure = st.session_state.folder_structure
     current_level = folder_structure
     for folder in current_path:
@@ -2343,7 +2341,6 @@ def show_exam_config_screen():
             st.rerun()
     st.subheader(f"Configure Test: {sheet_name}")
     st.write(f"**📍:** `{' > '.join(current_path)}`")
-    st.markdown("<br>", unsafe_allow_html=True)
     st.metric("Total No. of Questions", len(df_exam))
     
     # Enhanced metrics with expandable cards
@@ -3879,7 +3876,6 @@ def show_home_screen():
         breadcrumb = "Home"
     
     st.write(f"**📍:** `{breadcrumb}`")
-    st.markdown("<br>", unsafe_allow_html=True)
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
         display_folder_navigation(folder_structure)
