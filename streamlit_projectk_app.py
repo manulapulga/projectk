@@ -1298,23 +1298,18 @@ def show_question_editor():
     
     st.write(f"**📍:** `{breadcrumb}`")
 
-    
     # Add back navigation - MOVED HERE AFTER current_path is defined
     
-    col1, col2 = st.columns([1, 1])
-    # Only show back button if we're in a subfolder
-    with col2:
-        if current_path:  # Only show if we have a path
-            if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
-                st.session_state.editor_current_path = current_path[:-1]
-                st.rerun()
-        else:
-            st.button("⬅️ Back", use_container_width=True, disabled=True, key="editor_back_disabled")
-    
-    with col1:
-        if st.button("🏠 Back to Root", use_container_width=True, key="back_to_root"):
-            st.session_state.editor_current_path = []
+    if current_path:  # Only show if we have a path
+        if st.button("⬅️ Back", use_container_width=True, key="editor_back"):
+            st.session_state.editor_current_path = current_path[:-1]
             st.rerun()
+    else:
+        st.button("⬅️ Back", use_container_width=True, disabled=True, key="editor_back_disabled")
+    
+    if st.button("🏠 Back to Root", use_container_width=True, key="back_to_root"):
+        st.session_state.editor_current_path = []
+        st.rerun()
     
     # Display folder navigation for editor
     def get_current_level(structure, path):
