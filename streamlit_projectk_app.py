@@ -1933,7 +1933,10 @@ def show_student_dashboard():
         return
     
     # Key Metrics - ensure all values are proper Python types
-    st.subheader("📈 Performance Overview")
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+    st.markdown("📈 **Performance Overview**")
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+    
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
@@ -1963,7 +1966,9 @@ def show_student_dashboard():
     # Recent Test History
     test_history = progress.get("test_history", [])
     if test_history:
-        st.subheader("📋 Recent Tests")
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+        st.markdown("📋**Recent Tests**")
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         recent_tests = test_history[-10:]  # Show last 10 tests
         
         for idx, test in enumerate(reversed(recent_tests)):
@@ -2015,7 +2020,9 @@ def show_student_dashboard():
     # Achievements
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     if progress.get("achievements"):
-        st.subheader("🏆 Your Achievements")
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+        st.markdown("🏆**Your Achievements**")
+        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         achievement_data = {
             "first_test": {"emoji": "🎯", "name": "First Test", "desc": "Completed your first test"},
