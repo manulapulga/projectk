@@ -2373,86 +2373,53 @@ def show_exam_config_screen():
             st.rerun()
     st.subheader(f"Configure Test: {sheet_name}")
     st.markdown("<div style='margin-top: 0.2;'></div>", unsafe_allow_html=True)
+    # ===== MOBILE OPTIMIZED METADATA DISPLAY =====
+    try:
+        total_questions = len(df_exam)
     
-    # Extract metadata from the DataFrame
-    total_questions = len(df)
+        # Extract duration
+        duration_columns = [c for c in df_exam.columns if "Time" in str(c)]
+        if duration_columns:
+            duration_values = df_exam[duration_columns[0]].dropna()
+            if not duration_values.empty:
+                duration_display = str(duration_values.unique()[0])
+            else:
+                duration_display = "-"
+        else:
+            duration_display = "-"
     
-    # 1. Calculate Duration
-    time_per_question = 1.5  # Default
-    time_columns = [col for col in df.columns if "Time in Minute/Question" in str(col)]
-    if time_columns:
-        try:
-            time_col = time_columns[0]
-            time_values = df[time_col].dropna()
-            if not time_values.empty:
-                time_per_question = float(time_values.iloc[0])
-        except:
-            pass
+        # Marks per question
+        marks_columns = [c for c in df_exam.columns if "Marks/Question" in str(c)]
+        if marks_columns:
+            marks_values = df_exam[marks_columns[0]].dropna()
+            marks_per_question = str(marks_values.unique()[0]) if not marks_values.empty else "-"
+        else:
+            marks_per_question = "-"
     
-    total_duration_minutes = int(total_questions * time_per_question)
-    duration_display = f"{total_duration_minutes} min"
-    if total_duration_minutes > 60:
-        hours = total_duration_minutes // 60
-        minutes = total_duration_minutes % 60
-        duration_display = f"{hours}h {minutes}m"
+        # Negative marks
+        negative_columns = [c for c in df_exam.columns if "Negative" in str(c)]
+        if negative_columns:
+            negative_values = df_exam[negative_columns[0]].dropna()
+            negative_marks_per_question = str(negative_values.unique()[0]) if not negative_values.empty else "-"
+        else:
+            negative_marks_per_question = "-"
     
-    # 2. Get Marks/Question
-    marks_per_question = "1"  # Default
-    marks_columns = [col for col in df.columns if "Marks/Question" in str(col) or "Marks Per Question" in str(col)]
-    if not marks_columns:
-        # Also check for just "Marks" column
-        marks_columns = [col for col in df.columns if "Marks" in str(col)]
-    
-    if marks_columns:
-        try:
-            marks_col = marks_columns[0]
-            marks_values = df[marks_col].dropna()
-            if not marks_values.empty:
-                # Try to get unique value (assuming all questions have same marks)
-                unique_marks = marks_values.unique()
-                if len(unique_marks) == 1:
-                    marks_per_question = str(unique_marks[0])
-        except:
-            pass
-    
-    # 3. Get Negative Marks/Question
-    negative_marks_per_question = "0"  # Default
-    negative_columns = [col for col in df.columns if "Negative Marks/Question" in str(col) or "Negative Marks Per Question" in str(col)]
-    
-    if negative_columns:
-        try:
-            negative_col = negative_columns[0]
-            negative_values = df[negative_col].dropna()
-            if not negative_values.empty:
-                # Try to get unique value
-                unique_negative = negative_values.unique()
-                if len(unique_negative) == 1:
-                    negative_marks_per_question = str(unique_negative[0])
-        except:
-            pass
-    
-    # Create columns for the test card
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        # Exam name in primary color
-        st.markdown(f"<h4 style='color: {LITMUSQ_THEME['primary']}; margin: 0;'>{sheet_name}</h4>", 
-                   unsafe_allow_html=True)
-        
-        # Display all metadata in a single line with icons
-        # Alternative compact display (replace the metadata_html section):
         metadata_html = f"""
-        <div style="text-align: center;">
-            <div style="color: {LITMUSQ_THEME['text']}; font-weight: 600; margin: 0.5rem 0;">
-                <span style="color: {LITMUSQ_THEME['success']};">Q: {total_questions}</span> • 
-                <span style="color: {LITMUSQ_THEME['primary']};">⏱️ {duration_display}</span> • 
-                <span style="color: {LITMUSQ_THEME['warning']};">📊 {marks_per_question}M/Q</span> • 
-                <span style="color: {LITMUSQ_THEME['secondary']};">⚠️ {negative_marks_per_question}N/Q</span>
+        <div style="text-align: center; margin-top: 0.8rem;">
+            <div style="color: #1E293B; font-weight: 600; font-size: 1rem; margin: 0.5rem 0;">
+                <span style="color:#059669;">Q: {total_questions}</span> • 
+                <span style="color:#1E3A8A;">⏱️ {duration_display}</span> • 
+                <span style="color:#D97706;">📊 {marks_per_question}M/Q</span> • 
+                <span style="color:#DC2626;">⚠️ {negative_marks_per_question}N/Q</span>
             </div>
         </div>
         """
-        
+    
         st.markdown(metadata_html, unsafe_allow_html=True)
+    
+    except Exception as e:
+        st.warning("⚠️ Unable to load metadata summary")
+
     
     # Enhanced metrics with expandable cards
     # MODIFICATION 1: Check for "Subjects Covered" column first, then "Subject" column
