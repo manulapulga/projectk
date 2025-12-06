@@ -193,7 +193,6 @@ def inject_custom_css():
     .stMarkdown ol,
     .stMarkdown li {{
         margin: 0.2rem 0 !important;
-        padding-left: 10px;
     }}
 
     /* horizontal rule */
@@ -398,7 +397,78 @@ def inject_custom_css():
             padding: 1rem !important;
         }}
     }}
-    
+    /* =========================================================
+       FORMATTED CONTENT - FIX FOR SERIAL NUMBER CONTAINMENT
+    ==========================================================*/
+
+    .formatted-content {{
+        line-height: 1.6;
+        margin: 0.5rem 0;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+        display: inline-block !important;
+        box-sizing: border-box !important;
+    }}
+
+    /* Ensure list items and serial numbers are properly contained */
+    .formatted-content ol,
+    .formatted-content ul {{
+        margin-left: 1.5rem !important;
+        padding-left: 0.5rem !important;
+        overflow: visible !important;
+    }}
+
+    .formatted-content li {{
+        margin: 0.2rem 0 !important;
+        padding-left: 0.2rem !important;
+        position: relative !important;
+        left: 0 !important;
+        display: block !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }}
+
+    /* For numbered lists, ensure numbers stay visible */
+    .formatted-content ol li::before {{
+        content: counter(list-item) ".";
+        position: relative !important;
+        left: 0 !important;
+        margin-right: 0.5rem !important;
+        display: inline-block !important;
+    }}
+
+    /* Fix for any inline elements that might overflow */
+    .formatted-content span,
+    .formatted-content b,
+    .formatted-content strong,
+    .formatted-content i,
+    .formatted-content em,
+    .formatted-content u {{
+        display: inline !important;
+        max-width: 100% !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }}
+
+    /* Fix for question card container */
+    .question-card .formatted-content {{
+        width: 100% !important;
+        max-width: 100% !important;
+        padding-right: 0.5rem !important;
+        box-sizing: border-box !important;
+    }}
+
+    /* Ensure radio button options also contain their content properly */
+    .stRadio .formatted-content {{
+        display: block !important;
+        width: calc(100% - 2rem) !important;
+        margin-left: 0.5rem !important;
+    }}
+
+    /* ... (rest of existing CSS) ... */
     </style>
     """, unsafe_allow_html=True)
 
@@ -1258,11 +1328,34 @@ def render_formatted_content(content):
     if not content or not isinstance(content, str):
         return content or ""
     
-    # If content contains HTML tags, render as HTML
+    # If content contains HTML tags, render as HTML with proper container styling
     if any(tag in content for tag in ['<b>', '<strong>', '<i>', '<em>', '<u>', '<br>', '<span', '<div', '<p>']):
-        return st.markdown(f'<div class="formatted-content">{content}</div>', unsafe_allow_html=True)
+        # Wrap content in a div with proper styling to contain all elements
+        wrapped_content = f'''
+        <div class="formatted-content" style="
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            max-width: 100%;
+            overflow: hidden;
+        ">
+            {content}
+        </div>
+        '''
+        return st.markdown(wrapped_content, unsafe_allow_html=True)
     else:
-        return st.write(content)
+        # For plain text, use st.write with container styling
+        return st.markdown(f'''
+        <div class="formatted-content" style="
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            max-width: 100%;
+            overflow: hidden;
+        ">
+            {content}
+        </div>
+        ''', unsafe_allow_html=True)
 
 
 
