@@ -2522,17 +2522,15 @@ def show_exam_config_screen():
         enable_auto_save = st.checkbox("💾 Auto-save Progress", value=True, key="enable_auto_save")
         full_screen_mode = st.checkbox("🖥️ Full Screen Mode", value=True, key="full_screen_mode")
     
-    # Start test button
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        if st.button("🚀 Start Test Now", type="primary", use_container_width=True, key="start_test"):
-            # Store advanced settings using different variable names
-            st.session_state.live_progress_enabled = show_live_progress
-            st.session_state.auto_save_enabled = enable_auto_save
-            
-            start_quiz(df_exam, num_questions, exam_duration, use_final_key, sheet_name)
-            st.session_state.current_screen = "quiz"
-            st.rerun()
+
+    if st.button("🚀 Start Test Now", type="primary", use_container_width=True, key="start_test"):
+        # Store advanced settings using different variable names
+        st.session_state.live_progress_enabled = show_live_progress
+        st.session_state.auto_save_enabled = enable_auto_save
+        
+        start_quiz(df_exam, num_questions, exam_duration, use_final_key, sheet_name)
+        st.session_state.current_screen = "quiz"
+        st.rerun()
     
     st.markdown(
         "<p style='font-size:16px; color:red; font-weight:600; text-align:center;'>⚠️ Do not minimize or switch apps during the test.</p>",
