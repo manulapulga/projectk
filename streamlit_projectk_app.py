@@ -801,7 +801,7 @@ def save_formatted_questions(formatted_data):
 # =============================
 def show_litmusq_header(subtitle="Professional MCQ Assessment Platform"):
     st.markdown(f"""
-    <div class="litmusq-header" style="text-align: center;">
+    <div class="litmusq-header">
         <h1 style="margin: 0; font-size: 3rem; font-weight: 700;">🧪 LitmusQ</h1>
         <p style="margin: 0; opacity: 0.9; font-size: 1.2rem;">{subtitle}</p>
     </div>
