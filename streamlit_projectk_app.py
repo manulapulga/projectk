@@ -3588,35 +3588,10 @@ def show_results_screen():
     # Clear retest state after saving results
     clear_retest_state()
     
-# Navigation options - Add Home button
-    if st.button("🏠 Home", use_container_width=True, key="results_home"):
-        st.session_state.current_screen = "home"
-        st.rerun()
-    if st.button("← Back to Config", use_container_width=True, key="results_back"):
-        st.session_state.current_screen = "exam_config"
-        st.rerun()
-    if st.button("📊 View Analysis", use_container_width=True, key="results_analysis"):
-        st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
-        st.rerun()
-    if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
-        df_exam = st.session_state.quiz_questions
-        start_quiz(
-            df_exam, 
-            len(df_exam),
-            st.session_state.quiz_duration,
-            st.session_state.use_final_key, 
-            st.session_state.exam_name
-        )
-        st.session_state.current_screen = "quiz"
-        st.rerun()
-    if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
-        st.session_state.current_screen = "dashboard"
-        st.rerun()
+
     
     # Summary cards with enhanced styling
-    st.subheader("📊 Performance Summary")
-    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-    
+
 
     st.metric("Total Questions", summary["Total Questions"])
     st.markdown('</div>', unsafe_allow_html=True)
@@ -3633,30 +3608,50 @@ def show_results_screen():
     st.progress(int(percentage))
     
     # Performance gauge
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        if percentage >= 80:
-            performance = "Excellent! 🎉"
-            color = LITMUSQ_THEME['success']
-        elif percentage >= 60:
-            performance = "Good! 👍"
-            color = LITMUSQ_THEME['warning']
-        else:
-            performance = "Needs Improvement 📚"
-            color = LITMUSQ_THEME['secondary']
-        
-        st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
+    if percentage >= 80:
+        performance = "Excellent! 🎉"
+        color = LITMUSQ_THEME['success']
+    elif percentage >= 60:
+        performance = "Good! 👍"
+        color = LITMUSQ_THEME['warning']
+    else:
+        performance = "Needs Improvement 📚"
+        color = LITMUSQ_THEME['secondary']
     
-    with col2:
-        st.download_button(
-            label="📥 Download Results",
-            data=res_df.to_csv(index=False),
-            file_name=f"{summary['Exam Name']}_results_{st.session_state.username}.csv",
-            mime="text/csv",
-            use_container_width=True,
-            key="download_results"
+    st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
+    
+    st.download_button(
+        label="📥 Download Results",
+        data=res_df.to_csv(index=False),
+        file_name=f"{summary['Exam Name']}_results_{st.session_state.username}.csv",
+        mime="text/csv",
+        use_container_width=True,
+        key="download_results"
+    )
+# Navigation options - Add Home button
+    if st.button("🏠 Home", use_container_width=True, key="results_home", type="secondary"):
+        st.session_state.current_screen = "home"
+        st.rerun()
+    if st.button("← Back to Config", use_container_width=True, key="results_back", type="secondary"):
+        st.session_state.current_screen = "exam_config"
+        st.rerun()
+    if st.button("📊 View Analysis", use_container_width=True, key="results_analysis", type="secondary"):
+        st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
+        st.rerun()
+    if st.button("🔁 Retake Test", use_container_width=True, key="results_retake", type="secondary"):
+        df_exam = st.session_state.quiz_questions
+        start_quiz(
+            df_exam, 
+            len(df_exam),
+            st.session_state.quiz_duration,
+            st.session_state.use_final_key, 
+            st.session_state.exam_name
         )
-    
+        st.session_state.current_screen = "quiz"
+        st.rerun()
+    if st.button("📈 Performance", use_container_width=True, key="results_dashboard", type="secondary"):
+        st.session_state.current_screen = "dashboard"
+        st.rerun()    
     # Detailed analysis
     if st.session_state.get('show_detailed_analysis', False):
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
