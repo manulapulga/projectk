@@ -216,7 +216,7 @@ def inject_custom_css():
         margin: 0rem 0 !important;
         padding: 0rem !important;
         transition: all 0.2s ease;
-        border: 2px solid transparent !important;
+        border: 5px solid transparent !important;
     }}
 
 
@@ -801,7 +801,7 @@ def save_formatted_questions(formatted_data):
 # =============================
 def show_litmusq_header(subtitle="Professional MCQ Assessment Platform"):
     st.markdown(f"""
-    <div class="litmusq-header">
+    <div class="litmusq-header" style="text-align: center;">
         <h1 style="margin: 0; font-size: 3rem; font-weight: 700;">🧪 LitmusQ</h1>
         <p style="margin: 0; opacity: 0.9; font-size: 1.2rem;">{subtitle}</p>
     </div>
