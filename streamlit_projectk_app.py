@@ -1971,7 +1971,7 @@ def show_student_dashboard():
         st.metric("Average Score", f"{avg_score:.1f}")
     
     with col3:
-        test_history = progress.get("test_history", [])
+        test_history = load_test_history(username)
         total_correct = sum(int(entry.get("correct_answers", 0)) for entry in test_history)
         total_questions = sum(int(entry.get("total_questions", 0)) for entry in test_history)
         accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
@@ -1987,7 +1987,7 @@ def show_student_dashboard():
     st.markdown("---")
     
     # Recent Test History
-    test_history = progress.get("test_history", [])
+    test_history = load_test_history(username)
     if test_history:
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
 
@@ -3324,7 +3324,7 @@ def delete_test_entry(username, test_id):
         progress = convert_numpy_to_python(progress)
         
         # Find and remove the test
-        test_history = progress.get("test_history", [])
+        test_history = load_test_history(username)
         test_to_delete = None
         updated_history = []
         
