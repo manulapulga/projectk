@@ -2528,17 +2528,16 @@ def show_enhanced_question_interface():
     
     st.markdown(
         f"""
-        <div style='display:flex; align-items:center; gap:8px;'>
+        <div style='display: flex; align-items: center; gap: 0.5rem;'>
             <div><strong>Q. {current_idx + 1}</strong></div>
-            <div>
+            <div id="formatted_q"></div>
+        </div>
         """,
         unsafe_allow_html=True
     )
     
-    # This will render without breaking to a new block
-    render_formatted_content(formatted_question)
-    
-    st.markdown("</div></div>", unsafe_allow_html=True)
+    # Render formatted question into the same line
+    render_formatted_content(formatted_question, container_id="formatted_q")
 
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
