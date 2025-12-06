@@ -2526,19 +2526,12 @@ def show_enhanced_question_interface():
     formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
     formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
     
-    st.markdown(
-        f"""
-        <div style='display: flex; align-items: center; gap: 0.5rem;'>
-            <div><strong>Q. {current_idx + 1}</strong></div>
-            <div id="formatted_q"></div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
+    # Enhanced question card with formatted content
+    st.markdown(f"**Q. {current_idx + 1}**")
     
-    # Render formatted question into the same line
-    render_formatted_content(formatted_question, container_id="formatted_q")
-
+    
+    # Render formatted question
+    render_formatted_content(formatted_question)
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
