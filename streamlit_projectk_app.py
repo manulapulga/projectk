@@ -833,8 +833,17 @@ def save_paused_quiz():
         st.write(f"Debug: Saving paused quiz with ID: {record_id}")
         
         # Save to Firebase
+        # Save to global collection
         pause_ref = db.collection('paused_quizzes').document(record_id)
         pause_ref.set(cleaned_data, merge=True)
+        
+        # Save to user subcollection (REQUIRED)
+        user_pause_ref = db.collection('users') \
+            .document(username) \
+            .collection('paused_quizzes') \
+            .document(record_id)
+        user_pause_ref.set(cleaned_data, merge=True)
+
         
         st.write(f"✅ Paused quiz saved with ID: {record_id}")
         return True
