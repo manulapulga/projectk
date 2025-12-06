@@ -12,6 +12,7 @@ import streamlit.components.v1 as components
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
+import time
 
 # =============================
 # Configuration & Theme
