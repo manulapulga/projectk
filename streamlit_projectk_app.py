@@ -3593,14 +3593,34 @@ def show_results_screen():
     # Summary cards with enhanced styling
 
 
-    st.metric("Total Questions", summary["Total Questions"])
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.metric("Attempted", summary["Attempted"])
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.metric("Correct Answers", summary["Correct"])
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.metric("Final Score", f"{summary['Marks Obtained']}/{summary['Total Marks']}")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Compact summary layout for mobile (inline + icons)
+    summary_html = f"""
+    <div style="text-align: center; margin: 1rem 0;">
+    
+        <div style="color: {LITMUSQ_THEME['text']}; font-weight: 600; line-height: 1.8;">
+    
+            <span style="color:{LITMUSQ_THEME['primary']};">
+                📘 Total: {summary['Total Questions']}
+            </span> •
+    
+            <span style="color:{LITMUSQ_THEME['warning']};">
+                ✏️ Attempted: {summary['Attempted']}
+            </span> •
+    
+            <span style="color:{LITMUSQ_THEME['success']};">
+                ✅ Correct: {summary['Correct']}
+            </span> •
+    
+            <span style="color:{LITMUSQ_THEME['secondary']};">
+                🧮 Score: {summary['Marks Obtained']}/{summary['Total Marks']}
+            </span>
+    
+        </div>
+    
+    </div>
+    """
+    
+    st.markdown(summary_html, unsafe_allow_html=True)
     
     # Score visualization
     percentage = summary['Percentage']
@@ -3618,8 +3638,13 @@ def show_results_screen():
         performance = "Needs Improvement 📚"
         color = LITMUSQ_THEME['secondary']
     
-    st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
+    st.markdown(
+        f"<h3 style='color: {color}; text-align:center; margin-top:0.5rem;'>{performance}</h3>",
+        unsafe_allow_html=True,
+    )
+
     st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+    
     st.download_button(
         label="📥 Download Results",
         data=res_df.to_csv(index=False),
