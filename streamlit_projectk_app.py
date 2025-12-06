@@ -3572,7 +3572,7 @@ def show_enhanced_detailed_analysis(res_df):
 def show_results_screen():
     """Display enhanced results after quiz completion."""
     res_df, summary = compute_results()
-    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 4.5rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Test Results")
     
     # Add retest type to summary if applicable
