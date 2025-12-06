@@ -12,7 +12,6 @@ import streamlit.components.v1 as components
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
-import time
 
 # =============================
 # Configuration & Theme
@@ -54,7 +53,6 @@ def initialize_firebase():
 
 # Initialize Firebase
 db = initialize_firebase()
-
 
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
@@ -416,7 +414,6 @@ def register_user(full_name, email, phone, username, password):
         
         # 🔒 1. Check admin Excel usernames
         admin_credentials = load_admin_credentials()
-        time.sleep(5)
         if username in admin_credentials:
             st.error("❌ Username already exists (admin user). Please choose a different username.")
             return False
@@ -469,7 +466,6 @@ def authenticate_user_all(username, password):
     """Authenticate user against either admin (Excel) or regular users (Firebase)."""
     # First check if it's an admin user (from Excel)
     admin_credentials = load_admin_credentials()
-    time.sleep(5)
     if username in admin_credentials:
         if admin_credentials[username] == password:
             return True, "success", "admin"  # Excel = Admin
@@ -538,7 +534,6 @@ def get_all_users():
         
         users = []
         admin_credentials = load_admin_credentials()
-        time.sleep(5)
         editor_credentials = load_editor_credentials()
         
         for doc in docs:
@@ -575,7 +570,6 @@ def update_user_status(username, is_active):
         
         # Check if user is an admin or editor (from Excel)
         admin_credentials = load_admin_credentials()
-        time.sleep(5)
         editor_credentials = load_editor_credentials()
         
         if username in admin_credentials or username in editor_credentials:
@@ -600,7 +594,6 @@ def delete_user(username):
         
         # Check if user is an admin (from Excel)
         admin_credentials = load_admin_credentials()
-        time.sleep(5)
         if username in admin_credentials:
             st.error("Cannot delete admin users")
             return False
@@ -626,7 +619,6 @@ def update_user_approval(username, is_approved):
         
         # Check if user is an admin (from Excel)
         admin_credentials = load_admin_credentials()
-        time.sleep(5)
         if username in admin_credentials:
             st.error("Cannot modify admin users")
             return False
@@ -805,7 +797,6 @@ def show_login_screen():
     
     # Load admin credentials once at login screen
     admin_credentials = load_admin_credentials()
-    time.sleep(5)
     
     # Add temporary CSS fix for login screen
     st.markdown("""
@@ -4074,7 +4065,6 @@ def main():
         if username:
             # First check Excel admin credentials
             admin_credentials = load_admin_credentials()
-            time.sleep(5)
             if username in admin_credentials:
                 st.session_state.user_type = 'admin'
             else:
