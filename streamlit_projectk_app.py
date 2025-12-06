@@ -2554,12 +2554,14 @@ def show_enhanced_question_interface():
     )
     
     selected_option = st.radio(
-        "",
+        "options",
         options=["A", "B", "C", "D", None],
         format_func=lambda x: "Clear Response" if x is None else f"{x}) {options_dict[x]}",
         index=["A", "B", "C", "D", None].index(default_radio_value),
-        key=f"radio_{current_idx}"
+        key=f"radio_{current_idx}",
+        label_visibility="collapsed"
     )
+
     
     # Update session state when user selects an option
     if selected_option is not None:
