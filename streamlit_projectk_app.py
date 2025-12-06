@@ -398,77 +398,58 @@ def inject_custom_css():
         }}
     }}
     /* =========================================================
-       FORMATTED CONTENT - FIX FOR SERIAL NUMBER CONTAINMENT
+       FORMATTED CONTENT - SIMPLE FIX FOR TEXT CONTAINMENT
     ==========================================================*/
 
     .formatted-content {{
         line-height: 1.6;
         margin: 0.5rem 0;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
         white-space: normal !important;
+        word-wrap: break-word !important;
+        word-break: break-word !important;
+        overflow: visible !important;
         max-width: 100% !important;
-        overflow: hidden !important;
-        display: inline-block !important;
-        box-sizing: border-box !important;
+        display: block !important;
     }}
 
-    /* Ensure list items and serial numbers are properly contained */
-    .formatted-content ol,
-    .formatted-content ul {{
-        margin-left: 1.5rem !important;
-        padding-left: 0.5rem !important;
+    /* Fix for question card to allow full content visibility */
+    .question-card {{
+        overflow: visible !important;
+        min-height: fit-content !important;
+    }}
+
+    .question-card .formatted-content {{
+        overflow: visible !important;
+        width: 100% !important;
+    }}
+
+    /* Ensure all text elements are fully visible */
+    .formatted-content * {{
+        overflow: visible !important;
+        max-width: 100% !important;
+    }}
+
+    /* Fix for any numbered content */
+    .formatted-content p,
+    .formatted-content div,
+    .formatted-content span {{
+        display: inline !important;
+        overflow: visible !important;
+        white-space: normal !important;
+        word-wrap: break-word !important;
+    }}
+
+    /* Fix for radio button container */
+    .stRadio > div {{
         overflow: visible !important;
     }}
 
-    .formatted-content li {{
-        margin: 0.2rem 0 !important;
-        padding-left: 0.2rem !important;
-        position: relative !important;
-        left: 0 !important;
-        display: block !important;
-        width: 100% !important;
-        box-sizing: border-box !important;
-    }}
-
-    /* For numbered lists, ensure numbers stay visible */
-    .formatted-content ol li::before {{
-        content: counter(list-item) ".";
-        position: relative !important;
-        left: 0 !important;
-        margin-right: 0.5rem !important;
-        display: inline-block !important;
-    }}
-
-    /* Fix for any inline elements that might overflow */
-    .formatted-content span,
-    .formatted-content b,
-    .formatted-content strong,
-    .formatted-content i,
-    .formatted-content em,
-    .formatted-content u {{
-        display: inline !important;
-        max-width: 100% !important;
-        word-wrap: break-word !important;
-        overflow-wrap: break-word !important;
-    }}
-
-    /* Fix for question card container */
-    .question-card .formatted-content {{
-        width: 100% !important;
-        max-width: 100% !important;
-        padding-right: 0.5rem !important;
-        box-sizing: border-box !important;
-    }}
-
-    /* Ensure radio button options also contain their content properly */
     .stRadio .formatted-content {{
         display: block !important;
-        width: calc(100% - 2rem) !important;
-        margin-left: 0.5rem !important;
+        overflow: visible !important;
+        padding: 0.2rem 0 !important;
     }}
 
-    /* ... (rest of existing CSS) ... */
     </style>
     """, unsafe_allow_html=True)
 
@@ -2613,12 +2594,26 @@ def show_enhanced_question_interface():
     formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
     formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
     
-    # Enhanced question card with formatted content
+    # Question card with proper overflow handling
     st.markdown(f"**Q. {current_idx + 1}**")
     
+    # Render formatted question with visible overflow
+    st.markdown('''
+    <div style="
+        background-color: #F8FAFC;
+        padding: 1rem;
+        border-radius: 8px;
+        margin: 0.5rem 0;
+        border-left: 3px solid #1E3A8A;
+        overflow: visible !important;
+        min-height: fit-content;
+    ">
+    ''', unsafe_allow_html=True)
     
-    # Render formatted question
     render_formatted_content(formatted_question)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
