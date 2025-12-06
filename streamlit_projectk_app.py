@@ -13,6 +13,17 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 import traceback
+# =============================
+# DEBUG: Check file paths
+# =============================
+import os
+
+print("=== DEBUG: File Path Check ===")
+print(f"Current directory: {os.getcwd()}")
+print(f"LOGIN_FILE_PATH: {LOGIN_FILE_PATH}")
+print(f"File exists: {os.path.exists(LOGIN_FILE_PATH)}")
+print(f"Absolute path: {os.path.abspath(LOGIN_FILE_PATH)}")
+print("==============================")
 
 # =============================
 # Configuration & Theme
