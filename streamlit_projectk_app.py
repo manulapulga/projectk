@@ -398,29 +398,6 @@ def inject_custom_css():
         }}
     }}
     
-    /* Fix for the specific question container class */
-    .st-emotion-cache-yhxpuo {{
-        padding-left: 0.5rem !important;
-        margin-left: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-    }}
-    
-    /* Fix the content inside */
-    .st-emotion-cache-yhxpuo p,
-    .st-emotion-cache-yhxpuo ol,
-    .st-emotion-cache-yhxpuo ul,
-    .st-emotion-cache-yhxpuo li {{
-        margin-left: 0 !important;
-        padding-left: 0 !important;
-        text-align: left !important;
-    }}
-    
-    /* Fix lists specifically */
-    .st-emotion-cache-yhxpuo ol,
-    .st-emotion-cache-yhxpuo ul {{
-        padding-left: 1.5rem !important;
-    }}
     </style>
     """, unsafe_allow_html=True)
 
