@@ -3870,14 +3870,23 @@ def show_home_screen():
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Online Tests")
     st.subheader("Select Question Bank")
-    
-    breadcrumb = "Home"
-        
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
         display_folder_navigation(folder_structure)
     else:
         st.info("No folder structure found. Make sure 'Question_Data_Folder' exists with proper structure.")
+        
+    # Get current path - MUST BE DEFINED BEFORE USING IT
+    current_path = st.session_state.get('editor_current_path', [])
+    
+    # Display current location breadcrumb
+    if current_path:
+        breadcrumb = "Home > " + " > ".join(current_path)
+    else:
+        breadcrumb = "Home"
+    
+    st.write(f"**📍:** `{breadcrumb}`")
+    st.markdown("<br>", unsafe_allow_html=True)    
 
 def show_platform_guide():
     """Actual platform guide implementation."""
