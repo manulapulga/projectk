@@ -53,8 +53,6 @@ def initialize_firebase():
 
 # Initialize Firebase
 db = initialize_firebase()
-import time
-time.sleep(2)   # <-- Add this here
 
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
@@ -4057,8 +4055,6 @@ def main():
     global db
     if 'db' not in globals():
         db = initialize_firebase()
-        import time
-        time.sleep(2)   # <-- Add this here
     
     # Initialize session state with stability features
     initialize_state()
