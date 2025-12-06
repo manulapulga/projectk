@@ -1319,45 +1319,39 @@ def show_system_settings():
             st.success("Settings saved successfully!")
             # Note: In production, save these to Firebase
             
-def get_question_key(file_path, sheet_name, question_index, field="question"):
-    """Generate a unique key for each question/option."""
-    return f"{file_path}::{sheet_name}::{question_index}::{field}"
-
 def render_formatted_content(content):
     """Render formatted content with HTML/CSS styling."""
     if not content or not isinstance(content, str):
         return content or ""
     
-    # If content contains HTML tags, render as HTML with proper container styling
+    # If content contains HTML tags, render as HTML with proper overflow handling
     if any(tag in content for tag in ['<b>', '<strong>', '<i>', '<em>', '<u>', '<br>', '<span', '<div', '<p>']):
-        # Wrap content in a div with proper styling to contain all elements
-        wrapped_content = f'''
-        <div class="formatted-content" style="
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-            white-space: normal;
-            max-width: 100%;
-            overflow: hidden;
-        ">
-            {content}
-        </div>
-        '''
-        return st.markdown(wrapped_content, unsafe_allow_html=True)
-    else:
-        # For plain text, use st.write with container styling
         return st.markdown(f'''
         <div class="formatted-content" style="
-            word-wrap: break-word;
-            overflow-wrap: break-word;
+            display: block;
+            width: 100%;
+            overflow: visible !important;
             white-space: normal;
-            max-width: 100%;
-            overflow: hidden;
+            word-wrap: break-word;
+            word-break: break-word;
         ">
             {content}
         </div>
         ''', unsafe_allow_html=True)
-
-
+    else:
+        # For plain text
+        return st.markdown(f'''
+        <div class="formatted-content" style="
+            display: block;
+            width: 100%;
+            overflow: visible !important;
+            white-space: normal;
+            word-wrap: break-word;
+            word-break: break-word;
+        ">
+            {content}
+        </div>
+        ''', unsafe_allow_html=True)
 
 def show_question_editor():
     """Admin interface for editing question formatting."""
