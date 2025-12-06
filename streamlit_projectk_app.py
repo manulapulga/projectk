@@ -2553,7 +2553,6 @@ def show_enhanced_question_interface():
     )
     
     selected_option = st.radio(
-        "Choose an option:",
         options=["A", "B", "C", "D", None],
         format_func=lambda x: "Clear Response" if x is None else f"{x}) {options_dict[x]}",
         index=["A", "B", "C", "D", None].index(default_radio_value),
