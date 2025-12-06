@@ -3619,7 +3619,7 @@ def show_results_screen():
         color = LITMUSQ_THEME['secondary']
     
     st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
-    
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     st.download_button(
         label="📥 Download Results",
         data=res_df.to_csv(index=False),
@@ -3629,16 +3629,16 @@ def show_results_screen():
         key="download_results"
     )
 # Navigation options - Add Home button
-    if st.button("🏠 Home", use_container_width=True, key="results_home", type="secondary"):
+    if st.button("🏠 Home", use_container_width=True, key="results_home"):
         st.session_state.current_screen = "home"
         st.rerun()
-    if st.button("← Back to Config", use_container_width=True, key="results_back", type="secondary"):
+    if st.button("← Back to Config", use_container_width=True, key="results_back"):
         st.session_state.current_screen = "exam_config"
         st.rerun()
-    if st.button("📊 View Analysis", use_container_width=True, key="results_analysis", type="secondary"):
+    if st.button("📊 View Analysis", use_container_width=True, key="results_analysis"):
         st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
         st.rerun()
-    if st.button("🔁 Retake Test", use_container_width=True, key="results_retake", type="secondary"):
+    if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
         df_exam = st.session_state.quiz_questions
         start_quiz(
             df_exam, 
@@ -3649,7 +3649,7 @@ def show_results_screen():
         )
         st.session_state.current_screen = "quiz"
         st.rerun()
-    if st.button("📈 Performance", use_container_width=True, key="results_dashboard", type="secondary"):
+    if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
         st.session_state.current_screen = "dashboard"
         st.rerun()    
     # Detailed analysis
