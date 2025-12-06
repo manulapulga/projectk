@@ -1253,16 +1253,25 @@ def get_question_key(file_path, sheet_name, question_index, field="question"):
     """Generate a unique key for each question/option."""
     return f"{file_path}::{sheet_name}::{question_index}::{field}"
 
-def render_formatted_content(content):
-    """Render formatted content with HTML/CSS styling."""
+def render_formatted_content(content, sl_no=None):
+    """Render formatted content with HTML/CSS styling, including Sl No prefix."""
     if not content or not isinstance(content, str):
         return content or ""
     
+    # Build prefix (use only if sl_no provided)
+    prefix_html = ""
+    if sl_no is not None:
+        prefix_html = f"<b>Q. {sl_no}</b> — "
+    
     # If content contains HTML tags, render as HTML
     if any(tag in content for tag in ['<b>', '<strong>', '<i>', '<em>', '<u>', '<br>', '<span', '<div', '<p>']):
-        return st.markdown(f'<div class="formatted-content">{content}</div>', unsafe_allow_html=True)
+        final_html = f'<div class="formatted-content">{prefix_html}{content}</div>'
+        return st.markdown(final_html, unsafe_allow_html=True)
     else:
-        return st.write(content)
+        # For plain text, prefix manually
+        final_text = f"**Q. {sl_no}** — {content}" if sl_no else content
+        return st.markdown(final_text)
+
 
 
 
@@ -2531,7 +2540,8 @@ def show_enhanced_question_interface():
     
     
     # Render formatted question
-    render_formatted_content(formatted_question)
+    sl_no = row.get("Sl No", current_idx + 1)
+    render_formatted_content(formatted_question, sl_no)
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
@@ -3520,7 +3530,9 @@ def show_enhanced_detailed_analysis(res_df):
             
             # Question text
             st.markdown("**Question:**")
-            render_formatted_content(formatted_question)
+            sl_no = row.get("Sl No", current_idx + 1)
+            render_formatted_content(formatted_question, sl_no)
+
             
             # Options with status indicators
             def render_formatted_option(label, text, is_correct, is_chosen):
