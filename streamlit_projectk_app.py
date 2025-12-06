@@ -3871,11 +3871,7 @@ def show_home_screen():
     show_litmusq_header("Online Tests")
     st.subheader("Select Question Bank")
     
-    # Display current location breadcrumb
-    if current_path:
-        breadcrumb = "Home > " + " > ".join(current_path)
-    else:
-        breadcrumb = "Home"
+    breadcrumb = "Home"
         
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
