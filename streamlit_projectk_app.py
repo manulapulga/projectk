@@ -2610,8 +2610,9 @@ def show_enhanced_question_interface():
         update_question_status(current_idx, 'answered', selected_option)
         st.session_state.answers[current_idx] = selected_option
     
-    st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
+    
     st.markdown("---")
+    st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
     
     
     # Enhanced action buttons
