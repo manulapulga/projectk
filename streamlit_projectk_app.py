@@ -1292,9 +1292,9 @@ def show_question_editor():
     
     # Display current location breadcrumb
     if current_path:
-        breadcrumb = "Root > " + " > ".join(current_path)
+        breadcrumb = "Home > " + " > ".join(current_path)
     else:
-        breadcrumb = "Root"
+        breadcrumb = "Home"
     
     st.write(f"**📍:** `{breadcrumb}`")
     st.markdown("<br>", unsafe_allow_html=True)
@@ -3869,8 +3869,14 @@ def show_home_screen():
     """Display the main folder navigation."""
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Online Tests")
-    st.markdown("Select Exam")
-    st.markdown(f"**📍:** Root")
+    st.markdown("Select Question Bank")
+    
+    # Display current location breadcrumb
+    if current_path:
+        breadcrumb = "Home > " + " > ".join(current_path)
+    else:
+        breadcrumb = "Home"
+        
     folder_structure = st.session_state.get('folder_structure', {})
     if folder_structure:
         display_folder_navigation(folder_structure)
