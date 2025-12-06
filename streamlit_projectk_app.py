@@ -2134,11 +2134,16 @@ def show_folder_view_screen():
             st.rerun()
     with col2:
         if st.button("← Back", use_container_width=True, key="folder_back"):
-            if len(current_path) > 0:
-                st.session_state.current_path = current_path[:-1]
-            else:
+    
+            # If breadcrumb length <= 1 → treat as Home
+            if len(current_path) <= 1:
+                st.session_state.current_path = []   # reset to root
                 st.session_state.current_screen = "home"
+            else:
+                st.session_state.current_path = current_path[:-1]
+    
             st.rerun()
+
     
     breadcrumb = " > ".join(current_path) if current_path else ""
     st.write(f"**📍:** `{breadcrumb}`")
