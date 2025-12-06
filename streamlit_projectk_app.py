@@ -154,8 +154,8 @@ def inject_custom_css():
     /* Main content container – prevents header overlap */
     .block-container {{
         padding-top: 0.1rem !important;   /* header clearance */
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
+        padding-left: 0.2rem !important;
+        padding-right: 0.2rem !important;
         padding-bottom: 0.1rem !important;
     }}
 
