@@ -12,6 +12,9 @@ import streamlit.components.v1 as components
 import firebase_admin
 from firebase_admin import credentials, firestore
 import json
+from datetime import datetime
+import pytz
+
 
 # =============================
 # Configuration & Theme
@@ -65,6 +68,10 @@ LITMUSQ_THEME = {
     "warning": "#D97706",      # Amber for warnings
     "light_bg": "#EFF6FF"      # Light blue background
 }
+
+def now_ist():
+    ist = pytz.timezone("Asia/Kolkata")
+    return datetime.now(ist)
 
 # =============================
 # Custom CSS Injection
@@ -448,7 +455,7 @@ def register_user(full_name, email, phone, username, password):
             "password": password,
             "is_approved": False,     
             "role": "student",  # Default role for registered users
-            "created_at": datetime.now().isoformat(),
+            "created_at": now_ist().isoformat(),
             "last_login": None,
             "is_active": True
         }
@@ -515,7 +522,7 @@ def authenticate_user_firebase(username, password):
         # Check password
         if user_data.get('password') == password:
             # Update last login
-            user_ref.update({"last_login": datetime.now().isoformat()})
+            user_ref.update({"last_login": now_ist().isoformat()})
             return True, "success"
         else:
             return False, "Invalid password"
@@ -580,7 +587,7 @@ def update_user_status(username, is_active):
         user_ref = db.collection('users').document(username)
         user_ref.update({
             "is_active": is_active,
-            "updated_at": datetime.now().isoformat()
+            "updated_at": now_ist().isoformat()
         })
         return True
     except Exception as e:
@@ -633,7 +640,7 @@ def update_user_approval(username, is_approved):
         user_ref = db.collection('users').document(username)
         user_ref.update({
             "is_approved": is_approved,
-            "updated_at": datetime.now().isoformat()
+            "updated_at": now_ist().isoformat()
         })
         return True
     except Exception as e:
@@ -1173,7 +1180,7 @@ def show_admin_analytics():
     # Registration trend (last 30 days)
     thirty_days_ago = datetime.now() - timedelta(days=30)
     recent_users = sum(1 for user in users 
-                      if datetime.fromisoformat(user.get('created_at', '2000-01-01')) > thirty_days_ago)
+                      if datetime.fromisoformat(user.get('created_at', '2000-01-01')).astimezone(pytz.timezone("Asia/Kolkata")) > thirty_days_ago)
     
     # Reduce st.metric font size
     st.markdown("""
@@ -1660,8 +1667,8 @@ def initialize_user_progress(username):
                 "achievements": [],
                 "weak_areas": [],
                 "strong_areas": [],
-                "join_date": datetime.now().isoformat(),
-                "last_updated": datetime.now().isoformat()
+                "join_date": now_ist().isoformat(),
+                "last_updated": now_ist().isoformat()
             })
     except Exception as e:
         st.error(f"❌ Error initializing user progress: {e}")
@@ -1683,7 +1690,7 @@ def save_test_result(username, test_entry):
 def update_user_profile(username, updated_data):
     """Update lightweight user profile (small doc)."""
     try:
-        updated_data["last_updated"] = datetime.now().isoformat()
+        updated_data["last_updated"] = now_ist().isoformat()
 
         profile_ref = db.collection("user_progress")\
                         .document(username)\
@@ -1704,7 +1711,7 @@ def save_user_progress(username, progress_data):
             return False
         
         # Add timestamp
-        progress_data["last_updated"] = datetime.now().isoformat()
+        progress_data["last_updated"] = now_ist().isoformat()
         
         # Convert numpy types to Python native types before saving to Firestore
         progress_data = convert_numpy_to_python(progress_data)
@@ -1865,8 +1872,8 @@ def update_user_progress(test_results):
         })
 
     test_entry = {
-        "test_id": str(datetime.now().timestamp()),
-        "date": datetime.now().isoformat(),
+        "test_id": str(now_ist().timestamp()),
+        "date": now_ist().isoformat(),
         "exam_name": str(test_results["Exam Name"]),
         "score": float(test_results["Marks Obtained"]),
         "total_marks": float(test_results["Total Marks"]),
@@ -1900,7 +1907,7 @@ def update_achievements(progress, test_results):
     # Speed demon (if time was limited and finished early)
     if (st.session_state.quiz_duration > 0 and 
         st.session_state.end_time and 
-        datetime.now() < st.session_state.end_time - timedelta(minutes=5) and
+        now_ist() < st.session_state.end_time - timedelta(minutes=5) and
         "speed_demon" not in achievements):
         achievements.append("speed_demon")
     
@@ -1994,7 +2001,7 @@ def show_student_dashboard():
         recent_tests = test_history[-10:]  # Show last 10 tests
         
         for idx, test in enumerate(reversed(recent_tests)):
-            test_date = datetime.fromisoformat(str(test.get("date", ""))).strftime("%Y-%m-%d %H:%M")
+            test_date = datetime.fromisoformat(str(test.get("date", ""))).astimezone(pytz.timezone("Asia/Kolkata")).strftime("%Y-%m-%d %H:%M")
             percentage = float(test.get("percentage", 0))
             
             # Create columns for layout
@@ -3371,7 +3378,7 @@ def show_retest_config(original_test):
             st.session_state.current_screen = "dashboard"
             st.rerun()
     
-    st.markdown(f"**Original Test Date:** {datetime.fromisoformat(original_test['date']).strftime('%Y-%m-%d %H:%M')}")
+    st.markdown(f"**Original Test Date:** {datetime.fromisoformat(original_test['date']).astimezone(pytz.timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M')}")
     st.markdown(f"**Original Score:** {original_test['score']}/{original_test['total_marks']} ({original_test['percentage']:.1f}%)")
     
     # Check if we have stored questions
