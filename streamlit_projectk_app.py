@@ -397,7 +397,53 @@ def inject_custom_css():
             padding: 1rem !important;
         }}
     }}
-
+    
+    /* =========================================================
+       QUIZ QUESTION SPECIFIC FIXES
+    ==========================================================*/
+    
+    /* Target the specific markdown container for questions */
+    div[data-testid="stMarkdownContainer"] {{
+        padding-left: 0.5rem !important;
+        margin-left: 0rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }}
+    
+    /* Make sure paragraphs inside have minimal margin */
+    div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stMarkdownContainer"] ol,
+    div[data-testid="stMarkdownContainer"] ul,
+    div[data-testid="stMarkdownContainer"] li {{
+        margin-left: 0rem !important;
+        padding-left: 0rem !important;
+        text-align: left !important;
+    }}
+    
+    /* Specifically fix ordered/unordered list alignment */
+    div[data-testid="stMarkdownContainer"] ol,
+    div[data-testid="stMarkdownContainer"] ul {{
+        padding-left: 1.5rem !important;  /* Just enough for bullets/numbers */
+    }}
+    
+    /* Fix for the question display area */
+    .stMarkdown {{
+        padding-left: 0rem !important;
+        margin-left: 0rem !important;
+        width: 100% !important;
+    }}
+    
+    /* Ensure question text starts from left edge */
+    .stMarkdown > div {{
+        margin-left: 0rem !important;
+        padding-left: 0rem !important;
+    }}
+    
+    /* For quiz screen only - override all containers */
+    .quiz-screen div[data-testid="stMarkdownContainer"] {{
+        padding-left: 0.2rem !important;
+        margin-left: 0rem !important;
+    }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -3038,26 +3084,6 @@ def show_quiz_header_with_timer():
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }}
-        
-        /* ADD THESE FIXES FOR MAIN CONTENT AREA */
-        .main .block-container {{
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-            padding-top: 1rem !important; /* Adjust based on header height */
-        }}
-        
-        /* Target the specific quiz content area */
-        div[data-testid="stAppViewContainer"] > div[data-testid="stAppViewBlockContainer"] {{
-            padding-left: 1rem !important;
-            padding-right: 1rem !important;
-        }}
-        
-        /* Ensure question card has minimal left margin */
-        .question-card {{
-            margin-left: 1rem !important;
-            margin-right: 1rem !important;
-        }}
-        
         .content-wrapper {{
             padding-top: 70px; /* Make space for fixed header */
         }}
@@ -3143,24 +3169,6 @@ def show_quiz_header_with_timer():
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }}
-        
-        /* ADD THESE FIXES HERE TOO */
-        .main .block-container {{
-            padding-left: 0.1rem !important;
-            padding-right: 0.1rem !important;
-            padding-top: 4.5rem !important;
-        }}
-        
-        div[data-testid="stAppViewContainer"] > div[data-testid="stAppViewBlockContainer"] {{
-            padding-left: 0.1rem !important;
-            padding-right: 0.1rem !important;
-        }}
-        
-        .question-card {{
-            margin-left: 0rem !important;
-            margin-right: 0rem !important;
-        }}
-        
         .content-wrapper {{
             padding-top: 70px;
         }}
