@@ -2165,21 +2165,6 @@ def show_folder_view_screen():
                 
                 sheet_names = list(questions_data.keys())
                 if sheet_names:
-                    st.markdown(f"""
-                    <div style="text-align: center; margin: 2rem 0;">
-                        <h2 style="color: {LITMUSQ_THEME['primary']}; 
-                                   font-weight: 700; 
-                                   margin-bottom: 0.5rem;">
-                            🧪 Select Test
-                        </h2>
-                        <div style="height: 2px; 
-                                    background: {LITMUSQ_THEME['primary']}; 
-                                    margin: 0 auto; 
-                                    width: 50%; 
-                                    opacity: 0.7;">
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
 
                     # Mobile-friendly card layout for each test
                     for idx, sheet_name in enumerate(sheet_names):
