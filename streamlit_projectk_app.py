@@ -398,19 +398,22 @@ def inject_custom_css():
         }}
     }}
     
-    .st-emotion-cache-yhxpuo {
-    font-family: "Source Sans", sans-serif;
-    font-size: 1rem;
-    margin-bottom: -1rem;
-    color: inherit;
-    max-width: 100%;
-    width: 100%;
-    overflow-wrap: break-word;
-    
-    
     </style>
     """, unsafe_allow_html=True)
 
+def inject_quiz_question_fix():
+    """Target the exact class from your inspect."""
+    st.markdown("""
+    <style>
+    /* Pull the question container to the left */
+    .st-emotion-cache-yhxpuo {
+        padding-left: 0.2rem !important;
+        margin-left: -0.8rem !important;  /* Negative margin to pull left */
+        width: calc(100% + 0.8rem) !important;
+        max-width: calc(100% + 0.8rem) !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 # =============================
 # Firebase User Management Functions
 # =============================
