@@ -1472,7 +1472,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
     # Use a form for the editing interface
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     with st.form(f"edit_question_{question_index}"):
-        st.subheader("Edit Content")
+        st.markdown("**Edit Content**")
         
         edited_question = st.text_area(
             "**Question Text**",
@@ -1498,7 +1498,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         
         # Preview
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-        st.subheader("👁️ Live Preview")
+        st.markdown("👁️**Live Previe**")
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         st.markdown("**Question:**")
         render_formatted_content(edited_question)
@@ -1522,16 +1522,9 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         # Create three columns for action buttons INSIDE THE FORM
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
-        
-        with col2:
-            reset_btn = st.form_submit_button("🔁 Reset to Original", use_container_width=True, type="secondary")
-        
-        with col3:
-            clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True, type="secondary")
+        save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
+        reset_btn = st.form_submit_button("🔁 Reset to Original", use_container_width=True, type="secondary")
+        clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True, type="secondary")
     
     # Handle button actions after the form
     if save_btn:
