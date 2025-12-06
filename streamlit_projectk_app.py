@@ -763,59 +763,86 @@ def save_formatted_questions(formatted_data):
 # =============================
 
 def save_paused_quiz():
-    """Save paused quiz state to Firebase."""
+    """Save paused quiz state to Firebase with better error handling."""
     try:
         if db is None:
+            st.error("Firebase not initialized")
             return False
         
-        username = st.session_state.username
-        exam_name = st.session_state.exam_name
+        username = st.session_state.get('username')
+        exam_name = st.session_state.get('exam_name')
         
-        # Create a unique record ID for this paused exam
+        if not username or not exam_name:
+            st.error("Missing username or exam name")
+            return False
+        
+        # Create a valid unique record ID
         if not st.session_state.get('pause_record_id'):
-            st.session_state.pause_record_id = f"{username}_{exam_name}_{int(datetime.now().timestamp())}"
+            # Clean exam name for document ID
+            clean_exam_name = "".join(c for c in exam_name if c.isalnum() or c in "_-").strip("_")
+            if not clean_exam_name:
+                clean_exam_name = "exam"
+            
+            timestamp = int(datetime.now().timestamp())
+            record_id = f"{username}_{clean_exam_name}_{timestamp}"
+            st.session_state.pause_record_id = record_id
+        else:
+            record_id = st.session_state.pause_record_id
         
-        record_id = st.session_state.pause_record_id
+        # Validate record_id
+        if not record_id or len(record_id.strip()) == 0:
+            st.error("Invalid record ID")
+            return False
         
         # Calculate remaining time
         time_left = 0
         if st.session_state.end_time:
             time_left = max(0, int((st.session_state.end_time - datetime.now()).total_seconds()))
         
-        # Prepare quiz data for saving
+        # Prepare quiz data
         paused_data = {
-            "username": username,
-            "exam_name": exam_name,
-            "record_id": record_id,
+            "username": str(username),
+            "exam_name": str(exam_name),
+            "record_id": str(record_id),
             "paused_at": now_ist().isoformat(),
-            "time_left_seconds": time_left,
-            "current_question_idx": st.session_state.current_idx,
-            "answers": st.session_state.answers,
-            "question_status": st.session_state.question_status,
+            "time_left_seconds": int(time_left),
+            "current_question_idx": int(st.session_state.current_idx),
+            "answers": dict(st.session_state.answers) if st.session_state.answers else {},
+            "question_status": get_question_status_for_save(),
             "started_at": st.session_state.started_at.isoformat() if st.session_state.started_at else None,
-            "original_duration": st.session_state.quiz_duration,
-            "use_final_key": st.session_state.use_final_key,
-            "is_retest": st.session_state.get('is_retest', False),
-            "original_test_id": st.session_state.get('original_test_id'),
-            "retest_type": st.session_state.get('retest_type'),
-            "total_questions": len(st.session_state.quiz_questions),
-            "quiz_questions_summary": str(st.session_state.quiz_questions.shape)  # Store summary, not full data
+            "original_duration": int(st.session_state.quiz_duration),
+            "use_final_key": bool(st.session_state.use_final_key),
+            "is_retest": bool(st.session_state.get('is_retest', False)),
+            "original_test_id": str(st.session_state.get('original_test_id')) if st.session_state.get('original_test_id') else None,
+            "retest_type": str(st.session_state.get('retest_type')) if st.session_state.get('retest_type') else None,
+            "total_questions": int(len(st.session_state.quiz_questions)),
+            "status": "paused",
+            "last_updated": now_ist().isoformat()
         }
+        
+        # Clean up None values
+        cleaned_data = {}
+        for key, value in paused_data.items():
+            if value is not None:
+                cleaned_data[key] = value
+        
+        # Convert to Python native types
+        cleaned_data = ensure_python_types(cleaned_data)
+        
+        # Debug: Show what we're saving
+        st.write(f"Debug: Saving paused quiz with ID: {record_id}")
         
         # Save to Firebase
         pause_ref = db.collection('paused_quizzes').document(record_id)
-        pause_ref.set(paused_data)
+        pause_ref.set(cleaned_data, merge=True)
         
-        # Also save in user's paused_quizzes subcollection
-        user_pause_ref = db.collection('users').document(username)\
-                              .collection('paused_quizzes')\
-                              .document(record_id)
-        user_pause_ref.set(paused_data)
-        
+        st.write(f"✅ Paused quiz saved with ID: {record_id}")
         return True
         
     except Exception as e:
-        st.error(f"Error saving paused quiz: {e}")
+        st.error(f"❌ Error saving paused quiz: {str(e)}")
+        import traceback
+        st.error(f"Traceback: {traceback.format_exc()}")
         return False
 
 def load_paused_quiz(record_id):
@@ -824,23 +851,17 @@ def load_paused_quiz(record_id):
         if db is None:
             return None
         
-        username = st.session_state.username
-        
-        # Try to load from main paused_quizzes collection
+        # Try to load from paused_quizzes collection
         pause_ref = db.collection('paused_quizzes').document(record_id)
         pause_doc = pause_ref.get()
         
         if not pause_doc.exists:
-            # Try from user's subcollection
-            user_pause_ref = db.collection('users').document(username)\
-                                  .collection('paused_quizzes')\
-                                  .document(record_id)
-            pause_doc = user_pause_ref.get()
-            
-            if not pause_doc.exists:
-                return None
+            st.error(f"No paused quiz found with ID: {record_id}")
+            return None
         
-        return pause_doc.to_dict()
+        data = pause_doc.to_dict()
+        st.write(f"✅ Loaded paused quiz: {data.get('exam_name')}")
+        return data
         
     except Exception as e:
         st.error(f"Error loading paused quiz: {e}")
@@ -852,21 +873,18 @@ def delete_paused_quiz(record_id):
         if db is None:
             return False
         
-        username = st.session_state.username
+        if not record_id:
+            return False
         
-        # Delete from main collection
+        # Delete from paused_quizzes collection
         pause_ref = db.collection('paused_quizzes').document(record_id)
         pause_doc = pause_ref.get()
+        
         if pause_doc.exists:
             pause_ref.delete()
-        
-        # Delete from user's subcollection
-        user_pause_ref = db.collection('users').document(username)\
-                              .collection('paused_quizzes')\
-                              .document(record_id)
-        user_pause_ref.delete()
-        
-        return True
+            return True
+        else:
+            return False
         
     except Exception as e:
         st.error(f"Error deleting paused quiz: {e}")
@@ -1921,7 +1939,7 @@ def convert_numpy_to_python(data):
 def ensure_python_types(data):
     """Ensure all data is in Python native types for Firestore compatibility."""
     if isinstance(data, dict):
-        return {key: ensure_python_types(value) for key, value in data.items()}
+        return {str(key): ensure_python_types(value) for key, value in data.items()}
     elif isinstance(data, list):
         return [ensure_python_types(item) for item in data]
     elif isinstance(data, (np.bool_, np.bool)):
@@ -1940,8 +1958,41 @@ def ensure_python_types(data):
         return data.decode('utf-8') if isinstance(data, bytes) else str(data)
     elif pd.isna(data):
         return None
+    elif isinstance(data, datetime):
+        return data.isoformat()
     else:
         return data
+        
+def get_question_status_for_save():
+    """Convert question_status to a Firebase-compatible format."""
+    if 'question_status' not in st.session_state:
+        return {}
+    
+    status_dict = {}
+    for idx, status in st.session_state.question_status.items():
+        # Ensure all values are serializable
+        status_dict[int(idx)] = {
+            'status': str(status.get('status', 'not_visited')),
+            'marked': bool(status.get('marked', False)),
+            'answer': str(status.get('answer')) if status.get('answer') else None,
+            'time_spent': float(status.get('time_spent', 0)),
+            'visited_at': status.get('visited_at').isoformat() if status.get('visited_at') else None
+        }
+    return status_dict
+
+def restore_question_status_from_save(saved_status):
+    """Restore question_status from saved format."""
+    status_dict = {}
+    for idx_str, status in saved_status.items():
+        idx = int(idx_str)
+        status_dict[idx] = {
+            'status': str(status.get('status', 'not_visited')),
+            'marked': bool(status.get('marked', False)),
+            'answer': str(status.get('answer')) if status.get('answer') else None,
+            'time_spent': float(status.get('time_spent', 0)),
+            'visited_at': datetime.fromisoformat(status['visited_at']) if status.get('visited_at') else None
+        }
+    return status_dict        
         
 def load_user_progress(username):
     """Load ONLY lightweight profile data."""
@@ -3615,40 +3666,31 @@ def show_paused_quiz_interface():
         st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
         
         # Resume button
-        if st.button("▶️ Resume Quiz", 
-                    use_container_width=True,
-                    type="primary",
-                    key="resume_quiz"):
-            resume_quiz()
-            st.rerun()
-        
-        st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-        
-        # Save & Exit button
-        if st.button("💾 Save & Exit to Exam List", 
-                    use_container_width=True,
-                    type="secondary",
-                    key="save_and_exit"):
-            if save_paused_quiz():
-                st.success("Quiz saved successfully!")
-                st.session_state.current_screen = "home"
+        resume_col1, resume_col2 = st.columns(2)
+        with resume_col1:
+            if st.button("▶️ Resume Quiz", 
+                        use_container_width=True,
+                        type="primary",
+                        key="resume_quiz"):
+                resume_quiz()
                 st.rerun()
-            else:
-                st.error("Failed to save quiz. Please try again.")
         
-        st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-        
-        # Continue without saving button
-        if st.button("❌ Discard & Exit", 
-                    use_container_width=True,
-                    type="secondary",
-                    key="discard_and_exit"):
-            st.session_state.current_screen = "home"
-            st.rerun()
+        with resume_col2:
+            if st.button("💾 Save & Exit", 
+                        use_container_width=True,
+                        type="secondary",
+                        key="save_and_exit"):
+                if save_paused_quiz():
+                    st.success("Quiz saved! Returning to home...")
+                    time.sleep(1)  # Brief delay to show success message
+                    st.session_state.current_screen = "home"
+                    st.rerun()
+                else:
+                    st.error("Failed to save quiz. Please try again.")
         
         # Show stats
         st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
-        with st.expander("📊 Current Progress", expanded=False):
+        with st.expander("📊 Current Progress", expanded=True):
             total = len(st.session_state.quiz_questions)
             answered = sum(1 for status in st.session_state.question_status.values() 
                           if status['answer'] is not None)
@@ -3657,53 +3699,99 @@ def show_paused_quiz_interface():
             
             col1, col2, col3 = st.columns(3)
             with col1:
-                st.metric("Questions", total)
+                st.metric("Total Questions", total)
             with col2:
-                st.metric("Answered", answered)
+                st.metric("Answered", f"{answered}/{total}")
             with col3:
-                st.metric("Marked", marked)
+                st.metric("Marked for Review", marked)
             
             # Show time remaining if applicable
             if st.session_state.paused_time_left:
                 minutes = st.session_state.paused_time_left // 60
                 seconds = st.session_state.paused_time_left % 60
-                st.info(f"⏰ Time remaining when paused: {minutes}:{seconds:02d}")
+                st.info(f"⏰ Time remaining: {minutes}:{seconds:02d}")
+                
+def test_firebase_connection():
+    """Test Firebase connection and document creation."""
+    try:
+        if db is None:
+            st.error("Firebase not initialized")
+            return False
+        
+        # Test with a simple document
+        test_ref = db.collection('test_connection').document('test_doc')
+        test_ref.set({
+            'test_time': now_ist().isoformat(),
+            'message': 'Firebase connection test'
+        })
+        
+        # Read it back
+        doc = test_ref.get()
+        if doc.exists:
+            st.success("✅ Firebase connection test successful!")
+            return True
+        else:
+            st.error("❌ Firebase test failed")
+            return False
+            
+    except Exception as e:
+        st.error(f"❌ Firebase test error: {e}")
+        return False                
                 
 def pause_quiz():
     """Pause the quiz and save current state."""
-    # Calculate remaining time
-    time_left = 0
-    if st.session_state.end_time:
-        time_left = max(0, int((st.session_state.end_time - datetime.now()).total_seconds()))
-    
-    # Save to session state
-    st.session_state.quiz_paused = True
-    st.session_state.paused_time_left = time_left
-    st.session_state.paused_at = datetime.now()
-    
-    # Store original end time
-    if st.session_state.end_time:
-        st.session_state.original_end_time = st.session_state.end_time
-    
-    # Save to Firebase
-    save_paused_quiz()
-    
-    st.success("✅ Quiz paused successfully!")
+    try:
+        # Calculate remaining time
+        time_left = 0
+        if st.session_state.end_time:
+            time_left = max(0, int((st.session_state.end_time - datetime.now()).total_seconds()))
+        
+        # Save to session state
+        st.session_state.quiz_paused = True
+        st.session_state.paused_time_left = time_left
+        st.session_state.paused_at = datetime.now()
+        
+        # Store original end time
+        if st.session_state.end_time:
+            st.session_state.original_end_time = st.session_state.end_time
+        
+        # Save to Firebase
+        if save_paused_quiz():
+            st.success("✅ Quiz paused successfully!")
+        else:
+            st.error("Failed to save paused state. Try again.")
+            st.session_state.quiz_paused = False  # Revert if save fails
+            
+    except Exception as e:
+        st.error(f"Error pausing quiz: {e}")
+        st.session_state.quiz_paused = False
 
 def resume_quiz():
     """Resume a paused quiz."""
-    # Restore timer if it was running
-    if st.session_state.paused_time_left and st.session_state.paused_time_left > 0:
-        # Calculate new end time based on paused time left
-        new_end_time = datetime.now() + timedelta(seconds=st.session_state.paused_time_left)
-        st.session_state.end_time = new_end_time
-    
-    # Restore quiz state
-    st.session_state.quiz_paused = False
-    st.session_state.paused_time_left = None
-    st.session_state.paused_at = None
-    
-    st.success("✅ Quiz resumed!")
+    try:
+        # Restore timer if it was running
+        if st.session_state.paused_time_left and st.session_state.paused_time_left > 0:
+            # Calculate new end time based on paused time left
+            new_end_time = datetime.now() + timedelta(seconds=st.session_state.paused_time_left)
+            st.session_state.end_time = new_end_time
+        
+        # Restore quiz state
+        st.session_state.quiz_paused = False
+        st.session_state.paused_time_left = None
+        st.session_state.paused_at = None
+        
+        # Delete the paused record since we're resuming
+        if st.session_state.get('pause_record_id'):
+            try:
+                delete_paused_quiz(st.session_state.pause_record_id)
+            except:
+                pass  # Don't fail if delete doesn't work
+        
+        st.success("✅ Quiz resumed!")
+        st.rerun()
+        
+    except Exception as e:
+        st.error(f"Error resuming quiz: {e}")
 
 def save_and_exit_quiz():
     """Save quiz state and exit to home."""
@@ -4527,6 +4615,15 @@ def quick_actions_panel():
         st.session_state.current_screen = "guide"
         st.rerun()
         
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### 🐛 Debug")
+    
+    if st.sidebar.button("Test Firebase", key="test_firebase"):
+        test_firebase_connection()
+    
+    if st.sidebar.button("Show Session State", key="show_session"):
+        st.write(st.session_state)    
+        
 # =============================
 # Enhanced Initialization
 # =============================
@@ -4602,6 +4699,19 @@ def main():
     
     # Inject custom CSS
     inject_custom_css()
+    
+    # Initialize Firebase
+    try:
+        global db
+        if 'db' not in globals() or db is None:
+            db = initialize_firebase()
+            if db:
+                st.sidebar.success("✅ Firebase connected")
+            else:
+                st.sidebar.warning("⚠️ Using local storage only")
+    except Exception as e:
+        st.sidebar.error(f"❌ Firebase error: {e}")
+        db = None
     
     # Initialize Firebase
     global db
