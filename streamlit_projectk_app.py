@@ -1407,7 +1407,7 @@ def show_question_editor():
 def show_question_editing_interface(question_row, question_index, file_path, sheet_name, formatted_questions):
     """Show editing interface for a specific question."""
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-    st.markdown("✏️ **Editing Question {question_index + 1}**")
+    st.markdown(f"✏️ **Editing Question {question_index + 1}**")
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     
     # Store original content in session state for reliable access
