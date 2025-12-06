@@ -3571,36 +3571,30 @@ def show_results_screen():
     # Clear retest state after saving results
     clear_retest_state()
     
-    # Navigation options - Add Home button
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        if st.button("🏠 Home", use_container_width=True, key="results_home"):
-            st.session_state.current_screen = "home"
-            st.rerun()
-    with col2:
-        if st.button("← Back to Config", use_container_width=True, key="results_back"):
-            st.session_state.current_screen = "exam_config"
-            st.rerun()
-    with col3:
-        if st.button("📊 View Analysis", use_container_width=True, key="results_analysis"):
-            st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
-            st.rerun()
-    with col4:
-        if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
-            df_exam = st.session_state.quiz_questions
-            start_quiz(
-                df_exam, 
-                len(df_exam),
-                st.session_state.quiz_duration,
-                st.session_state.use_final_key, 
-                st.session_state.exam_name
-            )
-            st.session_state.current_screen = "quiz"
-            st.rerun()
-    with col5:
-        if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
-            st.session_state.current_screen = "dashboard"
-            st.rerun()
+# Navigation options - Add Home button
+    if st.button("🏠 Home", use_container_width=True, key="results_home"):
+        st.session_state.current_screen = "home"
+        st.rerun()
+    if st.button("← Back to Config", use_container_width=True, key="results_back"):
+        st.session_state.current_screen = "exam_config"
+        st.rerun()
+    if st.button("📊 View Analysis", use_container_width=True, key="results_analysis"):
+        st.session_state.show_detailed_analysis = not st.session_state.get('show_detailed_analysis', False)
+        st.rerun()
+    if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
+        df_exam = st.session_state.quiz_questions
+        start_quiz(
+            df_exam, 
+            len(df_exam),
+            st.session_state.quiz_duration,
+            st.session_state.use_final_key, 
+            st.session_state.exam_name
+        )
+        st.session_state.current_screen = "quiz"
+        st.rerun()
+    if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
+        st.session_state.current_screen = "dashboard"
+        st.rerun()
     
     # Summary cards with enhanced styling
     st.markdown("---")
