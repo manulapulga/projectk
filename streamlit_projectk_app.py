@@ -2126,19 +2126,20 @@ def show_folder_view_screen():
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Select Exam")
     
+    # Home and Navigation buttons
     if st.button("🏠 Home", use_container_width=True, key="folder_home"):
-            st.session_state.current_screen = "home"
-            st.rerun()
+        st.session_state.current_screen = "home"
+        st.rerun()
     if st.button("← Back", use_container_width=True, key="folder_back"):
-    
-            # If breadcrumb length <= 1 → treat as Home
-            if len(current_path) <= 1:
-                st.session_state.current_path = []   # reset to root
-                st.session_state.current_screen = "home"
-            else:
-                st.session_state.current_path = current_path[:-1]
-    
-            st.rerun()
+
+        # If breadcrumb length <= 1 → treat as Home
+        if len(current_path) <= 1:
+            st.session_state.current_path = []   # reset to root
+            st.session_state.current_screen = "home"
+        else:
+            st.session_state.current_path = current_path[:-1]
+
+        st.rerun()
 
     
     breadcrumb = " > ".join(current_path) if current_path else ""
@@ -3856,17 +3857,17 @@ def show_home_screen():
     st.markdown("<div style='margin-top: 4rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Online Tests")
     
+    # Home and Navigation buttons
     if st.button("🏠 Home", use_container_width=True, key="folder_home"):
+        st.session_state.current_screen = "home"
+        st.rerun()
+    if st.button("← Back", use_container_width=True, key="folder_back"):
+        if len(current_path) > 0:
+            st.session_state.current_path = current_path[:-1]
+        else:
             st.session_state.current_screen = "home"
-            st.rerun()
-            
-   if st.button("← Back", use_container_width=True, key="folder_back"):
-            if len(current_path) > 0:
-                st.session_state.current_path = current_path[:-1]
-            else:
-                st.session_state.current_screen = "home"
-            st.rerun()
-    
+        st.rerun()
+
     # Get current path - MUST BE DEFINED BEFORE USING IT
     current_path = st.session_state.get('editor_current_path', [])
     
