@@ -398,7 +398,82 @@ def inject_custom_css():
         }}
     }}
     
-
+    /* =========================================================
+       QUIZ QUESTION SPECIFIC FIXES - TARGET ONLY QUIZ SCREEN
+    ==========================================================*/
+    
+    /* Only apply these fixes when on quiz screen */
+    /* We'll use a data attribute to identify quiz screen */
+    
+    /* Target markdown containers ONLY in the main content area of quiz */
+    .main .block-container div[data-testid="stMarkdownContainer"] {{
+        padding-left: 0.5rem !important;
+        margin-left: 0rem !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }}
+    
+    /* Specifically target question-related containers by checking content */
+    .main .block-container div[data-testid="stMarkdownContainer"]:has(p):not(:has(h1)):not(:has(h2)):not(:has(h3)) {{
+        padding-left: 0.2rem !important;
+        margin-left: 0rem !important;
+    }}
+    
+    /* Target containers that have lists (likely questions with options) */
+    .main .block-container div[data-testid="stMarkdownContainer"]:has(ol),
+    .main .block-container div[data-testid="stMarkdownContainer"]:has(ul) {{
+        padding-left: 0.2rem !important;
+        margin-left: 0rem !important;
+    }}
+    
+    /* Make sure paragraphs inside quiz questions have minimal margin */
+    .main .block-container div[data-testid="stMarkdownContainer"] p,
+    .main .block-container div[data-testid="stMarkdownContainer"] ol,
+    .main .block-container div[data-testid="stMarkdownContainer"] ul,
+    .main .block-container div[data-testid="stMarkdownContainer"] li {{
+        margin-left: 0rem !important;
+        padding-left: 0rem !important;
+        text-align: left !important;
+    }}
+    
+    /* Specifically fix ordered/unordered list alignment in quiz */
+    .main .block-container div[data-testid="stMarkdownContainer"] ol,
+    .main .block-container div[data-testid="stMarkdownContainer"] ul {{
+        padding-left: 1.5rem !important;  /* Just enough for bullets/numbers */
+    }}
+    
+    /* Exclude headers from these fixes */
+    .main .block-container div[data-testid="stMarkdownContainer"] h1,
+    .main .block-container div[data-testid="stMarkdownContainer"] h2,
+    .main .block-container div[data-testid="stMarkdownContainer"] h3,
+    .main .block-container div[data-testid="stMarkdownContainer"] h4,
+    .main .block-container div[data-testid="stMarkdownContainer"] h5,
+    .main .block-container div[data-testid="stMarkdownContainer"] h6 {{
+        /* Let headers keep their original styling */
+        padding-left: inherit !important;
+        margin-left: inherit !important;
+    }}
+    
+    /* Alternative: Add a class to quiz questions for specific targeting */
+    .quiz-question div[data-testid="stMarkdownContainer"] {{
+        padding-left: 0.2rem !important;
+        margin-left: 0rem !important;
+    }}
+    
+    /* Fix for the question display area specifically */
+    div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlockBorderWrapper"] > div > div > div > div > div[data-testid="stMarkdownContainer"] {{
+        padding-left: 0.2rem !important;
+        margin-left: 0rem !important;
+    }}
+    
+    /* Protect the header by excluding elements with litmusq-header class */
+    .litmusq-header div[data-testid="stMarkdownContainer"],
+    .litmusq-header ~ div[data-testid="stMarkdownContainer"],
+    div[data-testid="stMarkdownContainer"]:has(.litmusq-header) {{
+        /* Reset to default for header */
+        padding-left: inherit !important;
+        margin-left: inherit !important;
+    }}
     </style>
     """, unsafe_allow_html=True)
 
