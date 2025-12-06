@@ -3606,21 +3606,15 @@ def show_results_screen():
     st.markdown("---")
     st.subheader("📊 Performance Summary")
     
-    col1, col2 = st.columns(2)
-    col3, col4 = st.columns(2)
-    
-    with col1:
-        st.metric("Total Questions", summary["Total Questions"])
-        st.markdown('</div>', unsafe_allow_html=True)
-    with col2:
-        st.metric("Attempted", summary["Attempted"])
-        st.markdown('</div>', unsafe_allow_html=True)
-    with col3:
-        st.metric("Correct Answers", summary["Correct"])
-        st.markdown('</div>', unsafe_allow_html=True)
-    with col4:
-        st.metric("Final Score", f"{summary['Marks Obtained']}/{summary['Total Marks']}")
-        st.markdown('</div>', unsafe_allow_html=True)
+
+    st.metric("Total Questions", summary["Total Questions"])
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.metric("Attempted", summary["Attempted"])
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.metric("Correct Answers", summary["Correct"])
+    st.markdown('</div>', unsafe_allow_html=True)
+    st.metric("Final Score", f"{summary['Marks Obtained']}/{summary['Total Marks']}")
+    st.markdown('</div>', unsafe_allow_html=True)
     
     # Score visualization
     percentage = summary['Percentage']
