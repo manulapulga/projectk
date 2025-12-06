@@ -2042,7 +2042,7 @@ def show_student_dashboard():
                         <p style="font-size: 0.8rem; color: #64748B;">{data['desc']}</p>
                     </div>
                     """, unsafe_allow_html=True)
-    
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     # Clear Data Section
     show_clear_data_section()
 
