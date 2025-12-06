@@ -2377,63 +2377,59 @@ def show_exam_config_screen():
     st.metric("Total No. of Questions", len(df_exam))
     
     # Enhanced metrics with expandable cards
-    col1, col2 = st.columns(2)
+    # MODIFICATION 1: Check for "Subjects Covered" column first, then "Subject" column
+    subjects_column = None
+    if "Subjects Covered" in df_exam.columns:
+        subjects_column = "Subjects Covered"
+    elif "Subject" in df_exam.columns:
+        subjects_column = "Subject"
     
-    with col1:
-        # MODIFICATION 1: Check for "Subjects Covered" column first, then "Subject" column
-        subjects_column = None
-        if "Subjects Covered" in df_exam.columns:
-            subjects_column = "Subjects Covered"
-        elif "Subject" in df_exam.columns:
-            subjects_column = "Subject"
+    if subjects_column:
+        # Get unique subjects (case-insensitive and strip whitespace)
+        subjects = df_exam[subjects_column].dropna().apply(lambda x: str(x).strip().title()).unique()
+        unique_subjects = sorted(subjects)
         
-        if subjects_column:
-            # Get unique subjects (case-insensitive and strip whitespace)
-            subjects = df_exam[subjects_column].dropna().apply(lambda x: str(x).strip().title()).unique()
-            unique_subjects = sorted(subjects)
-            
-            column_name_display = "Subjects Covered" if subjects_column == "Subjects Covered" else "Subject"
-            with st.expander(f"📚 {column_name_display}: **{len(unique_subjects)}**", expanded=False):
-                for i, subject in enumerate(unique_subjects, 1):
-                    st.write(f"• {subject}")
-                st.markdown("</div>", unsafe_allow_html=True)
-        else:
-            st.metric("Subjects Covered", "N/A")
-    
-    with col2:
-        if "Exam Year" in df_exam.columns:
-            # Get unique years (handle different formats)
-            years = df_exam["Exam Year"].dropna().apply(lambda x: str(x).strip()).unique()
-            
-            # Convert to numeric for proper sorting and remove duplicates
-            unique_years = []
-            for year in years:
-                try:
-                    # Try to convert to integer for proper sorting
-                    numeric_year = int(year)
-                    if numeric_year not in unique_years:
-                        unique_years.append(numeric_year)
-                except ValueError:
-                    # If not numeric, keep as string and ensure uniqueness
-                    if year not in unique_years:
-                        unique_years.append(year)
-            
-            # Sort years properly
+        column_name_display = "Subjects Covered" if subjects_column == "Subjects Covered" else "Subject"
+        with st.expander(f"📚 {column_name_display}: **{len(unique_subjects)}**", expanded=False):
+            for i, subject in enumerate(unique_subjects, 1):
+                st.write(f"• {subject}")
+            st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.metric("Subjects Covered", "N/A")
+
+    if "Exam Year" in df_exam.columns:
+        # Get unique years (handle different formats)
+        years = df_exam["Exam Year"].dropna().apply(lambda x: str(x).strip()).unique()
+        
+        # Convert to numeric for proper sorting and remove duplicates
+        unique_years = []
+        for year in years:
             try:
-                # Sort numeric years in descending order (most recent first)
-                numeric_years = [y for y in unique_years if isinstance(y, int)]
-                string_years = [y for y in unique_years if isinstance(y, str)]
-                sorted_years = sorted(numeric_years, reverse=True) + sorted(string_years)
-            except:
-                # Fallback: sort everything as strings
-                sorted_years = sorted(unique_years, key=str, reverse=True)
-            
-            with st.expander(f"📅 Years Covered: **{len(sorted_years)}**", expanded=False):
-                for year in sorted_years:
-                    st.write(f"• {year}")
-                st.markdown("</div>", unsafe_allow_html=True)
-        else:
-            st.metric("Years Covered", "N/A")
+                # Try to convert to integer for proper sorting
+                numeric_year = int(year)
+                if numeric_year not in unique_years:
+                    unique_years.append(numeric_year)
+            except ValueError:
+                # If not numeric, keep as string and ensure uniqueness
+                if year not in unique_years:
+                    unique_years.append(year)
+        
+        # Sort years properly
+        try:
+            # Sort numeric years in descending order (most recent first)
+            numeric_years = [y for y in unique_years if isinstance(y, int)]
+            string_years = [y for y in unique_years if isinstance(y, str)]
+            sorted_years = sorted(numeric_years, reverse=True) + sorted(string_years)
+        except:
+            # Fallback: sort everything as strings
+            sorted_years = sorted(unique_years, key=str, reverse=True)
+        
+        with st.expander(f"📅 Years Covered: **{len(sorted_years)}**", expanded=False):
+            for year in sorted_years:
+                st.write(f"• {year}")
+            st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.metric("Years Covered", "N/A")
     
     # Configuration options
     use_final_key = True
