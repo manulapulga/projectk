@@ -1885,7 +1885,7 @@ def update_achievements(progress, test_results):
 
 def show_clear_data_section():
     """Show section to clear performance data."""
-    st.markdown("---")
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     # Confirmation workflow
     if not st.session_state.get('show_clear_confirmation', False):
         if st.button("🚮 Clear All My Performance Data", type="secondary", key="clear_data_init", use_container_width="True"):
@@ -1896,7 +1896,7 @@ def show_clear_data_section():
             "<p style='color: #d9534f; font-weight: 600;'>⚠️ Are you sure you want to delete ALL your performance data? This action cannot be undone!</p>",
             unsafe_allow_html=True
         )
-        st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
         col1, col2 = st.columns([1, 1])
         with col1:
             if st.button("✅ Yes, Delete Everything", type="primary", key="confirm_clear", use_container_width="True"):
