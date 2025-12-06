@@ -1997,7 +1997,7 @@ def show_student_dashboard():
             with col5:
                 # Take Retest button
                 test_id = test.get('test_id', f"test_{idx}")
-                if st.button("🔄", key=f"retest_{test_id}", 
+                if st.button("🔁", key=f"retest_{test_id}", 
                            help="Take Re-Test"):
                     st.session_state.retest_config = test
                     st.session_state.current_screen = "retest_config"
