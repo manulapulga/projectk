@@ -3374,8 +3374,6 @@ def show_retest_config(original_test):
             elif not is_correct:
                 incorrect_questions.append(answer['question_index'])
     
-    st.subheader("📊 Original Test Analysis")
-    
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("Total Questions", total_questions)
@@ -3443,6 +3441,7 @@ def show_retest_config(original_test):
     
     df_questions = pd.DataFrame(questions_list)
     
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     # Store retest configuration in session state
     if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
         if question_count == 0:
