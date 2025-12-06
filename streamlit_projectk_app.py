@@ -2372,9 +2372,19 @@ def show_exam_config_screen():
             st.session_state.current_screen = "folder_view"
             st.rerun()
     st.subheader(f"Configure Test: {sheet_name}")
-    st.write(f"**📍:** `{' > '.join(current_path)}`")
     st.markdown("<div style='margin-top: 0.2;'></div>", unsafe_allow_html=True)
-    st.metric("Total No. of Questions", len(df_exam))
+    metadata_html = f"""
+    <div class="exam-meta-box">
+        <div class="exam-meta-inner" style="color:{LITMUSQ_THEME['text']};">
+            <span style="color:{LITMUSQ_THEME['success']}">Q: {total_questions}</span> • 
+            <span style="color:{LITMUSQ_THEME['primary']}">⏱️ {duration_display}</span> • 
+            <span style="color:{LITMUSQ_THEME['warning']}">📊 {marks_per_question}M/Q</span> •
+            <span style="color:{LITMUSQ_THEME['secondary']}">⚠️ {negative_marks_per_question}N/Q</span>
+        </div>
+    </div>
+    """
+    
+    st.markdown(metadata_html, unsafe_allow_html=True)
     
     # Enhanced metrics with expandable cards
     # MODIFICATION 1: Check for "Subjects Covered" column first, then "Subject" column
