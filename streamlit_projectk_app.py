@@ -1280,7 +1280,6 @@ def show_question_editor():
     formatted_questions = load_formatted_questions()
     
     # Folder selection
-    st.subheader("Select Question Bank")
     folder_structure = st.session_state.get('folder_structure', {})
     
     if not folder_structure:
@@ -1362,7 +1361,7 @@ def show_question_editor():
         
         if has_qb:
             st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-            st.subheader("📝 Question Bank Editor")
+            st.markdown("📝 **Question Bank Editor**")
             st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
             qb_path = os.path.join(QUESTION_DATA_FOLDER, *current_path, 'QB.xlsx')
             if os.path.exists(qb_path):
@@ -1371,7 +1370,7 @@ def show_question_editor():
                 if questions_data:
                     # Sheet selection
                     sheet_names = list(questions_data.keys())
-                    selected_sheet = st.selectbox("Select Sheet", sheet_names, key="editor_sheet")
+                    selected_sheet = st.selectbox("Select Question Paper", sheet_names, key="editor_sheet")
                     
                     if selected_sheet:
                         df = questions_data[selected_sheet]
@@ -1408,7 +1407,7 @@ def show_question_editor():
 def show_question_editing_interface(question_row, question_index, file_path, sheet_name, formatted_questions):
     """Show editing interface for a specific question."""
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-    st.subheader(f"✏️ Editing Question {question_index + 1}")
+    st.markdown("✏️ **Editing Question {question_index + 1}**")
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     
     # Store original content in session state for reliable access
