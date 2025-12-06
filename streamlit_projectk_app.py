@@ -3041,9 +3041,9 @@ def show_quiz_header_with_timer():
         
         /* ADD THESE FIXES FOR MAIN CONTENT AREA */
         .main .block-container {{
-            padding-left: 0.1rem !important;
-            padding-right: 0.1rem !important;
-            padding-top: 4.5rem !important; /* Adjust based on header height */
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            padding-top: 1rem !important; /* Adjust based on header height */
         }}
         
         /* Target the specific quiz content area */
