@@ -3038,6 +3038,26 @@ def show_quiz_header_with_timer():
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }}
+        
+        /* ADD THESE FIXES FOR MAIN CONTENT AREA */
+        .main .block-container {{
+            padding-left: 0.1rem !important;
+            padding-right: 0.1rem !important;
+            padding-top: 4.5rem !important; /* Adjust based on header height */
+        }}
+        
+        /* Target the specific quiz content area */
+        div[data-testid="stAppViewContainer"] > div[data-testid="stAppViewBlockContainer"] {{
+            padding-left: 0.1rem !important;
+            padding-right: 0.1rem !important;
+        }}
+        
+        /* Ensure question card has minimal left margin */
+        .question-card {{
+            margin-left: 0rem !important;
+            margin-right: 0rem !important;
+        }}
+        
         .content-wrapper {{
             padding-top: 70px; /* Make space for fixed header */
         }}
@@ -3123,6 +3143,24 @@ def show_quiz_header_with_timer():
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }}
+        
+        /* ADD THESE FIXES HERE TOO */
+        .main .block-container {{
+            padding-left: 0.1rem !important;
+            padding-right: 0.1rem !important;
+            padding-top: 4.5rem !important;
+        }}
+        
+        div[data-testid="stAppViewContainer"] > div[data-testid="stAppViewBlockContainer"] {{
+            padding-left: 0.1rem !important;
+            padding-right: 0.1rem !important;
+        }}
+        
+        .question-card {{
+            margin-left: 0rem !important;
+            margin-right: 0rem !important;
+        }}
+        
         .content-wrapper {{
             padding-top: 70px;
         }}
