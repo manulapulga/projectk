@@ -757,174 +757,7 @@ def save_formatted_questions(formatted_data):
     except Exception as e:
         st.error(f"Error saving formatted questions: {e}")
         return False
-
-# =============================
-# Pause & Resume Functions
-# =============================
-
-def save_paused_quiz():
-    """Save paused quiz state to Firebase."""
-    try:
-        if db is None:
-            return False
-        
-        username = st.session_state.username
-        exam_name = st.session_state.exam_name
-        
-        # Create a unique record ID for this paused exam
-        if not st.session_state.get('pause_record_id'):
-            st.session_state.pause_record_id = f"{username}_{exam_name}_{int(datetime.now().timestamp())}"
-        
-        record_id = st.session_state.pause_record_id
-        
-        # Calculate remaining time
-        time_left = 0
-        if st.session_state.end_time:
-            time_left = max(0, int((st.session_state.end_time - datetime.now()).total_seconds()))
-        
-        # Prepare quiz data for saving
-        paused_data = {
-            "username": username,
-            "exam_name": exam_name,
-            "record_id": record_id,
-            "paused_at": now_ist().isoformat(),
-            "time_left_seconds": time_left,
-            "current_question_idx": st.session_state.current_idx,
-            "answers": st.session_state.answers,
-            "question_status": st.session_state.question_status,
-            "started_at": st.session_state.started_at.isoformat() if st.session_state.started_at else None,
-            "original_duration": st.session_state.quiz_duration,
-            "use_final_key": st.session_state.use_final_key,
-            "is_retest": st.session_state.get('is_retest', False),
-            "original_test_id": st.session_state.get('original_test_id'),
-            "retest_type": st.session_state.get('retest_type'),
-            "total_questions": len(st.session_state.quiz_questions),
-            "quiz_questions_summary": str(st.session_state.quiz_questions.shape)  # Store summary, not full data
-        }
-        
-        # Save to Firebase
-        pause_ref = db.collection('paused_quizzes').document(record_id)
-        pause_ref.set(paused_data)
-        
-        # Also save in user's paused_quizzes subcollection
-        user_pause_ref = db.collection('users').document(username)\
-                              .collection('paused_quizzes')\
-                              .document(record_id)
-        user_pause_ref.set(paused_data)
-        
-        return True
-        
-    except Exception as e:
-        st.error(f"Error saving paused quiz: {e}")
-        return False
-
-def load_paused_quiz(record_id):
-    """Load paused quiz state from Firebase."""
-    try:
-        if db is None:
-            return None
-        
-        username = st.session_state.username
-        
-        # Try to load from main paused_quizzes collection
-        pause_ref = db.collection('paused_quizzes').document(record_id)
-        pause_doc = pause_ref.get()
-        
-        if not pause_doc.exists:
-            # Try from user's subcollection
-            user_pause_ref = db.collection('users').document(username)\
-                                  .collection('paused_quizzes')\
-                                  .document(record_id)
-            pause_doc = user_pause_ref.get()
-            
-            if not pause_doc.exists:
-                return None
-        
-        return pause_doc.to_dict()
-        
-    except Exception as e:
-        st.error(f"Error loading paused quiz: {e}")
-        return None
-
-def delete_paused_quiz(record_id):
-    """Delete paused quiz record from Firebase."""
-    try:
-        if db is None:
-            return False
-        
-        username = st.session_state.username
-        
-        # Delete from main collection
-        pause_ref = db.collection('paused_quizzes').document(record_id)
-        pause_doc = pause_ref.get()
-        if pause_doc.exists:
-            pause_ref.delete()
-        
-        # Delete from user's subcollection
-        user_pause_ref = db.collection('users').document(username)\
-                              .collection('paused_quizzes')\
-                              .document(record_id)
-        user_pause_ref.delete()
-        
-        return True
-        
-    except Exception as e:
-        st.error(f"Error deleting paused quiz: {e}")
-        return False
-
-def get_user_paused_quizzes(username):
-    """Get all paused quizzes for a user."""
-    try:
-        if db is None:
-            return []
-        
-        paused_quizzes = []
-        
-        # Get from user's subcollection
-        user_pause_ref = db.collection('users').document(username)\
-                               .collection('paused_quizzes')
-        
-        for doc in user_pause_ref.stream():
-            quiz_data = doc.to_dict()
-            quiz_data['id'] = doc.id
-            paused_quizzes.append(quiz_data)
-        
-        return paused_quizzes
-        
-    except Exception as e:
-        st.error(f"Error getting paused quizzes: {e}")
-        return []
-
-def update_paused_quiz_time(record_id, new_time_left):
-    """Update the time left for a paused quiz."""
-    try:
-        if db is None:
-            return False
-        
-        username = st.session_state.username
-        
-        # Update in main collection
-        pause_ref = db.collection('paused_quizzes').document(record_id)
-        pause_ref.update({
-            "time_left_seconds": new_time_left,
-            "last_updated": now_ist().isoformat()
-        })
-        
-        # Update in user's subcollection
-        user_pause_ref = db.collection('users').document(username)\
-                              .collection('paused_quizzes')\
-                              .document(record_id)
-        user_pause_ref.update({
-            "time_left_seconds": new_time_left,
-            "last_updated": now_ist().isoformat()
-        })
-        
-        return True
-        
-    except Exception as e:
-        st.error(f"Error updating paused quiz time: {e}")
-        return False
-        
+    
 # =============================
 # Branded Header
 # =============================
@@ -2112,7 +1945,7 @@ def show_clear_data_section():
 
 def show_student_dashboard():
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
-    """Display student dashboard with progress analytics and paused quizzes."""
+    """Display student dashboard with progress analytics."""
     show_litmusq_header("Your Learning Dashboard")
     
     # Home button
@@ -2122,47 +1955,6 @@ def show_student_dashboard():
     
     username = st.session_state.username
     progress = load_user_progress(username)
-    
-    # ===== PAUSED QUIZZES SECTION =====
-    paused_quizzes = get_user_paused_quizzes(username)
-    
-    if paused_quizzes:
-        st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-        st.markdown("### ⏸️ Paused Quizzes")
-        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-        
-        for quiz in paused_quizzes:
-            paused_at = datetime.fromisoformat(quiz.get('paused_at', ''))
-            time_left = quiz.get('time_left_seconds', 0)
-            minutes = time_left // 60
-            seconds = time_left % 60
-            
-            col1, col2, col3 = st.columns([3, 2, 1])
-            
-            with col1:
-                st.write(f"**{quiz.get('exam_name', 'Unknown')}**")
-                st.write(f"Paused: {paused_at.strftime('%Y-%m-%d %H:%M')}")
-            
-            with col2:
-                if time_left > 0:
-                    st.write(f"Time left: {minutes}:{seconds:02d}")
-                else:
-                    st.write("No time limit")
-                
-                answered = len(quiz.get('answers', {}))
-                st.write(f"Answered: {answered}/{quiz.get('total_questions', 0)}")
-            
-            with col3:
-                if st.button("▶️ Resume", key=f"resume_{quiz.get('id')}", use_container_width=True):
-                    resume_quiz_from_dashboard(quiz)
-            
-            st.markdown("---")
-    
-    if not progress and not paused_quizzes:
-        st.info("📊 Start taking tests to see your progress analytics!")
-        # Show clear data section even if no data exists
-        show_clear_data_section()
-        return
     
     if not progress:
         st.info("📊 Start taking tests to see your progress analytics!")
@@ -2857,8 +2649,8 @@ def show_enhanced_question_interface():
     st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
     
     
-    # Enhanced action buttons - ADDED PAUSE BUTTON
-    col1, col2, col3, col4, col5 = st.columns(5)  # Changed from 4 to 5 columns
+    # Enhanced action buttons
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.button(
@@ -2891,16 +2683,6 @@ def show_enhanced_question_interface():
         )
     
     with col4:
-        # PAUSE BUTTON
-        st.button(
-            "⏸️ Pause",
-            use_container_width=True,
-            key=f"pause_{current_idx}",
-            type="secondary",
-            on_click=lambda: pause_quiz()
-        )
-    
-    with col5:
         st.button(
             "📤 Submit Test",
             use_container_width=True,
@@ -3250,9 +3032,7 @@ def get_time_color(seconds_left):
 
 def auto_submit_on_timeout():
     """Auto-submit the test when time is up using JavaScript."""
-    if (st.session_state.end_time and 
-        not st.session_state.submitted and 
-        not st.session_state.quiz_paused):  # Don't auto-submit if paused
+    if st.session_state.end_time and not st.session_state.submitted:
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = int(time_left.total_seconds())
         
@@ -3285,7 +3065,7 @@ def auto_submit_on_timeout():
         setInterval(checkTime, 1000);
         </script>
         """
-        components.html(js_code, height=0)  
+        components.html(js_code, height=0)    
 
 def clear_response(question_idx):
     """Clear response for a question."""
@@ -3306,45 +3086,7 @@ def clear_response(question_idx):
 
 def show_quiz_header_with_timer():
     """Show a custom header with timer for quiz interface."""
-    if st.session_state.quiz_paused:
-        # Show paused header
-        st.markdown(f"""
-        <style>
-        .fixed-quiz-header {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            margin-top: 3.5rem;
-            margin-bottom:0.2rem;
-            width: 100%;
-            height:2rem;
-            background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: white;
-            padding: 0.8rem 1rem;
-            z-index: 9999;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        }}
-        .content-wrapper {{
-            padding-top: 70px; /* Make space for fixed header */
-        }}
-        </style>
-        
-        <div class="fixed-quiz-header">
-            <div style="font-size: 1rem;">
-                ⏸️ {st.session_state.exam_name} - PAUSED
-            </div>
-            <div style="font-size: 1rem; color: #ffd700;">
-                ⏰ Timer Stopped
-            </div>
-        </div>
-        
-        <div class="content-wrapper"></div>
-        """, unsafe_allow_html=True)
-    elif st.session_state.end_time and not st.session_state.submitted:
+    if st.session_state.end_time and not st.session_state.submitted:
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = max(0, int(time_left.total_seconds()))
         
@@ -3476,54 +3218,9 @@ def show_quiz_header_with_timer():
         <div class="content-wrapper"></div>
         """, unsafe_allow_html=True)
 
-def resume_quiz_from_dashboard(paused_quiz_data):
-    """Resume a quiz from paused state."""
-    try:
-        # Store the paused data
-        st.session_state.paused_quiz_data = paused_quiz_data
-        st.session_state.pause_record_id = paused_quiz_data.get('record_id')
-        
-        # We need to reload the original questions
-        # This requires the original exam configuration
-        # For now, we'll assume the questions are available in session state
-        
-        # Restore answers and question status
-        if 'answers' in paused_quiz_data:
-            st.session_state.answers = paused_quiz_data['answers']
-        
-        if 'question_status' in paused_quiz_data:
-            st.session_state.question_status = paused_quiz_data['question_status']
-        
-        if 'current_question_idx' in paused_quiz_data:
-            st.session_state.current_idx = paused_quiz_data['current_question_idx']
-        
-        # Restore timer
-        if 'time_left_seconds' in paused_quiz_data:
-            time_left = paused_quiz_data['time_left_seconds']
-            if time_left > 0:
-                st.session_state.end_time = datetime.now() + timedelta(seconds=time_left)
-                st.session_state.paused_time_left = time_left
-        
-        # Restore other states
-        st.session_state.quiz_paused = False
-        st.session_state.quiz_started = True
-        st.session_state.submitted = False
-        
-        # Set current screen to quiz
-        st.session_state.current_screen = "quiz"
-        
-        # Delete the paused record since we're resuming
-        if st.session_state.pause_record_id:
-            delete_paused_quiz(st.session_state.pause_record_id)
-        
-        st.rerun()
-        
-    except Exception as e:
-        st.error(f"Error resuming quiz: {e}")
-        
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
-    """Main quiz interface with professional layout and pause feature."""
+    """Main quiz interface with professional layout."""
     # Show header with timer
     show_quiz_header_with_timer()
     
@@ -3537,12 +3234,7 @@ def show_quiz_screen():
     if 'question_status' not in st.session_state or not st.session_state.question_status:
         initialize_question_status()
     
-    # Check if quiz is paused
-    if st.session_state.quiz_paused:
-        show_paused_quiz_interface()
-        return
-    
-    # Auto-check for timeout and auto-submit (only if not paused)
+    # Auto-check for timeout and auto-submit
     if st.session_state.end_time and not st.session_state.submitted:
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = int(time_left.total_seconds())
@@ -3584,138 +3276,11 @@ def show_quiz_screen():
     
     # Show question first, then header at the bottom
     if not st.session_state.submitted:
+        
         show_enhanced_question_interface()
     else:
         show_results_screen()
 
-def show_paused_quiz_interface():
-    """Show interface when quiz is paused."""
-    st.markdown("<div style='margin-top: 5rem;'></div>", unsafe_allow_html=True)
-    
-    # Create a centered container
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        st.markdown(f"""
-        <div style="
-            text-align: center;
-            padding: 2rem;
-            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-            border-radius: 15px;
-            border: 2px solid {LITMUSQ_THEME['primary']};
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        ">
-            <h1 style="color: {LITMUSQ_THEME['primary']};">⏸️ Quiz Paused</h1>
-            <p style="font-size: 1.1rem; color: #64748B; margin-bottom: 2rem;">
-                Your quiz has been paused. Timer is stopped.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
-        
-        # Resume button
-        if st.button("▶️ Resume Quiz", 
-                    use_container_width=True,
-                    type="primary",
-                    key="resume_quiz"):
-            resume_quiz()
-            st.rerun()
-        
-        st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-        
-        # Save & Exit button
-        if st.button("💾 Save & Exit to Exam List", 
-                    use_container_width=True,
-                    type="secondary",
-                    key="save_and_exit"):
-            if save_paused_quiz():
-                st.success("Quiz saved successfully!")
-                st.session_state.current_screen = "home"
-                st.rerun()
-            else:
-                st.error("Failed to save quiz. Please try again.")
-        
-        st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-        
-        # Continue without saving button
-        if st.button("❌ Discard & Exit", 
-                    use_container_width=True,
-                    type="secondary",
-                    key="discard_and_exit"):
-            st.session_state.current_screen = "home"
-            st.rerun()
-        
-        # Show stats
-        st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
-        with st.expander("📊 Current Progress", expanded=False):
-            total = len(st.session_state.quiz_questions)
-            answered = sum(1 for status in st.session_state.question_status.values() 
-                          if status['answer'] is not None)
-            marked = sum(1 for status in st.session_state.question_status.values() 
-                        if status['marked'])
-            
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.metric("Questions", total)
-            with col2:
-                st.metric("Answered", answered)
-            with col3:
-                st.metric("Marked", marked)
-            
-            # Show time remaining if applicable
-            if st.session_state.paused_time_left:
-                minutes = st.session_state.paused_time_left // 60
-                seconds = st.session_state.paused_time_left % 60
-                st.info(f"⏰ Time remaining when paused: {minutes}:{seconds:02d}")
-                
-def pause_quiz():
-    """Pause the quiz and save current state."""
-    # Calculate remaining time
-    time_left = 0
-    if st.session_state.end_time:
-        time_left = max(0, int((st.session_state.end_time - datetime.now()).total_seconds()))
-    
-    # Save to session state
-    st.session_state.quiz_paused = True
-    st.session_state.paused_time_left = time_left
-    st.session_state.paused_at = datetime.now()
-    
-    # Store original end time
-    if st.session_state.end_time:
-        st.session_state.original_end_time = st.session_state.end_time
-    
-    # Save to Firebase
-    save_paused_quiz()
-    
-    st.success("✅ Quiz paused successfully!")
-
-def resume_quiz():
-    """Resume a paused quiz."""
-    # Restore timer if it was running
-    if st.session_state.paused_time_left and st.session_state.paused_time_left > 0:
-        # Calculate new end time based on paused time left
-        new_end_time = datetime.now() + timedelta(seconds=st.session_state.paused_time_left)
-        st.session_state.end_time = new_end_time
-    
-    # Restore quiz state
-    st.session_state.quiz_paused = False
-    st.session_state.paused_time_left = None
-    st.session_state.paused_at = None
-    
-    st.success("✅ Quiz resumed!")
-
-def save_and_exit_quiz():
-    """Save quiz state and exit to home."""
-    if save_paused_quiz():
-        # Delete the paused state from session
-        st.session_state.quiz_paused = False
-        st.session_state.current_screen = "home"
-        st.rerun()
-    else:
-        st.error("Failed to save quiz. Please try again.")
-        
-        
 # Add this function to handle auto-submits from JavaScript
 def handle_auto_submit():
     """Handle auto-submit from JavaScript timer."""
@@ -4077,18 +3642,6 @@ def show_results_screen():
     st.markdown("<div style='margin-top: 2.5rem;'></div>", unsafe_allow_html=True)
     show_litmusq_header("Test Results")
     
-    # Clean up any paused quiz records for this exam
-    if st.session_state.get('pause_record_id'):
-        delete_paused_quiz(st.session_state.pause_record_id)
-    
-    # Also clean up any other paused records for this user/exam combination
-    username = st.session_state.username
-    exam_name = st.session_state.exam_name
-    paused_quizzes = get_user_paused_quizzes(username)
-    for quiz in paused_quizzes:
-        if quiz.get('exam_name') == exam_name:
-            delete_paused_quiz(quiz.get('id'))
-    
     # Add retest type to summary if applicable
     if hasattr(st.session_state, 'retest_type'):
         summary['retest_type'] = st.session_state.retest_type
@@ -4318,26 +3871,7 @@ def get_correct_option(row, use_final_key=True):
 
 def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
                use_final_key: bool, exam_name: str):
-    """Start quiz with pause/resume support."""
-    
-    # Check if there's a paused version of this quiz
-    username = st.session_state.get('username')
-    if username:
-        paused_quizzes = get_user_paused_quizzes(username)
-        for quiz in paused_quizzes:
-            if quiz.get('exam_name') == exam_name:
-                # Ask user if they want to resume
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button("▶️ Resume Paused Quiz", use_container_width=True):
-                        resume_quiz_from_dashboard(quiz)
-                        return
-                with col2:
-                    if st.button("🔄 Start Fresh", use_container_width=True):
-                        # Delete the paused quiz and continue
-                        delete_paused_quiz(quiz.get('id'))
-                        break
-    
+    """Start quiz."""
     n = min(n_questions, len(df))
     
     # Check if shuffle is enabled from session state
@@ -4366,12 +3900,6 @@ def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
     st.session_state.use_final_key = use_final_key
     st.session_state.exam_name = exam_name
     st.session_state.quiz_duration = duration_minutes
-    
-    # Reset pause states
-    st.session_state.quiz_paused = False
-    st.session_state.paused_time_left = None
-    st.session_state.paused_at = None
-    st.session_state.pause_record_id = None
     
     # Preserve retest information if available
     if hasattr(st.session_state, 'is_retest'):
@@ -4545,7 +4073,7 @@ def initialize_state():
         "exam_name": None,
         "logged_in": False,
         "username": None,
-        "user_type": "regular",
+        "user_type": "regular",  # Add this
         "current_screen": "home",
         "current_path": [],
         "selected_sheet": None,
@@ -4562,13 +4090,6 @@ def initialize_state():
         "show_clear_confirmation": False,
         "editor_current_path": [],
         "last_cleanup": datetime.now(),
-        # NEW: Pause & Resume states
-        "quiz_paused": False,
-        "paused_time_left": None,  # seconds
-        "paused_at": None,
-        "original_end_time": None,  # To track original end time
-        "paused_quiz_data": {},  # Store serialized quiz data
-        "pause_record_id": None,  # Unique ID for pause record
     }
     for k, v in defaults.items():
         if k not in st.session_state:
