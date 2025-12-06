@@ -3048,14 +3048,14 @@ def show_quiz_header_with_timer():
         
         /* Target the specific quiz content area */
         div[data-testid="stAppViewContainer"] > div[data-testid="stAppViewBlockContainer"] {{
-            padding-left: 0.1rem !important;
-            padding-right: 0.1rem !important;
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
         }}
         
         /* Ensure question card has minimal left margin */
         .question-card {{
-            margin-left: 0rem !important;
-            margin-right: 0rem !important;
+            margin-left: 1rem !important;
+            margin-right: 1rem !important;
         }}
         
         .content-wrapper {{
