@@ -1265,8 +1265,12 @@ def get_question_key(file_path, sheet_name, question_index, field="question"):
 
 def render_formatted_content(content, sl_no=None):
     """Render formatted content with HTML/CSS styling, with optional Sl No prefix."""
-    if not content or not isinstance(content, str):
-        return content or ""
+    if not content:
+        content = ""
+    
+    # Ensure content is string
+    if not isinstance(content, str):
+        content = str(content)
     
     # Prefix only if Sl No is provided
     prefix_html = ""
@@ -1885,7 +1889,8 @@ def update_user_progress(test_results):
             "option_b": str(row.get('Option B', '')),
             "option_c": str(row.get('Option C', '')),
             "option_d": str(row.get('Option D', '')),
-            "explanation": str(row.get('Explanation', ''))
+            "explanation": str(row.get('Explanation', '')),
+            "correct_option": str(row.get('Correct Option (Final Answer Key)', ''))  # Add this
         })
 
     test_entry = {
@@ -1897,6 +1902,7 @@ def update_user_progress(test_results):
         "percentage": float((test_results["Marks Obtained"] / test_results["Total Marks"]) * 100),
         "correct": int(test_results["Correct"]),
         "total_questions": int(test_results["Total Questions"]),
+        "duration_minutes": int(st.session_state.get('quiz_duration', 60)),  # ADD THIS LINE
         "detailed_answers": test_results.get("detailed_answers", []),
         "questions_used": detailed_questions,
         "is_retest": bool(test_results.get("is_retest", False)),
@@ -4009,14 +4015,17 @@ def start_quiz(df: pd.DataFrame, n_questions: int, duration_minutes: int,
     st.session_state.submitted = False
     st.session_state.quiz_started = True
     st.session_state.started_at = datetime.now()
-    st.session_state.end_time = (
-        st.session_state.started_at + timedelta(minutes=duration_minutes)
-        if duration_minutes and duration_minutes > 0
-        else None
-    )
+    
+    # FIX: Ensure duration is properly set
+    if duration_minutes and duration_minutes > 0:
+        st.session_state.end_time = st.session_state.started_at + timedelta(minutes=duration_minutes)
+        st.session_state.quiz_duration = duration_minutes
+    else:
+        st.session_state.end_time = None
+        st.session_state.quiz_duration = 0  # Unlimited time
+    
     st.session_state.use_final_key = use_final_key
     st.session_state.exam_name = exam_name
-    st.session_state.quiz_duration = duration_minutes
     
     # Preserve retest information if available
     if hasattr(st.session_state, 'is_retest'):
