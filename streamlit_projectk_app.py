@@ -2012,9 +2012,10 @@ def show_student_dashboard():
         total_marks = float(test.get("total_marks", 0))
         percentage = float(test.get("percentage", 0))
         
+        # Test card (without buttons)
         st.markdown(f"""
         <div style="
-            margin-bottom: 8px;
+            margin-bottom: 6px;
             padding: 12px 14px;
             background: #f8fafc;
             border-radius: 10px;
@@ -2032,24 +2033,24 @@ def show_student_dashboard():
         </div>
         """, unsafe_allow_html=True)
         
-        st.progress(int(percentage))
-
-        # Take Retest button
-        test_id = test.get('test_id', f"test_{idx}")
-        if st.button("🔁", key=f"retest_{test_id}", 
-                   help="Take Re-Test"):
+        # FULL-WIDTH BUTTONS BELOW THE CARD
+        test_id = test.get("test_id", f"test_{idx}")
+        
+        if st.button("🔁 Take Retest", key=f"retest_{test_id}", use_container_width=True):
             st.session_state.retest_config = test
             st.session_state.current_screen = "retest_config"
             st.rerun()
-        # Delete Entry button
-        if st.button("🗑️", key=f"delete_{test_id}", 
-                   help="Delete this test entry"):
+        
+        if st.button("🗑️ Delete This Test Entry", key=f"delete_{test_id}", use_container_width=True):
             if delete_test_entry(username, test_id):
                 st.success("Test entry deleted successfully!")
                 st.rerun()
             else:
                 st.error("Failed to delete test entry")
-        st.markdown("---")
+        
+        # Progress bar under everything
+        st.progress(int(percentage))
+
 
     # Achievements
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
