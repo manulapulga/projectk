@@ -3659,13 +3659,15 @@ def show_results_screen():
     # Clear retest state after saving results
     clear_retest_state()
     
-    # Summary cards with enhanced styling
     total_q = summary["Total Questions"]
     attempted = summary["Attempted"]
     correct = summary["Correct"]
     marks_obt = summary["Marks Obtained"]
     tot_marks = summary["Total Marks"]
     percentage = summary["Percentage"]
+    
+    incorrect = attempted - correct
+    not_attended = total_q - attempted
     
     st.markdown(f"""
     <div style="
@@ -3682,6 +3684,10 @@ def show_results_screen():
         &nbsp;•&nbsp;
         ✏️ <b>Attempted:</b> {attempted}
         &nbsp;•&nbsp;
+        ❌ <b>Incorrect:</b> {incorrect}
+        &nbsp;•&nbsp;
+        🚫 <b>Not Attended:</b> {not_attended}
+        &nbsp;•&nbsp;
         ✅ <b>Correct:</b> {correct}
         &nbsp;•&nbsp;
         🧮 <b>Score:</b> {marks_obt}/{tot_marks}
@@ -3692,10 +3698,7 @@ def show_results_screen():
     
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Percentage bar
-    st.progress(int(percentage))
 
-    
     # Performance gauge
     if percentage >= 80:
         performance = "Excellent! 🎉"
