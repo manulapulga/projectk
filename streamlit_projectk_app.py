@@ -3952,20 +3952,28 @@ def show_results_screen():
 # Session State Optimization
 # =============================
 def optimize_session_state():
-    """Clean up and optimize session state to prevent bloat."""
-    essential_keys = {
-        'logged_in', 'username', 'user_type', 'current_screen', 'current_path',  # ← Added user_type
-        'selected_sheet', 'current_qb_path', 'folder_structure',
-        'quiz_started', 'quiz_questions', 'current_idx', 'answers',
-        'submitted', 'exam_name', 'question_status', 'quiz_duration',
-        'use_final_key', 'started_at', 'end_time', 'last_cleanup'
-    }
+    """Prevent cleanup during quiz and keep essential keys."""
     
-    # Remove non-essential keys
-    keys_to_remove = [key for key in st.session_state.keys() if key not in essential_keys]
+    # 🔥 Prevent cleanup during quiz
+    if st.session_state.get("current_screen") == "quiz":
+        return
+
+    essential_keys = {
+        'logged_in', 'username', 'user_type', 
+        'current_screen', 'current_path',
+        'selected_sheet', 'current_qb_path', 'folder_structure',
+
+        # QUIZ KEYS (must not be removed)
+        'quiz_started', 'quiz_questions', 'current_idx',
+        'question_status', 'answers', 'submitted',
+        'exam_name', 'quiz_duration', 'use_final_key',
+        'started_at', 'end_time'
+    }
+
+    keys_to_remove = [k for k in st.session_state if k not in essential_keys]
     for key in keys_to_remove:
-        if key in st.session_state:
-            del st.session_state[key]
+        del st.session_state[key]
+
 
 def periodic_cleanup():
     """Perform periodic cleanup every 5 minutes."""
