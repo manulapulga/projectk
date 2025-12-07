@@ -3419,9 +3419,35 @@ def show_retest_config(original_test):
             st.session_state.current_screen = "dashboard"
             st.rerun()
     
+    st.markdown(f"**Original Test Date:** {datetime.fromisoformat(original_test['date']).astimezone(pytz.timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M')}")
+    st.markdown(f"**Original Score:** {original_test['score']}/{original_test['total_marks']} ({original_test['percentage']:.1f}%)")
+    
+    # Check if we have stored questions
+    if 'questions_used' not in original_test or not original_test['questions_used']:
+        st.error("Original questions data not available. Cannot create retest.")
+        st.info("Note: This feature requires tests taken after this update.")
+        return
+    
+    # Analyze original test performance
+    total_questions = original_test['total_questions']
+    incorrect_questions = []
+    unanswered_questions = []
+    
+    if 'detailed_answers' in original_test:
+        for answer in original_test['detailed_answers']:
+            user_answer = answer.get('user_answer')
+            is_correct = answer.get('is_correct', False)
+            
+            # Check if unanswered (user_answer is None or empty)
+            if user_answer is None or (isinstance(user_answer, str) and user_answer.strip() == ""):
+                unanswered_questions.append(answer['question_index'])
+            # Check if answered but incorrect
+            elif not is_correct:
+                incorrect_questions.append(answer['question_index'])
+    
     # Original test details
     original_date = datetime.fromisoformat(original_test['date']).astimezone(
-        pytz.timezone('Asia/Kolkata')
+        pytz.timezone("Asia/Kolkata")
     ).strftime('%Y-%m-%d %H:%M')
     
     score = original_test['score']
@@ -3444,7 +3470,6 @@ def show_retest_config(original_test):
         padding: 10px 14px;
         border-radius: 10px;
         line-height: 1.6;
-        margin-top: 1rem;
     ">
         📅 <b>Date:</b> {original_date}
         &nbsp;•&nbsp;
