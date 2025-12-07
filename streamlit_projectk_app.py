@@ -3324,119 +3324,88 @@ def clear_response(question_idx):
     st.rerun()
 
 import streamlit as st
-from datetime import datetime
-import time
+from datetime import datetime, timedelta
+import streamlit.components.v1 as components
 
 def show_quiz_header_with_timer():
-    """Show a custom fixed header structure for the quiz interface."""
-    # 1. Setup the Fixed HTML/CSS structure (runs once or on re-render)
-    st.markdown("""
+    """Show a fixed quiz header with ticking timer using st.components.v1.html"""
+    
+    if "end_time" not in st.session_state:
+        st.session_state.end_time = datetime.now() + timedelta(minutes=10)  # Example: 10 min timer
+        st.session_state.submitted = False
+        st.session_state.exam_name = "Sample Exam"
+    
+    if st.session_state.end_time and not st.session_state.submitted:
+        seconds_left = max(0, int((st.session_state.end_time - datetime.now()).total_seconds()))
+        
+        # Render the header + timer in a component
+        components.html(f"""
         <style>
-        .fixed-quiz-header {
+        .fixed-quiz-header {{
             position: fixed;
             top: 0;
             left: 0;
-            margin-top: 3.5rem;
-            margin-bottom:0.2rem;
             width: 100%;
-            height:3rem;
+            height: 3rem;
             background: linear-gradient(135deg, #50fbf8, #e039d3);
             color: black;
-            padding: 0.5rem 0.5rem;
+            padding: 0.5rem 1rem;
             z-index: 9999;
             display: flex;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        }
-        .content-wrapper {
-            padding-top: 70px; /* Make space for fixed header */
-        }
+        }}
+        .content-wrapper {{ padding-top: 70px; }}
+        #header-timer {{
+            font-size: 1rem;
+            padding: 0.3rem 1rem;
+            border-radius: 50px;
+            min-width: 120px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }}
         </style>
-        <div class="fixed-quiz-header" id="quiz-header-container">
-            <div style="font-size: 1rem;">
-                {exam_name}
-            </div>
-            <div id="streamlit-timer-placeholder">
-                </div>
+        
+        <div class="fixed-quiz-header">
+            <div>{st.session_state.exam_name}</div>
+            <div id="header-timer">⏰ 00:00:00</div>
         </div>
         <div class="content-wrapper"></div>
-        """.format(exam_name=st.session_state.exam_name), 
-        unsafe_allow_html=True
-    )
-    
-    # 2. Use st.empty() for the live-ticking component
-    if st.session_state.end_time and not st.session_state.submitted:
-        # Create an empty placeholder for the timer (will be updated every second)
-        timer_placeholder = st.empty()
         
-        while True:
-            # Calculate time remaining
-            time_left = st.session_state.end_time - datetime.now()
-            seconds_left = max(0, int(time_left.total_seconds()))
-            
-            # Format time
-            h = str(seconds_left // 3600).zfill(2)
-            m = str((seconds_left % 3600) // 60).zfill(2)
-            s = str(seconds_left % 60).zfill(2)
-            time_display = f"⏰ {h}:{m}:{s}"
+        <script>
+        let timeLeft = {seconds_left};
+        const timerEl = document.getElementById("header-timer");
 
-            # Determine color
-            timer_color = 'red' if seconds_left < 300 else 'black' # Adjusted for visibility
+        function updateTimer() {{
+            if(timeLeft <= 0) {{
+                timerEl.innerHTML = "⏰ 00:00:00";
+                timerEl.style.color = "red";
+                // Trigger submission button if needed
+                const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
+                if(submitButton) submitButton.click();
+                return;
+            }}
+            let h = String(Math.floor(timeLeft / 3600)).padStart(2,'0');
+            let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2,'0');
+            let s = String(timeLeft % 60).padStart(2,'0');
             
-            # Update the placeholder using Streamlit's Markdown and HTML
-            # We use an HTML div that targets the placeholder within the fixed header
-            # Note: This is an advanced technique, sometimes relying on st.empty() alone is simpler.
-            # A simpler approach is to have the fixed header as a regular Streamlit component in a container
+            timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
             
-            # Since the header is fixed HTML, the easiest path is to update the st.empty()
-            # which *is* a Streamlit element. We'll use JavaScript to move the st.empty() element.
+            if(timeLeft < 300) timerEl.style.color = "red";
+            timeLeft--;
+            setTimeout(updateTimer, 1000);
+        }}
 
-            # Simple Streamlit Update (More reliable)
-            with timer_placeholder.container():
-                st.markdown(
-                    f"""
-                    <div style="
-                        font-size: 1rem;
-                        padding: 0.3rem 1rem;
-                        border-radius: 50px;
-                        min-width: 120px;
-                        text-align: center;
-                        color: {timer_color};
-                        font-weight: bold;
-                        background-color: rgba(255,255,255,0.8);
-                        border: 2px solid {timer_color};
-                    ">
-                        {time_display}
-                    </div>
-                    """, 
-                    unsafe_allow_html=True
-                )
-            
-            # --- Auto Submission and Loop Break ---
-            if seconds_left <= 0:
-                # Display 00:00:00 and break loop
-                with timer_placeholder.container():
-                    st.markdown(f"""<div style="color:red; font-size: 1rem;">⏰ 00:00:00</div>""", unsafe_allow_html=True)
-                
-                # You'll need a separate callback function for the submission logic here
-                # to trigger the state change and re-run the app.
-                if not st.session_state.submitted:
-                    st.session_state.submitted = True
-                    # This tells Streamlit to re-run the script immediately
-                    st.experimental_rerun()
-                
-                break # Stop the while True loop
-            
-            # Wait for 1 second before re-running the loop (and Streamlit)
-            time.sleep(1)
+        updateTimer();
+        </script>
+        """, height=70)
 
-            # NOTE: If you need to keep the timer in the FIXED header you created,
-            # you must use Streamlit's official components OR use JavaScript/HTML 
-            # to dynamically move the st.empty() element into the fixed header's div. 
-            # For a simple fix, using the Python loop and st.empty() is the correct approach 
-            # for a live Streamlit counter.
+# Usage
+show_quiz_header_with_timer()
+st.write("Your quiz content goes here...")
+
 
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
