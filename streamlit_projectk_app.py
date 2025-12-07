@@ -2023,23 +2023,31 @@ def show_student_dashboard():
     # Recent Test History
     test_history = load_test_history(username)
     if test_history:
+            
+        recent_tests = test_history      # Show ALL tests
         
-        recent_tests = test_history[-10:]  # Show last 10 tests
-        
+        # --- Attempt Numbering for normal tests ---
+        attempt_counter = {}
+    
         for idx, test in enumerate(recent_tests):
             test_date = datetime.fromisoformat(str(test.get("date", ""))).astimezone(
                 pytz.timezone("Asia/Kolkata")
             ).strftime("%d-%m-%Y • ⏱️ %I:%M %p")
-
+    
             percentage = float(test.get("percentage", 0))
             score = float(test.get("score", 0))
             total_marks = float(test.get("total_marks", 0))
-        
-            exam_name = str(test.get('exam_name', 'Unknown Test'))
-            if test.get('is_retest', False):
-                exam_name += "📝"
-        
+            
+            base_name = str(test.get("exam_name", "Unknown Test"))
+    
+            if not test.get("is_retest", False):
+                attempt_counter[base_name] = attempt_counter.get(base_name, 0) + 1
+                exam_name = f"{base_name} (Attempt {attempt_counter[base_name]})"
+            else:
+                exam_name = f"{base_name}📝"
+    
             test_id = test.get('test_id', f"test_{idx}")
+    
         
             # --- Clean inline metadata card ---
             st.markdown(f"""
