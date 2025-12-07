@@ -3112,7 +3112,7 @@ def show_question_palette():
     .compact-header {{
         text-align: center;
         padding: 0.35rem 0;
-        font-size: 18px;
+        font-size: 13px;
         font-weight: 600;
         line-height: 1.35;
     }}
@@ -3141,14 +3141,40 @@ def show_question_palette():
         <span style="color:{LITMUSQ_THEME['warning']};">🟨 {marked}</span>
     </div>
     
-    <div class="legend-compact">
-        <div class="legend-pill">⛔ Cleared</div>
-        <div class="legend-pill">❌ Not Ans</div>
-        <div class="legend-pill">✅ Answered</div>
-        <div class="legend-pill">🟨 Marked</div>
-        <div class="legend-pill">🟩 Ans+Marked</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # Legend
+        st.sidebar.markdown("""
+        <style>
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+            font-size: 12px;
+        }
+        .color-box {
+            width: 15px;
+            height: 15px;
+            margin-right: 8px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        </style>
+        
+        <div class="legend-item">
+            <span>⛔: Response cleared</span>
+        </div>
+        <div class="legend-item">
+            <span>❌: Not Answered</span>
+        </div>
+        <div class="legend-item">
+            <span>✅: Answered</span>
+        </div>
+        <div class="legend-item">
+            <span>🟨: Marked for Review</span>
+        </div>
+        <div class="legend-item">
+            <span>🟩: Answered & marked for review</span>
+        </div>
+        """, unsafe_allow_html=True)
 
     
 
