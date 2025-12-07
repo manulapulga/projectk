@@ -155,6 +155,71 @@ def inject_custom_css():
     <style>
 
     /* =========================================================
+       FIXED QUIZ FOOTER - REAL SOLUTION
+    ==========================================================*/
+    
+    /* Create a fixed container at the bottom */
+    #fixed-footer-container {{
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        background-color: {LITMUSQ_THEME['light_bg']} !important;
+        padding: 12px 20px !important;
+        border-top: 2px solid {LITMUSQ_THEME['primary']} !important;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15) !important;
+        z-index: 999999 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }}
+    
+    /* Adjust main content to prevent overlap */
+    .main .block-container {{
+        padding-bottom: 100px !important;
+    }}
+    
+    /* Footer stats styling */
+    .footer-stat {{
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: {LITMUSQ_THEME['primary']};
+        padding: 5px 10px;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+    }}
+    
+    /* Footer button styling */
+    .footer-btn {{
+        padding: 8px 20px !important;
+        margin: 0 5px !important;
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+        font-size: 0.9rem !important;
+        min-width: 120px !important;
+    }}
+    
+    /* Button colors */
+    .footer-btn-primary {{
+        background-color: {LITMUSQ_THEME['primary']} !important;
+        color: white !important;
+        border: none !important;
+    }}
+    
+    .footer-btn-warning {{
+        background-color: {LITMUSQ_THEME['warning']} !important;
+        color: white !important;
+        border: none !important;
+    }}
+    
+    .footer-btn-danger {{
+        background-color: {LITMUSQ_THEME['secondary']} !important;
+        color: white !important;
+        border: none !important;
+    }}
+    
+    /* =========================================================
        GLOBAL SAFE SPACING (NO OVERLAPS, NO HUGE MARGINS)
     ==========================================================*/
 
@@ -2672,6 +2737,314 @@ def show_exam_config_screen():
 # =============================
 # Enhanced Question Display in Quiz
 # =============================
+def show_fixed_quiz_footer():
+    """Display fixed navigation buttons at the bottom of the quiz using Streamlit layout."""
+    df = st.session_state.quiz_questions
+    current_idx = st.session_state.current_idx
+    
+    # Count answered questions
+    answered_count = sum(1 for status in st.session_state.question_status.values() 
+                        if status['answer'] is not None)
+    
+    # Use st.container() with custom CSS to create a fixed position
+    footer_container = st.container()
+    
+    with footer_container:
+        # Create columns for the footer layout
+        col1, col2, col3 = st.columns([1, 2, 1])
+        
+        with col1:
+            st.markdown(
+                f'<div class="footer-stats">Q{current_idx + 1} of {len(df)}</div>',
+                unsafe_allow_html=True
+            )
+        
+        with col2:
+            # Create button columns
+            btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4)
+            
+            with btn_col1:
+                if st.button(
+                    "◀ Previous",
+                    key=f"prev_footer_{current_idx}",
+                    disabled=current_idx == 0,
+                    use_container_width=True,
+                    type="secondary"
+                ):
+                    st.session_state.current_idx = current_idx - 1
+                    st.rerun()
+            
+            with btn_col2:
+                if st.button(
+                    "Next ▶",
+                    key=f"next_footer_{current_idx}",
+                    disabled=current_idx == len(df) - 1,
+                    use_container_width=True,
+                    type="secondary"
+                ):
+                    st.session_state.current_idx = current_idx + 1
+                    st.rerun()
+            
+            with btn_col3:
+                button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
+                if st.button(
+                    button_text,
+                    key=f"mark_footer_{current_idx}",
+                    use_container_width=True,
+                    type="secondary"
+                ):
+                    toggle_mark_review(current_idx)
+                    st.rerun()
+            
+            with btn_col4:
+                if st.button(
+                    "📤 Submit Test",
+                    key=f"submit_footer_{current_idx}",
+                    use_container_width=True,
+                    type="secondary"
+                ):
+                    st.session_state.submitted = True
+                    st.rerun()
+        
+        with col3:
+            st.markdown(
+                f'<div class="footer-stats" style="text-align: right;">✅ {answered_count}/{len(df)}</div>',
+                unsafe_allow_html=True
+            )
+    
+    # Inject JavaScript to fix the footer at the bottom
+    st.markdown("""
+    <script>
+    // Wait for the page to load
+    setTimeout(() => {
+        // Find the footer container
+        const footerContainer = document.querySelector('[data-testid="stVerticalBlock"]').lastElementChild;
+        
+        if (footerContainer) {
+            // Apply fixed position styling
+            footerContainer.style.position = 'fixed';
+            footerContainer.style.bottom = '0';
+            footerContainer.style.left = '0';
+            footerContainer.style.width = '100%';
+            footerContainer.style.backgroundColor = '#EFF6FF';
+            footerContainer.style.padding = '12px 16px';
+            footerContainer.style.borderTop = '2px solid #1E3A8A';
+            footerContainer.style.boxShadow = '0 -2px 10px rgba(0, 0, 0, 0.1)';
+            footerContainer.style.zIndex = '9999';
+            
+            // Add margin to main content to prevent overlap
+            const mainContent = document.querySelector('.main .block-container');
+            if (mainContent) {
+                mainContent.style.paddingBottom = '120px';
+            }
+        }
+    }, 100);
+    </script>
+    """, unsafe_allow_html=True)
+    
+def create_fixed_footer_with_js():
+    """Inject JavaScript to create a truly fixed footer."""
+    df = st.session_state.quiz_questions
+    current_idx = st.session_state.current_idx
+    
+    # Count answered questions
+    answered_count = sum(1 for status in st.session_state.question_status.values() 
+                        if status['answer'] is not None)
+    
+    # Get button states
+    is_first = str(current_idx == 0).lower()
+    is_last = str(current_idx == len(df) - 1).lower()
+    is_marked = str(st.session_state.question_status[current_idx]['marked']).lower()
+    mark_text = '↩️ Unmark Review' if st.session_state.question_status[current_idx]['marked'] else '🟨 Mark Review'
+    
+    # Create the JavaScript to build the fixed footer
+    js_code = f"""
+    <script>
+    function createFixedFooter() {{
+        // Remove any existing footer
+        const existingFooter = document.getElementById('fixed-footer-container');
+        if (existingFooter) {{
+            existingFooter.remove();
+        }}
+        
+        // Create the fixed footer container
+        const footer = document.createElement('div');
+        footer.id = 'fixed-footer-container';
+        
+        // Create the HTML structure
+        footer.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div class="footer-stat">Q{current_idx + 1} of {len(df)}</div>
+                <div class="footer-stat">✅ {answered_count}/{len(df)}</div>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="prev-btn" class="footer-btn footer-btn-primary" {f'disabled' if current_idx == 0 else ''}>
+                    ◀ Previous
+                </button>
+                <button id="next-btn" class="footer-btn footer-btn-primary" {f'disabled' if current_idx == len(df) - 1 else ''}>
+                    Next ▶
+                </button>
+                <button id="mark-btn" class="footer-btn footer-btn-warning">
+                    {mark_text}
+                </button>
+                <button id="submit-btn" class="footer-btn footer-btn-danger">
+                    📤 Submit Test
+                </button>
+            </div>
+        `;
+        
+        // Add to body
+        document.body.appendChild(footer);
+        
+        // Add event listeners
+        document.getElementById('prev-btn').addEventListener('click', function() {{
+            if (!{is_first}) {{
+                // Trigger Streamlit button click
+                const streamlitDoc = window.parent.document;
+                const buttons = streamlitDoc.querySelectorAll('[data-testid="baseButton-secondary"]');
+                buttons.forEach(btn => {{
+                    if (btn.textContent.includes('HIDDEN_PREV')) {{
+                        btn.click();
+                    }}
+                }});
+            }}
+        }});
+        
+        document.getElementById('next-btn').addEventListener('click', function() {{
+            if (!{is_last}) {{
+                // Trigger Streamlit button click
+                const streamlitDoc = window.parent.document;
+                const buttons = streamlitDoc.querySelectorAll('[data-testid="baseButton-secondary"]');
+                buttons.forEach(btn => {{
+                    if (btn.textContent.includes('HIDDEN_NEXT')) {{
+                        btn.click();
+                    }}
+                }});
+            }}
+        }});
+        
+        document.getElementById('mark-btn').addEventListener('click', function() {{
+            // Trigger Streamlit button click
+            const streamlitDoc = window.parent.document;
+            const buttons = streamlitDoc.querySelectorAll('[data-testid="baseButton-secondary"]');
+            buttons.forEach(btn => {{
+                if (btn.textContent.includes('HIDDEN_MARK')) {{
+                    btn.click();
+                }}
+            }});
+        }});
+        
+        document.getElementById('submit-btn').addEventListener('click', function() {{
+            // Trigger Streamlit button click
+            const streamlitDoc = window.parent.document;
+            const buttons = streamlitDoc.querySelectorAll('[data-testid="baseButton-secondary"]');
+            buttons.forEach(btn => {{
+                if (btn.textContent.includes('HIDDEN_SUBMIT')) {{
+                    btn.click();
+                }}
+            }});
+        }});
+        
+        // Style the buttons
+        const style = document.createElement('style');
+        style.textContent = `
+            #fixed-footer-container button {{
+                padding: 8px 20px !important;
+                margin: 0 5px !important;
+                border-radius: 6px !important;
+                font-weight: 500 !important;
+                font-size: 0.9rem !important;
+                min-width: 120px !important;
+                cursor: pointer !important;
+                transition: all 0.2s !important;
+            }}
+            
+            #fixed-footer-container button:hover:not(:disabled) {{
+                transform: translateY(-2px) !important;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+            }}
+            
+            #fixed-footer-container button:disabled {{
+                opacity: 0.5 !important;
+                cursor: not-allowed !important;
+            }}
+            
+            .footer-btn-primary {{
+                background-color: {LITMUSQ_THEME['primary']} !important;
+                color: white !important;
+                border: none !important;
+            }}
+            
+            .footer-btn-warning {{
+                background-color: {LITMUSQ_THEME['warning']} !important;
+                color: white !important;
+                border: none !important;
+            }}
+            
+            .footer-btn-danger {{
+                background-color: {LITMUSQ_THEME['secondary']} !important;
+                color: white !important;
+                border: none !important;
+            }}
+        `;
+        document.head.appendChild(style);
+    }}
+    
+    // Create footer on load
+    createFixedFooter();
+    
+    // Recreate on page changes (for Streamlit)
+    const observer = new MutationObserver(function(mutations) {{
+        if (!document.getElementById('fixed-footer-container')) {{
+            createFixedFooter();
+        }}
+    }});
+    
+    observer.observe(document.body, {{ childList: true, subtree: true }});
+    
+    // Ensure it stays on resize
+    window.addEventListener('resize', createFixedFooter);
+    </script>
+    """
+    
+    # Also add CSS styles
+    css_styles = f"""
+    <style>
+    #fixed-footer-container {{
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        background-color: {LITMUSQ_THEME['light_bg']} !important;
+        padding: 12px 20px !important;
+        border-top: 2px solid {LITMUSQ_THEME['primary']} !important;
+        box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15) !important;
+        z-index: 999999 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+    }}
+    
+    .main .block-container {{
+        padding-bottom: 100px !important;
+    }}
+    
+    .footer-stat {{
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: {LITMUSQ_THEME['primary']};
+        padding: 5px 10px;
+        background: white;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+    }}
+    </style>
+    """
+    
+    st.markdown(css_styles, unsafe_allow_html=True)
+    components.html(js_code, height=0)
+    
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
@@ -2740,55 +3113,13 @@ def show_enhanced_question_interface():
     
     
     st.markdown("---")
-    st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
     
+    # NOTE: NO NAVIGATION BUTTONS HERE - THEY'RE IN THE FIXED FOOTER
     
-    # Enhanced action buttons
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.button(
-            "◀ Previous",
-            use_container_width=True,
-            disabled=current_idx == 0,
-            key=f"prev_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
-        )
-    
-    with col2:
-        st.button(
-            "Next ▶",
-            use_container_width=True,
-            disabled=current_idx == len(df) - 1,
-            key=f"next_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
-        )
-    
-    with col3:
-        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
-        st.button(
-            button_text,
-            use_container_width=True,
-            key=f"mark_{current_idx}",
-            type="secondary",
-            on_click=lambda: toggle_mark_review(current_idx)
-        )
-    
-    with col4:
-        st.button(
-            "📤 Submit Test",
-            use_container_width=True,
-            key=f"submit_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'submitted', True)
-        )
-        
+    # Timer section only
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
     if st.session_state.end_time and not st.session_state.submitted:
-        # Calculate remaining time
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = int(time_left.total_seconds())
         
@@ -2796,7 +3127,7 @@ def show_enhanced_question_interface():
         if seconds_left <= 0:
             st.session_state.submitted = True
             st.rerun()
-            return  # Exit early to prevent further rendering
+            return
         
         # Create timer with JavaScript
         html_code = f"""
@@ -3318,7 +3649,6 @@ def show_quiz_screen():
     # Show header with timer
     show_quiz_header_with_timer()
     
-    # Rest of your existing code...
     if not st.session_state.quiz_started:
         st.error("Quiz not properly initialized. Returning to home.")
         st.session_state.current_screen = "home"
@@ -3338,20 +3668,6 @@ def show_quiz_screen():
             st.session_state.submitted = True
             st.rerun()
             return
-        
-        # Set up auto-refresh with reduced frequency
-        if seconds_left <= 0:
-            # Time's up - auto-submit immediately
-            st.session_state.submitted = True
-            st.rerun()
-        elif seconds_left < 5:  # Last minute: every 5 seconds
-            st_autorefresh(interval=1000, key="timer_refresh_last_minute")
-        elif seconds_left < 300:  # Last 5 minutes: every 60 seconds
-            st_autorefresh(interval=60000, key="timer_refresh_last_5min")
-        elif seconds_left < 1800:  # Last 30 minutes: every 5 minutes
-            st_autorefresh(interval=300000, key="timer_refresh_last_30min")
-        else:  # More than 30 minutes: every 10 minutes
-            st_autorefresh(interval=1000000, key="timer_refresh_long_exam")
     
     if st.session_state.get('show_leave_confirmation', False):
         st.sidebar.warning("Leave test? Progress will be lost.")
@@ -3368,10 +3684,56 @@ def show_quiz_screen():
     
     show_question_palette()
     
-    # Show question first, then header at the bottom
+    # Show question
     if not st.session_state.submitted:
-        
+        # Show the actual question interface
         show_enhanced_question_interface()
+        
+        # IMPORTANT: Add hidden Streamlit buttons that JavaScript will trigger
+        df = st.session_state.quiz_questions
+        current_idx = st.session_state.current_idx
+        
+        # Create hidden container for the buttons that JavaScript will click
+        with st.container():
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.button(
+                    "HIDDEN_PREV",
+                    key=f"hidden_prev_{current_idx}",
+                    disabled=current_idx == 0,
+                    on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
+                )
+            with col2:
+                st.button(
+                    "HIDDEN_NEXT",
+                    key=f"hidden_next_{current_idx}",
+                    disabled=current_idx == len(df) - 1,
+                    on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
+                )
+            with col3:
+                st.button(
+                    "HIDDEN_MARK",
+                    key=f"hidden_mark_{current_idx}",
+                    on_click=lambda: toggle_mark_review(current_idx)
+                )
+            with col4:
+                st.button(
+                    "HIDDEN_SUBMIT",
+                    key=f"hidden_submit_{current_idx}",
+                    on_click=lambda: setattr(st.session_state, 'submitted', True)
+                )
+        
+        # Hide the buttons
+        st.markdown("""
+        <style>
+        [data-testid="column"] {
+            display: none !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Create the fixed footer with JavaScript
+        create_fixed_footer_with_js()
     else:
         show_results_screen()
 
