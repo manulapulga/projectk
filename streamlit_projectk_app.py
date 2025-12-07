@@ -3419,42 +3419,48 @@ def show_retest_config(original_test):
             st.session_state.current_screen = "dashboard"
             st.rerun()
     
-    st.markdown(f"**Original Test Date:** {datetime.fromisoformat(original_test['date']).astimezone(pytz.timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M')}")
-    st.markdown(f"**Original Score:** {original_test['score']}/{original_test['total_marks']} ({original_test['percentage']:.1f}%)")
+    # Original test details
+    original_date = datetime.fromisoformat(original_test['date']).astimezone(
+        pytz.timezone("Asia/Kolkata")
+    ).strftime('%Y-%m-%d %H:%M')
     
-    # Check if we have stored questions
-    if 'questions_used' not in original_test or not original_test['questions_used']:
-        st.error("Original questions data not available. Cannot create retest.")
-        st.info("Note: This feature requires tests taken after this update.")
-        return
+    score = original_test['score']
+    total_marks = original_test['total_marks']
+    percentage = original_test['percentage']
     
-    # Analyze original test performance
     total_questions = original_test['total_questions']
-    incorrect_questions = []
-    unanswered_questions = []
+    incorrect = len(incorrect_questions)
+    unanswered = len(unanswered_questions)
+    correct = total_questions - incorrect - unanswered
     
-    if 'detailed_answers' in original_test:
-        for answer in original_test['detailed_answers']:
-            user_answer = answer.get('user_answer')
-            is_correct = answer.get('is_correct', False)
-            
-            # Check if unanswered (user_answer is None or empty)
-            if user_answer is None or (isinstance(user_answer, str) and user_answer.strip() == ""):
-                unanswered_questions.append(answer['question_index'])
-            # Check if answered but incorrect
-            elif not is_correct:
-                incorrect_questions.append(answer['question_index'])
-    
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Questions", total_questions)
-    with col2:
-        st.metric("Incorrect Answers", len(incorrect_questions))
-    with col3:
-        st.metric("Unanswered", len(unanswered_questions))
-    with col4:
-        correct_questions = total_questions - len(incorrect_questions) - len(unanswered_questions)
-        st.metric("Correct Answers", correct_questions)
+    # Unified metadata row
+    st.markdown(f"""
+    <div style="
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 1rem;
+        background: #f1f5f9;
+        padding: 10px 14px;
+        border-radius: 10px;
+        line-height: 1.6;
+    ">
+        📅 <b>Date:</b> {original_date}
+        &nbsp;•&nbsp;
+        🧮 <b>Score:</b> {score}/{total_marks}
+        &nbsp;•&nbsp;
+        🎯 <b>Percent:</b> {percentage:.1f}%
+        &nbsp;•&nbsp;
+        ❓ <b>Total:</b> {total_questions}
+        &nbsp;•&nbsp;
+        ❌ <b>Incorrect:</b> {incorrect}
+        &nbsp;•&nbsp;
+        🚫 <b>Unanswered:</b> {unanswered}
+        &nbsp;•&nbsp;
+        ✅ <b>Correct:</b> {correct}
+    </div>
+    """, unsafe_allow_html=True)
+
     
     # Retest options
     retest_option = st.radio(
