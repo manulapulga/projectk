@@ -3402,11 +3402,6 @@ def show_quiz_header_with_timer():
         </script>
         """, height=70)
 
-# Usage
-show_quiz_header_with_timer()
-st.write("Your quiz content goes here...")
-
-
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
     """Main quiz interface with professional layout."""
