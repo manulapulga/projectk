@@ -2034,22 +2034,22 @@ def show_student_dashboard():
         
         st.progress(int(percentage))
 
-            # Take Retest button
-            test_id = test.get('test_id', f"test_{idx}")
-            if st.button("🔁", key=f"retest_{test_id}", 
-                       help="Take Re-Test"):
-                st.session_state.retest_config = test
-                st.session_state.current_screen = "retest_config"
+        # Take Retest button
+        test_id = test.get('test_id', f"test_{idx}")
+        if st.button("🔁", key=f"retest_{test_id}", 
+                   help="Take Re-Test"):
+            st.session_state.retest_config = test
+            st.session_state.current_screen = "retest_config"
+            st.rerun()
+        # Delete Entry button
+        if st.button("🗑️", key=f"delete_{test_id}", 
+                   help="Delete this test entry"):
+            if delete_test_entry(username, test_id):
+                st.success("Test entry deleted successfully!")
                 st.rerun()
-            # Delete Entry button
-            if st.button("🗑️", key=f"delete_{test_id}", 
-                       help="Delete this test entry"):
-                if delete_test_entry(username, test_id):
-                    st.success("Test entry deleted successfully!")
-                    st.rerun()
-                else:
-                    st.error("Failed to delete test entry")
-            st.markdown("---")
+            else:
+                st.error("Failed to delete test entry")
+        st.markdown("---")
 
     # Achievements
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
