@@ -228,21 +228,28 @@ def inject_custom_css():
 
 
 
-    /* =========================================================
-       RADIO BUTTONS (FULL WIDTH + THEME COLORS)
+     /* =========================================================
+       IMPROVED RADIO BUTTONS (MORE VISIBLE)
     ==========================================================*/
-
+    
+    /* Make radio button circles more visible */
     .stRadio > div {{
-        padding: 0rem !important;
-        width: 100% !important;
+        background-color: {LITMUSQ_THEME['light_bg']};
+        padding: 1rem !important;
+        border-radius: 10px;
+        border: 1px solid {LITMUSQ_THEME['primary']} !important;
     }}
-
-    .stRadio > div > label {{
-        width: 100% !important;
-        margin: 0rem 0 !important;
-        padding: 0rem !important;
-        transition: all 0.2s ease;
-        border: 5px solid transparent !important;
+    
+    .stRadio label {{
+        color: {LITMUSQ_THEME['text']} !important;
+        font-weight: 500 !important;
+        padding: 0.5rem 0 !important;
+    }}
+    
+    /* Selected radio button styling */
+    .stRadio input[type="radio"]:checked + label {{
+        color: {LITMUSQ_THEME['primary']} !important;
+        font-weight: 600 !important;
     }}
     
     /* Radio button circle styling */
@@ -251,6 +258,13 @@ def inject_custom_css():
         transform: scale(1.2);
         accent-color: {LITMUSQ_THEME['primary']} !important;
     }}
+    
+    /* Hover effect */
+    .stRadio > div:hover {{
+        background-color: {LITMUSQ_THEME['accent']}22 !important;
+        border-color: {LITMUSQ_THEME['accent']} !important;
+    }}
+    
 
     /* =========================================================
        PRIMARY BUTTONS
@@ -2732,39 +2746,44 @@ def show_enhanced_question_interface():
     
     current_answer = st.session_state.question_status[current_idx]['answer']
     
-    # -------- RADIO BUTTON ANSWER SELECTION --------
-
-    options_dict = {
-        "A": formatted_a,
-        "B": formatted_b,
-        "C": formatted_c,
-        "D": formatted_d
-    }
+    # -------- IMPROVED RADIO BUTTON ANSWER SELECTION --------
     
-    # None selected by default
-    default_radio_value = (
-        current_answer if current_answer in options_dict else None
-    )
+    # First, display the options with formatted content
+    st.markdown("**Options:**")
+    col1, col2 = st.columns(2)
     
+    with col1:
+        render_formatted_content(f"<b>A)</b> {formatted_a}")
+        render_formatted_content(f"<b>B)</b> {formatted_b}")
+    
+    with col2:
+        render_formatted_content(f"<b>C)</b> {formatted_c}")
+        render_formatted_content(f"<b>D)</b> {formatted_d}")
+    
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+    
+    # SIMPLE radio button without complex formatting
+    options = ["A", "B", "C", "D"]
+    
+    # Create a clean radio button
     selected_option = st.radio(
-        "options",
-        options=["A", "B", "C", "D", None],
-        format_func=lambda x: "Clear Response" if x is None else f"{x}) {options_dict[x]}",
-        index=["A", "B", "C", "D", None].index(default_radio_value),
+        "**Your Answer:**",
+        options=options,
+        index=options.index(current_answer) if current_answer in options else 0,
         key=f"radio_{current_idx}",
-        label_visibility="collapsed"
+        horizontal=False,
+        label_visibility="visible"  # Changed from "collapsed"
     )
-
     
     # Update session state when user selects an option
-    if selected_option is not None:
+    if selected_option != current_answer:
         update_question_status(current_idx, 'answered', selected_option)
         st.session_state.answers[current_idx] = selected_option
-    
+        # Add a visual feedback
+        st.success(f"✓ Selected option {selected_option}")
     
     st.markdown("---")
     st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
-    
     
     # Enhanced action buttons
     col1, col2, col3, col4 = st.columns(4)
@@ -2806,6 +2825,16 @@ def show_enhanced_question_interface():
             key=f"submit_{current_idx}",
             type="secondary",
             on_click=lambda: setattr(st.session_state, 'submitted', True)
+        )
+        
+    # Add a "Clear Response" button
+    if current_answer:
+        st.button(
+            "🗑️ Clear Response",
+            use_container_width=True,
+            key=f"clear_{current_idx}",
+            type="secondary",
+            on_click=lambda: clear_response(current_idx)
         )
         
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
