@@ -2821,6 +2821,9 @@ def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
     current_idx = st.session_state.current_idx
+    # Hidden action channel (for JS → Python communication)
+    action = st.text_input("action_receiver", "", key="quiz_action_receiver")
+
     
     if current_idx >= len(df):
         st.error("Invalid question index")
@@ -2888,47 +2891,7 @@ def show_enhanced_question_interface():
     st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
     
     
-    # Enhanced action buttons
-    col1, col2, col3, col4 = st.columns(4)
     
-    with col1:
-        st.button(
-            "◀ Previous",
-            use_container_width=True,
-            disabled=current_idx == 0,
-            key=f"prev_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
-        )
-    
-    with col2:
-        st.button(
-            "Next ▶",
-            use_container_width=True,
-            disabled=current_idx == len(df) - 1,
-            key=f"next_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
-        )
-    
-    with col3:
-        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
-        st.button(
-            button_text,
-            use_container_width=True,
-            key=f"mark_{current_idx}",
-            type="secondary",
-            on_click=lambda: toggle_mark_review(current_idx)
-        )
-    
-    with col4:
-        st.button(
-            "📤 Submit Test",
-            use_container_width=True,
-            key=f"submit_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'submitted', True)
-        )
         
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
@@ -2984,6 +2947,96 @@ def show_enhanced_question_interface():
         st.metric("⏰ Time Left", "No Limit")
 
     st.markdown("</div>", unsafe_allow_html=True)
+    quiz_navbar = """
+    <div class="quiz-fixed-bar">
+    
+        <button class="qbtn prev" onclick="sendQuizAction('prev')">⬅ Previous</button>
+        <button class="qbtn next" onclick="sendQuizAction('next')">Next ➡</button>
+        <button class="qbtn review" onclick="sendQuizAction('review')">⭐ Mark Review</button>
+        <button class="qbtn submit" onclick="sendQuizAction('submit')">✔ Submit</button>
+    
+    </div>
+    
+    <script>
+    function sendQuizAction(a) {
+        const input = window.parent.document.querySelector("input[data-testid='quiz_action_receiver']");
+        if (input) {
+            input.value = a;
+            input.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+    }
+    </script>
+    
+    <style>
+    .quiz-fixed-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #ffcf70, #ffa53a);
+        padding: 12px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.25);
+        z-index: 999999;
+    }
+    
+    .quiz-fixed-bar .qbtn {
+        padding: 10px 20px;
+        border-radius: 12px;
+        border: none;
+        font-size: 16px;
+        font-weight: 700;
+        cursor: pointer;
+        background: white;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        transition: 0.15s ease-in-out;
+    }
+    
+    .quiz-fixed-bar .qbtn:hover {
+        transform: scale(1.05);
+    }
+    
+    .quiz-fixed-bar .submit {
+        background: #ff5252;
+        color: white;
+    }
+    
+    .quiz-fixed-bar .review {
+        background: #fff4be;
+    }
+    
+    @media (max-width: 480px) {
+        .quiz-fixed-bar .qbtn {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+    }
+    </style>
+    """
+    
+    st.markdown(quiz_navbar, unsafe_allow_html=True)
+    # Process action from fixed ribbon
+    if action == "prev" and current_idx > 0:
+        st.session_state.current_idx -= 1
+        st.session_state.quiz_action_receiver = ""
+        st.rerun()
+    
+    elif action == "next" and current_idx < len(df) - 1:
+        st.session_state.current_idx += 1
+        st.session_state.quiz_action_receiver = ""
+        st.rerun()
+    
+    elif action == "review":
+        toggle_mark_review(current_idx)
+        st.session_state.quiz_action_receiver = ""
+        st.rerun()
+    
+    elif action == "submit":
+        st.session_state.submitted = True
+        st.session_state.quiz_action_receiver = ""
+        st.rerun()
 
     st.markdown("---")
 
