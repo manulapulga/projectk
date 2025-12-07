@@ -2852,10 +2852,9 @@ def create_fixed_footer_with_js():
                         if status['answer'] is not None)
     
     # Get button states
-    is_first = str(current_idx == 0).lower()
-    is_last = str(current_idx == len(df) - 1).lower()
-    is_marked = str(st.session_state.question_status[current_idx]['marked']).lower()
-    mark_text = '↩️ Unmark Review' if st.session_state.question_status[current_idx]['marked'] else '🟨 Mark Review'
+    is_first = current_idx == 0
+    is_last = current_idx == len(df) - 1
+    is_marked = st.session_state.question_status[current_idx]['marked']
     
     # Create the JavaScript to build the fixed footer
     js_code = f"""
@@ -2879,14 +2878,14 @@ def create_fixed_footer_with_js():
             </div>
             
             <div style="display: flex; gap: 10px;">
-                <button id="prev-btn" class="footer-btn footer-btn-primary" {f'disabled' if current_idx == 0 else ''}>
+                <button id="prev-btn" class="footer-btn footer-btn-primary" {is_first ? 'disabled' : ''}>
                     ◀ Previous
                 </button>
-                <button id="next-btn" class="footer-btn footer-btn-primary" {f'disabled' if current_idx == len(df) - 1 else ''}>
+                <button id="next-btn" class="footer-btn footer-btn-primary" {is_last ? 'disabled' : ''}>
                     Next ▶
                 </button>
                 <button id="mark-btn" class="footer-btn footer-btn-warning">
-                    {mark_text}
+                    {'↩️ Unmark Review' if is_marked else '🟨 Mark Review'}
                 </button>
                 <button id="submit-btn" class="footer-btn footer-btn-danger">
                     📤 Submit Test
@@ -2904,7 +2903,7 @@ def create_fixed_footer_with_js():
                 const streamlitDoc = window.parent.document;
                 const buttons = streamlitDoc.querySelectorAll('[data-testid="baseButton-secondary"]');
                 buttons.forEach(btn => {{
-                    if (btn.textContent.includes('HIDDEN_PREV')) {{
+                    if (btn.textContent.includes('Previous')) {{
                         btn.click();
                     }}
                 }});
@@ -2917,7 +2916,7 @@ def create_fixed_footer_with_js():
                 const streamlitDoc = window.parent.document;
                 const buttons = streamlitDoc.querySelectorAll('[data-testid="baseButton-secondary"]');
                 buttons.forEach(btn => {{
-                    if (btn.textContent.includes('HIDDEN_NEXT')) {{
+                    if (btn.textContent.includes('Next')) {{
                         btn.click();
                     }}
                 }});
@@ -2929,7 +2928,7 @@ def create_fixed_footer_with_js():
             const streamlitDoc = window.parent.document;
             const buttons = streamlitDoc.querySelectorAll('[data-testid="baseButton-secondary"]');
             buttons.forEach(btn => {{
-                if (btn.textContent.includes('HIDDEN_MARK')) {{
+                if (btn.textContent.includes('Mark Review') || btn.textContent.includes('Unmark Review')) {{
                     btn.click();
                 }}
             }});
@@ -2940,7 +2939,7 @@ def create_fixed_footer_with_js():
             const streamlitDoc = window.parent.document;
             const buttons = streamlitDoc.querySelectorAll('[data-testid="baseButton-secondary"]');
             buttons.forEach(btn => {{
-                if (btn.textContent.includes('HIDDEN_SUBMIT')) {{
+                if (btn.textContent.includes('Submit Test')) {{
                     btn.click();
                 }}
             }});
@@ -3029,22 +3028,11 @@ def create_fixed_footer_with_js():
     .main .block-container {{
         padding-bottom: 100px !important;
     }}
-    
-    .footer-stat {{
-        font-weight: 600;
-        font-size: 0.95rem;
-        color: {LITMUSQ_THEME['primary']};
-        padding: 5px 10px;
-        background: white;
-        border-radius: 6px;
-        border: 1px solid #cbd5e1;
-    }}
     </style>
     """
     
     st.markdown(css_styles, unsafe_allow_html=True)
-    components.html(js_code, height=0)
-    
+    components.html(js_code, height=0)    
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
