@@ -229,27 +229,20 @@ def inject_custom_css():
 
 
     /* =========================================================
-       IMPROVED RADIO BUTTONS (MORE VISIBLE)
+       RADIO BUTTONS (FULL WIDTH + THEME COLORS)
     ==========================================================*/
-    
-    /* Make radio button circles more visible */
+
     .stRadio > div {{
-        background-color: {LITMUSQ_THEME['light_bg']};
-        padding: 1rem !important;
-        border-radius: 10px;
-        border: 1px solid {LITMUSQ_THEME['primary']} !important;
+        padding: 0rem !important;
+        width: 100% !important;
     }}
-    
-    .stRadio label {{
-        color: {LITMUSQ_THEME['text']} !important;
-        font-weight: 500 !important;
-        padding: 0.5rem 0 !important;
-    }}
-    
-    /* Selected radio button styling */
-    .stRadio input[type="radio"]:checked + label {{
-        color: {LITMUSQ_THEME['primary']} !important;
-        font-weight: 600 !important;
+
+    .stRadio > div > label {{
+        width: 100% !important;
+        margin: 0rem 0 !important;
+        padding: 0rem !important;
+        transition: all 0.2s ease;
+        border: 5px solid transparent !important;
     }}
     
     /* Radio button circle styling */
@@ -258,13 +251,6 @@ def inject_custom_css():
         transform: scale(1.2);
         accent-color: {LITMUSQ_THEME['primary']} !important;
     }}
-    
-    /* Hover effect */
-    .stRadio > div:hover {{
-        background-color: {LITMUSQ_THEME['accent']}22 !important;
-        border-color: {LITMUSQ_THEME['accent']} !important;
-    }}
-
 
     /* =========================================================
        PRIMARY BUTTONS
