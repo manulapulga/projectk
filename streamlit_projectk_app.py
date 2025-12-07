@@ -2015,44 +2015,58 @@ def show_student_dashboard():
         
             exam_name = str(test.get('exam_name', 'Unknown Test'))
             if test.get('is_retest', False):
-                exam_name += "📝"
+                exam_name += " 📝"
         
             test_id = test.get('test_id', f"test_{idx}")
         
-            # ==== Clean metadata card ====
-            st.markdown(f"""
+            # Build the metadata HTML (left side)
+            metadata_html = f"""
             <div style="
-                display: flex;
-                flex-wrap: wrap;
-                align-items: center;
-                justify-content: space-between;
-                gap: 10px;
-                padding: 12px 14px;
-                background: #f8fafc;
-                border-radius: 10px;
-                border: 1px solid #e2e8f0;
-                margin-bottom: 6px;
+                display: inline-block;
                 font-size: 0.95rem;
             ">
-                <div style="flex-grow: 1;">
-                    📘 <b>{exam_name}</b>
-                    &nbsp;•&nbsp; 🧮 <b>{score:.0f}/{total_marks:.0f}</b>
-                    &nbsp;•&nbsp; 🎯 <b>{percentage:.1f}%</b>
-                    &nbsp;•&nbsp; 📅 {test_date}
-                </div>
-        
-                <div style="display: flex; gap: 8px;">
-                    <button onclick="window.location.href='?action=retest_{test_id}'"
-                        style="background:none;border:none;font-size:20px;cursor:pointer;">🔁</button>
-        
-                    <button onclick="window.location.href='?action=delete_{test_id}'"
-                        style="background:none;border:none;font-size:20px;cursor:pointer;">🗑️</button>
-                </div>
+                📘 <b>{exam_name}</b>
+                &nbsp;•&nbsp; 🧮 <b>{score:.0f}/{total_marks:.0f}</b>
+                &nbsp;•&nbsp; 🎯 <b>{percentage:.1f}%</b>
+                &nbsp;•&nbsp; 📅 {test_date}
             </div>
-            """, unsafe_allow_html=True)
+            """
         
-            # ==== Progress bar ====
+            # Use columns: big left column for metadata, two small for buttons
+            left_col, btn_col1, btn_col2 = st.columns([10, 1, 1])
+        
+            with left_col:
+                # Render metadata inside a styled container to match the card look
+                st.markdown(f"""
+                <div style="
+                    padding: 12px 14px;
+                    background: #f8fafc;
+                    border-radius: 10px;
+                    border: 1px solid #e2e8f0;
+                    margin-bottom: 6px;
+                ">
+                    {metadata_html}
+                </div>
+                """, unsafe_allow_html=True)
+        
+            # Buttons use Streamlit so they trigger Python events reliably
+            with btn_col1:
+                if st.button("🔁", key=f"retest_{test_id}", help="Take Re-Test"):
+                    st.session_state.retest_config = test
+                    st.session_state.current_screen = "retest_config"
+                    st.rerun()
+        
+            with btn_col2:
+                if st.button("🗑️", key=f"delete_{test_id}", help="Delete this test entry"):
+                    if delete_test_entry(username, test_id):
+                        st.success("Test entry deleted successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to delete test entry")
+        
+            # Progress bar under the card (keeps spacing consistent)
             st.progress(int(percentage))
+
         
             # ==== Handle UI actions ====
             if f"action=retest_{test_id}" in st.query_params:
