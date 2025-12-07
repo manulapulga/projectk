@@ -3328,8 +3328,9 @@ from datetime import datetime, timedelta
 import streamlit.components.v1 as components
 
 def show_quiz_header_with_timer():
+  
     """Show a fixed quiz header with ticking timer using st.components.v1.html"""
-    
+    st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
     if "end_time" not in st.session_state:
         st.session_state.end_time = datetime.now() + timedelta(minutes=10)  # Example: 10 min timer
         st.session_state.submitted = False
