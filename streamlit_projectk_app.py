@@ -158,12 +158,29 @@ def inject_custom_css():
        GLOBAL SAFE SPACING (NO OVERLAPS, NO HUGE MARGINS)
     ==========================================================*/
 
-    /* Main content container – prevents header overlap */
+    /* Main content container – prevents header overlap AND footer overlap */
     .block-container {{
         padding-top: 0.1rem !important;   /* header clearance */
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
-        padding-bottom: 0.1rem !important;
+        /* INCREASED padding-bottom to clear space for the fixed footer */
+        padding-bottom: 80px !important; 
+    }}
+    
+    /* =========================================================
+       FIXED QUIZ FOOTER (The Ribbon)
+    ==========================================================*/
+    
+    .fixed-quiz-footer {{
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        /* Use light background color from theme */
+        background-color: {LITMUSQ_THEME['light_bg']}; 
+        padding: 0.8rem 1rem;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 10000; /* Ensure it stays above other content */
     }}
 
     /* Vertical spacing between Streamlit elements */
@@ -2023,22 +2040,61 @@ def show_student_dashboard():
     # Recent Test History
     test_history = load_test_history(username)
     if test_history:
-        
-        recent_tests = test_history[-10:]  # Show last 10 tests
-        
-        for idx, test in enumerate(reversed(recent_tests)):
-            test_date = datetime.fromisoformat(str(test.get("date", ""))).astimezone(
-                pytz.timezone("Asia/Kolkata")
-            ).strftime("%Y-%m-%d %H:%M")
-        
-            percentage = float(test.get("percentage", 0))
-            score = float(test.get("score", 0))
-            total_marks = float(test.get("total_marks", 0))
-        
-            exam_name = str(test.get('exam_name', 'Unknown Test'))
-            if test.get('is_retest', False):
-                exam_name += "📝"
-        
+    
+        # --- Ensure explicit ordering: newest first (descending by date) ---
+        def parse_date_safe(d):
+            try:
+                return datetime.fromisoformat(str(d))
+            except Exception:
+                # fallback: try parsing common formats, or return epoch
+                try:
+                    return datetime.strptime(str(d), "%d-%m-%Y %H:%M:%S")
+                except Exception:
+                    return datetime.fromtimestamp(0)
+    
+        # Sort by parsed date descending (newest first)
+        test_history_sorted = sorted(
+            test_history,
+            key=lambda x: parse_date_safe(x.get("date", "")),
+            reverse=True
+        )
+    
+        # --- Precompute total (non-retest) attempts per exam name ---
+        total_attempts = {}
+        for t in test_history_sorted:
+            if not t.get("is_retest", False):
+                name = str(t.get("exam_name", "Unknown Test"))
+                total_attempts[name] = total_attempts.get(name, 0) + 1
+    
+        # We'll decrement total_attempts[name] as we render newest->oldest
+        attempt_counter_remaining = total_attempts.copy()
+    
+        # Now render ALL tests (newest first)
+        for idx, test in enumerate(test_history_sorted):
+    
+            # Date formatting (safe)
+            test_date_obj = parse_date_safe(test.get("date", ""))
+            try:
+                test_date = test_date_obj.astimezone(pytz.timezone("Asia/Kolkata")).strftime("%d-%m-%Y • ⏱️ %I:%M %p")
+            except Exception:
+                test_date = test.get("date", "")
+    
+            percentage = float(test.get("percentage", 0) or 0)
+            score = float(test.get("score", 0) or 0)
+            total_marks = float(test.get("total_marks", 0) or 0)
+    
+            base_name = str(test.get("exam_name", "Unknown Test"))
+    
+            if not test.get("is_retest", False):
+                # Use remaining attempts (newest gets highest number)
+                remaining = attempt_counter_remaining.get(base_name, 0)
+                exam_name = f"{base_name} (Attempt {remaining})" if remaining > 0 else base_name
+                # Decrement so older entry will get remaining-1 next time
+                attempt_counter_remaining[base_name] = max(0, remaining - 1)
+            else:
+                # Retest - keep your existing retest suffix icon
+                exam_name = f"{base_name}📝"
+    
             test_id = test.get('test_id', f"test_{idx}")
         
             # --- Clean inline metadata card ---
@@ -3147,10 +3203,10 @@ def show_quiz_header_with_timer():
             margin-top: 3.5rem;
             margin-bottom:0.2rem;
             width: 100%;
-            height:2rem;
-            background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
-            color: white;
-            padding: 0.8rem 1rem;
+            height:3rem;
+            background: linear-gradient(135deg, #50fbf8, #e039d3);
+            color: black;
+            padding: 0.5rem 0.5rem;
             z-index: 9999;
             display: flex;
             justify-content: space-between;
@@ -3482,7 +3538,7 @@ def show_retest_config(original_test):
     # Original test details
     original_date = datetime.fromisoformat(original_test['date']).astimezone(
         pytz.timezone("Asia/Kolkata")
-    ).strftime('%Y-%m-%d %H:%M')
+    ).strftime('%d-%m-%Y %I:%M %p')
     
     score = original_test['score']
     total_marks = original_test['total_marks']
