@@ -999,9 +999,7 @@ def show_admin_panel():
         show_user_management()
     
     with subtab2:
-        show_admin_analytics()
-    
-
+        show_system_settings()
 
 def show_user_management():
     """Display and manage all registered users."""
