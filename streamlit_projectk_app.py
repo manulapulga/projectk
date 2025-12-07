@@ -155,63 +155,6 @@ def inject_custom_css():
     <style>
 
     /* =========================================================
-       FIXED QUIZ FOOTER (The Ribbon) - UPDATED FOR STREAMLIT
-    ==========================================================*/
-    
-    /* Create space for the fixed footer */
-    .stApp {{
-        padding-bottom: 100px !important;
-    }}
-    
-    /* Fixed footer container */
-    .stFixedFooter {{
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        background-color: {LITMUSQ_THEME['light_bg']} !important;
-        padding: 12px 16px !important;
-        border-top: 2px solid {LITMUSQ_THEME['primary']} !important;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1) !important;
-        z-index: 9999 !important;
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
-    }}
-    
-    /* Footer stats */
-    .footer-stats {{
-        font-weight: 600;
-        font-size: 0.9rem;
-        color: {LITMUSQ_THEME['primary']};
-    }}
-    
-    /* Button container */
-    .footer-buttons {{
-        display: flex;
-        gap: 10px;
-    }}
-    
-    /* Custom button styles for footer */
-    .footer-btn {{
-        min-width: 120px;
-        padding: 8px 16px !important;
-        border-radius: 6px !important;
-        font-weight: 500 !important;
-        transition: all 0.2s ease !important;
-    }}
-    
-    .footer-btn:hover {{
-        transform: translateY(-2px) !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
-    }}
-    
-    /* Hide the Streamlit's own column layout for hidden buttons */
-    [data-testid="column"] {{
-        display: none !important;
-    }}
-    
-    /* =========================================================
        GLOBAL SAFE SPACING (NO OVERLAPS, NO HUGE MARGINS)
     ==========================================================*/
 
@@ -2729,111 +2672,6 @@ def show_exam_config_screen():
 # =============================
 # Enhanced Question Display in Quiz
 # =============================
-def show_fixed_quiz_footer():
-    """Display fixed navigation buttons at the bottom of the quiz using Streamlit layout."""
-    df = st.session_state.quiz_questions
-    current_idx = st.session_state.current_idx
-    
-    # Count answered questions
-    answered_count = sum(1 for status in st.session_state.question_status.values() 
-                        if status['answer'] is not None)
-    
-    # Use st.container() with custom CSS to create a fixed position
-    footer_container = st.container()
-    
-    with footer_container:
-        # Create columns for the footer layout
-        col1, col2, col3 = st.columns([1, 2, 1])
-        
-        with col1:
-            st.markdown(
-                f'<div class="footer-stats">Q{current_idx + 1} of {len(df)}</div>',
-                unsafe_allow_html=True
-            )
-        
-        with col2:
-            # Create button columns
-            btn_col1, btn_col2, btn_col3, btn_col4 = st.columns(4)
-            
-            with btn_col1:
-                if st.button(
-                    "◀ Previous",
-                    key=f"prev_footer_{current_idx}",
-                    disabled=current_idx == 0,
-                    use_container_width=True,
-                    type="secondary"
-                ):
-                    st.session_state.current_idx = current_idx - 1
-                    st.rerun()
-            
-            with btn_col2:
-                if st.button(
-                    "Next ▶",
-                    key=f"next_footer_{current_idx}",
-                    disabled=current_idx == len(df) - 1,
-                    use_container_width=True,
-                    type="secondary"
-                ):
-                    st.session_state.current_idx = current_idx + 1
-                    st.rerun()
-            
-            with btn_col3:
-                button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
-                if st.button(
-                    button_text,
-                    key=f"mark_footer_{current_idx}",
-                    use_container_width=True,
-                    type="secondary"
-                ):
-                    toggle_mark_review(current_idx)
-                    st.rerun()
-            
-            with btn_col4:
-                if st.button(
-                    "📤 Submit Test",
-                    key=f"submit_footer_{current_idx}",
-                    use_container_width=True,
-                    type="secondary"
-                ):
-                    st.session_state.submitted = True
-                    st.rerun()
-        
-        with col3:
-            st.markdown(
-                f'<div class="footer-stats" style="text-align: right;">✅ {answered_count}/{len(df)}</div>',
-                unsafe_allow_html=True
-            )
-    
-    # Inject JavaScript to fix the footer at the bottom
-    st.markdown("""
-    <script>
-    // Wait for the page to load
-    setTimeout(() => {
-        // Find the footer container
-        const footerContainer = document.querySelector('[data-testid="stVerticalBlock"]').lastElementChild;
-        
-        if (footerContainer) {
-            // Apply fixed position styling
-            footerContainer.style.position = 'fixed';
-            footerContainer.style.bottom = '0';
-            footerContainer.style.left = '0';
-            footerContainer.style.width = '100%';
-            footerContainer.style.backgroundColor = '#EFF6FF';
-            footerContainer.style.padding = '12px 16px';
-            footerContainer.style.borderTop = '2px solid #1E3A8A';
-            footerContainer.style.boxShadow = '0 -2px 10px rgba(0, 0, 0, 0.1)';
-            footerContainer.style.zIndex = '9999';
-            
-            // Add margin to main content to prevent overlap
-            const mainContent = document.querySelector('.main .block-container');
-            if (mainContent) {
-                mainContent.style.paddingBottom = '120px';
-            }
-        }
-    }, 100);
-    </script>
-    """, unsafe_allow_html=True)
-    
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
@@ -2902,13 +2740,55 @@ def show_enhanced_question_interface():
     
     
     st.markdown("---")
+    st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
     
-    # NOTE: NO NAVIGATION BUTTONS HERE - THEY'RE IN THE FIXED FOOTER
     
-    # Timer section only
+    # Enhanced action buttons
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.button(
+            "◀ Previous",
+            use_container_width=True,
+            disabled=current_idx == 0,
+            key=f"prev_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
+        )
+    
+    with col2:
+        st.button(
+            "Next ▶",
+            use_container_width=True,
+            disabled=current_idx == len(df) - 1,
+            key=f"next_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
+        )
+    
+    with col3:
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
+        st.button(
+            button_text,
+            use_container_width=True,
+            key=f"mark_{current_idx}",
+            type="secondary",
+            on_click=lambda: toggle_mark_review(current_idx)
+        )
+    
+    with col4:
+        st.button(
+            "📤 Submit Test",
+            use_container_width=True,
+            key=f"submit_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'submitted', True)
+        )
+        
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
     if st.session_state.end_time and not st.session_state.submitted:
+        # Calculate remaining time
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = int(time_left.total_seconds())
         
@@ -2916,7 +2796,7 @@ def show_enhanced_question_interface():
         if seconds_left <= 0:
             st.session_state.submitted = True
             st.rerun()
-            return
+            return  # Exit early to prevent further rendering
         
         # Create timer with JavaScript
         html_code = f"""
@@ -3438,6 +3318,7 @@ def show_quiz_screen():
     # Show header with timer
     show_quiz_header_with_timer()
     
+    # Rest of your existing code...
     if not st.session_state.quiz_started:
         st.error("Quiz not properly initialized. Returning to home.")
         st.session_state.current_screen = "home"
@@ -3487,13 +3368,10 @@ def show_quiz_screen():
     
     show_question_palette()
     
-    # Show question
+    # Show question first, then header at the bottom
     if not st.session_state.submitted:
-        # Show the actual question interface
-        show_enhanced_question_interface()
         
-        # Show the fixed footer ribbon
-        show_fixed_quiz_footer()
+        show_enhanced_question_interface()
     else:
         show_results_screen()
 
