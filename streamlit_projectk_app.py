@@ -2044,8 +2044,24 @@ def show_student_dashboard():
                 
             """, unsafe_allow_html=True)
         
-                        # Buttons use Streamlit so they trigger Python events reliably
-        
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                # Take Retest button
+                test_id = test.get('test_id', f"test_{idx}")
+                if st.button("🔁", key=f"retest_{test_id}", 
+                           help="Take Re-Test"):
+                    st.session_state.retest_config = test
+                    st.session_state.current_screen = "retest_config"
+            with col2:
+                # Delete Entry button
+                if st.button("🗑️", key=f"delete_{test_id}", 
+                           help="Delete this test entry"):
+                    if delete_test_entry(username, test_id):
+                        st.success("Test entry deleted successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to delete test entry")        
+
             # Progress bar under the card (keeps spacing consistent)
             st.progress(int(percentage))
 
