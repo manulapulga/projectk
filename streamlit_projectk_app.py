@@ -158,29 +158,12 @@ def inject_custom_css():
        GLOBAL SAFE SPACING (NO OVERLAPS, NO HUGE MARGINS)
     ==========================================================*/
 
-    /* Main content container – prevents header overlap AND footer overlap */
+    /* Main content container – prevents header overlap */
     .block-container {{
         padding-top: 0.1rem !important;   /* header clearance */
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
-        /* INCREASED padding-bottom to clear space for the fixed footer */
-        padding-bottom: 80px !important; 
-    }}
-    
-    /* =========================================================
-       FIXED QUIZ FOOTER (The Ribbon)
-    ==========================================================*/
-    
-    .fixed-quiz-footer {{
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        /* Use light background color from theme */
-        background-color: {LITMUSQ_THEME['light_bg']}; 
-        padding: 0.8rem 1rem;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-        z-index: 10000; /* Ensure it stays above other content */
+        padding-bottom: 0.1rem !important;
     }}
 
     /* Vertical spacing between Streamlit elements */
@@ -2040,61 +2023,22 @@ def show_student_dashboard():
     # Recent Test History
     test_history = load_test_history(username)
     if test_history:
-    
-        # --- Ensure explicit ordering: newest first (descending by date) ---
-        def parse_date_safe(d):
-            try:
-                return datetime.fromisoformat(str(d))
-            except Exception:
-                # fallback: try parsing common formats, or return epoch
-                try:
-                    return datetime.strptime(str(d), "%d-%m-%Y %H:%M:%S")
-                except Exception:
-                    return datetime.fromtimestamp(0)
-    
-        # Sort by parsed date descending (newest first)
-        test_history_sorted = sorted(
-            test_history,
-            key=lambda x: parse_date_safe(x.get("date", "")),
-            reverse=True
-        )
-    
-        # --- Precompute total (non-retest) attempts per exam name ---
-        total_attempts = {}
-        for t in test_history_sorted:
-            if not t.get("is_retest", False):
-                name = str(t.get("exam_name", "Unknown Test"))
-                total_attempts[name] = total_attempts.get(name, 0) + 1
-    
-        # We'll decrement total_attempts[name] as we render newest->oldest
-        attempt_counter_remaining = total_attempts.copy()
-    
-        # Now render ALL tests (newest first)
-        for idx, test in enumerate(test_history_sorted):
-    
-            # Date formatting (safe)
-            test_date_obj = parse_date_safe(test.get("date", ""))
-            try:
-                test_date = test_date_obj.astimezone(pytz.timezone("Asia/Kolkata")).strftime("%d-%m-%Y • ⏱️ %I:%M %p")
-            except Exception:
-                test_date = test.get("date", "")
-    
-            percentage = float(test.get("percentage", 0) or 0)
-            score = float(test.get("score", 0) or 0)
-            total_marks = float(test.get("total_marks", 0) or 0)
-    
-            base_name = str(test.get("exam_name", "Unknown Test"))
-    
-            if not test.get("is_retest", False):
-                # Use remaining attempts (newest gets highest number)
-                remaining = attempt_counter_remaining.get(base_name, 0)
-                exam_name = f"{base_name} (Attempt {remaining})" if remaining > 0 else base_name
-                # Decrement so older entry will get remaining-1 next time
-                attempt_counter_remaining[base_name] = max(0, remaining - 1)
-            else:
-                # Retest - keep your existing retest suffix icon
-                exam_name = f"{base_name}📝"
-    
+        
+        recent_tests = test_history[-10:]  # Show last 10 tests
+        
+        for idx, test in enumerate(reversed(recent_tests)):
+            test_date = datetime.fromisoformat(str(test.get("date", ""))).astimezone(
+                pytz.timezone("Asia/Kolkata")
+            ).strftime("%Y-%m-%d %H:%M")
+        
+            percentage = float(test.get("percentage", 0))
+            score = float(test.get("score", 0))
+            total_marks = float(test.get("total_marks", 0))
+        
+            exam_name = str(test.get('exam_name', 'Unknown Test'))
+            if test.get('is_retest', False):
+                exam_name += "📝"
+        
             test_id = test.get('test_id', f"test_{idx}")
         
             # --- Clean inline metadata card ---
@@ -2672,68 +2616,6 @@ def show_exam_config_screen():
 # =============================
 # Enhanced Question Display in Quiz
 # =============================
-# =============================
-# Fixed Footer Navigation
-# =============================
-def show_quiz_footer_navigation():
-    """Display fixed navigation and action buttons in a bottom ribbon."""
-    
-    # Check if quiz state is valid
-    if 'quiz_questions' not in st.session_state or st.session_state.submitted:
-        return
-
-    current_idx = st.session_state.current_idx
-    total_questions = len(st.session_state.quiz_questions)
-    
-    # Start the fixed footer div
-    st.markdown("""
-    <div class="fixed-quiz-footer">
-    """, unsafe_allow_html=True)
-    
-    # Use st.columns for button layout: [Previous] [Next] [Mark/Unmark] [Clear] [Submit]
-    # Adjust column ratios for button sizes
-    col1, col2, col3, col4, col5 = st.columns([1, 1, 1.5, 1.5, 1.5]) 
-    
-    # --- PREVIOUS Button ---
-    with col1:
-        is_disabled = current_idx == 0
-        if st.button("← Previous", use_container_width=True, key="quiz_prev", disabled=is_disabled):
-            st.session_state.current_idx = max(0, current_idx - 1)
-            st.rerun()
-
-    # --- NEXT Button ---
-    with col2:
-        is_disabled = current_idx == total_questions - 1
-        if st.button("Next →", type="primary", use_container_width=True, key="quiz_next", disabled=is_disabled):
-            st.session_state.current_idx = min(total_questions - 1, current_idx + 1)
-            # Update status if the user moves to a new question
-            if st.session_state.question_status[st.session_state.current_idx]['status'] == 'not_visited':
-                update_question_status(st.session_state.current_idx, 'not_answered')
-            st.rerun()
-
-    # --- MARK/UNMARK Button ---
-    with col3:
-        current_status = st.session_state.question_status[current_idx]
-        is_marked = current_status.get('marked', False)
-        
-        button_text = "⭐ Mark for Review" if not is_marked else "🗑️ Unmark Review"
-        if st.button(button_text, use_container_width=True, key="quiz_mark", type="secondary"):
-            new_marked_status = not is_marked
-            st.session_state.question_status[current_idx]['marked'] = new_marked_status
-            st.rerun()
-
-    # --- CLEAR RESPONSE Button ---
-
-    # --- SUBMIT Button ---
-    with col5:
-        # Using 'danger' type to make the final action stand out
-        if st.button("🏁 Submit Test", use_container_width=True, key="quiz_submit", type="danger"):
-            # Set submitted state to True and rerun to trigger result screen
-            st.session_state.submitted = True
-            st.rerun() 
-            
-    # Close the fixed footer div
-    st.markdown("</div>", unsafe_allow_html=True)
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
@@ -2805,8 +2687,104 @@ def show_enhanced_question_interface():
     st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
     
     
+    # Enhanced action buttons
+    col1, col2, col3, col4 = st.columns(4)
     
-    show_quiz_footer_navigation()
+    with col1:
+        st.button(
+            "◀ Previous",
+            use_container_width=True,
+            disabled=current_idx == 0,
+            key=f"prev_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
+        )
+    
+    with col2:
+        st.button(
+            "Next ▶",
+            use_container_width=True,
+            disabled=current_idx == len(df) - 1,
+            key=f"next_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
+        )
+    
+    with col3:
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
+        st.button(
+            button_text,
+            use_container_width=True,
+            key=f"mark_{current_idx}",
+            type="secondary",
+            on_click=lambda: toggle_mark_review(current_idx)
+        )
+    
+    with col4:
+        st.button(
+            "📤 Submit Test",
+            use_container_width=True,
+            key=f"submit_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'submitted', True)
+        )
+        
+    st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
+    
+    if st.session_state.end_time and not st.session_state.submitted:
+        # Calculate remaining time
+        time_left = st.session_state.end_time - datetime.now()
+        seconds_left = int(time_left.total_seconds())
+        
+        # Auto-submit when time reaches zero
+        if seconds_left <= 0:
+            st.session_state.submitted = True
+            st.rerun()
+            return  # Exit early to prevent further rendering
+        
+        # Create timer with JavaScript
+        html_code = f"""
+        <div id="timer" style="
+            font-size: 24px;
+            font-weight: bold;
+            color: {'red' if seconds_left < 300 else 'green'};
+            text-align: center;
+        "></div>
+
+        <script>
+            let timeLeft = {seconds_left};
+
+            function updateTimer() {{
+                if (timeLeft <= 0) {{
+                    document.getElementById('timer').innerHTML = "⏰ 00:00:00";
+                    // Trigger automatic submission when timer reaches zero
+                    const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
+                    if (submitButton) {{
+                        submitButton.click();
+                    }}
+                    return;
+                }}
+
+                let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                let s = String(timeLeft % 60).padStart(2, '0');
+
+                document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
+
+                timeLeft--;
+                setTimeout(updateTimer, 1000);
+            }}
+
+            updateTimer();
+        </script>
+        """
+        components.html(html_code, height=60)
+    else:
+        st.metric("⏰ Time Left", "No Limit")
+
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    st.markdown("---")
 
 # =============================
 # Professional Test Interface
@@ -3169,10 +3147,10 @@ def show_quiz_header_with_timer():
             margin-top: 3.5rem;
             margin-bottom:0.2rem;
             width: 100%;
-            height:3rem;
-            background: linear-gradient(135deg, #50fbf8, #e039d3);
-            color: black;
-            padding: 0.5rem 0.5rem;
+            height:2rem;
+            background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
+            color: white;
+            padding: 0.8rem 1rem;
             z-index: 9999;
             display: flex;
             justify-content: space-between;
@@ -3504,7 +3482,7 @@ def show_retest_config(original_test):
     # Original test details
     original_date = datetime.fromisoformat(original_test['date']).astimezone(
         pytz.timezone("Asia/Kolkata")
-    ).strftime('%d-%m-%Y %I:%M %p')
+    ).strftime('%Y-%m-%d %H:%M')
     
     score = original_test['score']
     total_marks = original_test['total_marks']
