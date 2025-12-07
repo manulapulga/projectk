@@ -3117,7 +3117,7 @@ def show_question_palette():
     .legend-item {
         display: flex;
         align-items: center;
-        margin: 5px 0;
+        margin: 1px 0;
         font-size: 12px;
     }
     .color-box {
