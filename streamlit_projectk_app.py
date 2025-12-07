@@ -3444,6 +3444,7 @@ def show_retest_config(original_test):
         padding: 10px 14px;
         border-radius: 10px;
         line-height: 1.6;
+        margin-top: 1rem;
     ">
         📅 <b>Date:</b> {original_date}
         &nbsp;•&nbsp;
