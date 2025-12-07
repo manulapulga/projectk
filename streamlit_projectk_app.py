@@ -999,6 +999,9 @@ def show_admin_panel():
         show_user_management()
     
     with subtab2:
+        show_admin_analytics()
+    
+    with subtab3:
         show_system_settings()
 
 def show_user_management():
@@ -1195,9 +1198,13 @@ def show_admin_analytics():
     active_users = sum(1 for user in users if user.get('is_active', True))
     
     # Registration trend (last 30 days)
-    thirty_days_ago = datetime.now() - timedelta(days=30)
-    recent_users = sum(1 for user in users 
-                      if datetime.fromisoformat(user.get('created_at', '2000-01-01')).astimezone(pytz.timezone("Asia/Kolkata")) > thirty_days_ago)
+    thirty_days_ago = datetime.now(tz) - timedelta(days=30)
+
+    recent_users = sum(
+        1 for user in users
+        if datetime.fromisoformat(user.get('created_at', '2000-01-01T00:00:00'))
+                .astimezone(tz) > thirty_days_ago
+    )
     
     # Reduce st.metric font size
     st.markdown("""
