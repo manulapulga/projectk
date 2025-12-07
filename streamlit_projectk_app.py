@@ -2018,55 +2018,49 @@ def show_student_dashboard():
         
             test_id = test.get('test_id', f"test_{idx}")
         
-            # --- Full light-blue card wrapper ---
+            # --- Clean inline metadata card ---
             st.markdown(f"""
             <div style="
-                background: #e0f2ff;  /* light blue background */
-                padding: 16px;
-                border-radius: 12px;
-                border: 1px solid #90caf9;
-                margin-bottom: 12px;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+                padding: 12px 14px;
+                background: #f8fafc;
+                border-radius: 10px;
+                border: 1px solid #e2e8f0;
+                margin-bottom: 6px;
+                font-size: 0.95rem;
             ">
-                <div style="
-                    display: flex;
-                    flex-wrap: wrap;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: 10px;
-                    font-size: 0.95rem;
-                ">
-                    <div style="flex-grow: 1;">
-                        📘 <b>{exam_name}</b>
-                        &nbsp;•&nbsp; 🧮 <b>{score:.0f}/{total_marks:.0f}</b>
-                        &nbsp;•&nbsp; 🎯 <b>{percentage:.1f}%</b>
-                        &nbsp;•&nbsp; 📅 {test_date}
-                    </div>
+                <div style="flex-grow: 1;">
+                    📘 <b>{exam_name}</b>
+                    &nbsp;•&nbsp; 🧮 <b>{score:.0f}/{total_marks:.0f}</b>
+                    &nbsp;•&nbsp; 🎯 <b>{percentage:.1f}%</b>
+                    &nbsp;•&nbsp; 📅 {test_date}
                 </div>
-    
-                <!-- Progress bar -->
-                <div style="margin-top: 10px; margin-bottom: 10px;">
+        
+                
             """, unsafe_allow_html=True)
-    
+            # Progress bar under the card (keeps spacing consistent)
             st.progress(int(percentage))
-    
-            # Buttons inside the card
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Retest 🔁", key=f"retest_{test_id}", 
-                             help="Take Re-Test", use_container_width=True):
-                    st.session_state.retest_config = test
-                    st.session_state.current_screen = "retest_config"
-            with col2:
-                if st.button("Delete 🗑️", key=f"delete_{test_id}", 
-                             help="Delete this test entry", use_container_width=True):
-                    if delete_test_entry(username, test_id):
-                        st.success("Test entry deleted successfully!")
-                        st.experimental_rerun()
-                    else:
-                        st.error("Failed to delete test entry")
-            
-            st.markdown("</div>", unsafe_allow_html=True)
-
+            # Take Retest button
+            test_id = test.get('test_id', f"test_{idx}")
+            if st.button("Retest 🔁", key=f"retest_{test_id}", 
+                       help="Take Re-Test", use_container_width="True"):
+                st.session_state.retest_config = test
+                st.session_state.current_screen = "retest_config"
+                
+            # Delete Entry button
+            if st.button("Delete 🗑️", key=f"delete_{test_id}", 
+                       help="Delete this test entry", use_container_width="True"):
+                if delete_test_entry(username, test_id):
+                    st.success("Test entry deleted successfully!")
+                    st.rerun()
+                else:
+                    st.error("Failed to delete test entry")
+                    
+            st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     # Achievements
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     if progress.get("achievements"):
