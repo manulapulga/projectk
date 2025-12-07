@@ -3112,9 +3112,9 @@ def show_question_palette():
     .compact-header {{
         text-align: center;
         padding: 0.4rem 0;
-        font-size: 13px;
+        font-size: 20px;
         font-weight: 600;
-        line-height: 1.4;
+        line-height: 2;
     }}
     </style>
     
@@ -3134,11 +3134,11 @@ def show_question_palette():
         display: flex;
         align-items: center;
         margin: 5px 0;
-        font-size: 12px;
+        font-size: 20px;
     }
     .color-box {
         width: 15px;
-        height: 15px;
+        height: 20px;
         margin-right: 8px;
         border: 1px solid #ccc;
         border-radius: 3px;
