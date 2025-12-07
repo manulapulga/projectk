@@ -2520,8 +2520,8 @@ def show_folder_view_screen():
                                 <div style="color: {LITMUSQ_THEME['text']}; font-weight: 600; margin: 0.5rem 0;">
                                     <span style="color:#059669;">Q: {total_questions}</span> • 
                                     <span style="color:#1E3A8A;">⏱️ {duration_display}</span> • 
-                                    <span style="color:#1ce615;">✅ {marks_per_question}Marks/Q</span> • 
-                                    <span style="color:#f70a26;">❌ {negative_marks_per_question}Neg/Q</span>
+                                    <span style="color:#1ce615;">✅ {marks_per_question}M/Q</span> • 
+                                    <span style="color:#f70a26;">❌ {negative_marks_per_question}N/Q</span>
                                 </div>
                             </div>
                             """
@@ -2659,8 +2659,8 @@ def show_exam_config_screen():
             <div style="color: #1E293B; font-weight: 600; font-size: 1rem; margin: 0.5rem 0;">
                 <span style="color:#059669;">Q: {total_questions}</span> • 
                 <span style="color:#1E3A8A;">⏱️ {duration_display}</span> • 
-                <span style="color:#1ce615;">✅ {marks_per_question} Marks/Q</span> • 
-                <span style="color:#f70a26;">❌ {negative_marks_per_question} Neg/Q</span>
+                <span style="color:#1ce615;">✅ {marks_per_question}M/Q</span> • 
+                <span style="color:#f70a26;">❌ {negative_marks_per_question}N/Q</span>
             </div>
         </div>
         """
