@@ -56,10 +56,11 @@ def initialize_firebase():
 
 # Initialize Firebase
 db = initialize_firebase()
+
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
-    "primary": "#bc97e",      # Dark blue
-    "secondary": "#9f79e6",    # Red
+    "primary": "##50fbf8",      # Dark blue
+    "secondary": "#e039d3",    # Red
     "accent": "#3B82F6",       # Light blue
     "background": "#F8FAFC",
     "text": "#1E293B",
@@ -338,31 +339,20 @@ def inject_custom_css():
     ==========================================================*/
 
     .stButton > button {{
-        background: linear-gradient(135deg, #bc97e6, #9f79e6);
+        background-color: {LITMUSQ_THEME['primary']};
         color: white !important;
         border: none !important;
-        border-radius: 12px !important;
-        padding: 0.5rem 1.5rem !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        cursor: pointer;
-        transition: all 0.3s ease !important;
-    }}
-    
-    /* Hover effect */
-    .stButton > button:hover {{
-        transform: translateY(-3px) scale(1.05);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        background: linear-gradient(135deg, #9f79e6, #bc97e6);
-    }}
-    
-    /* Active/click effect */
-    .stButton > button:active {{
-        transform: translateY(0) scale(0.98);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        border-radius: 8px !important;
+        padding: 0.2rem 1rem !important;
+        font-weight: 500 !important;
+        transition: all 0.25s ease !important;
     }}
 
+    .stButton > button:hover {{
+        background-color: {LITMUSQ_THEME['accent']};
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }}
 
 
 
