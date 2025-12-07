@@ -3484,7 +3484,7 @@ def show_retest_config(original_test):
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     # Retest options
     retest_option = st.radio(
         "Select Re-Test Type:",
