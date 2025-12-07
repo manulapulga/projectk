@@ -2865,7 +2865,7 @@ def show_enhanced_question_interface():
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("---")
-
+    show_quiz_footer_navigation()
 # =============================
 # Professional Test Interface
 # =============================
