@@ -338,7 +338,7 @@ def inject_custom_css():
     ==========================================================*/
 
     .stButton > button {{
-        background: linear-gradient(135deg, #bc97e6, #9f79e6);
+        background: linear-gradient(135deg, #f8fafc, #e2e8f0);
         color: white !important;
         border: none !important;
         border-radius: 12px !important;
