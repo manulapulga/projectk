@@ -155,6 +155,54 @@ def inject_custom_css():
     <style>
 
     /* =========================================================
+       FIXED QUIZ FOOTER (The Ribbon) - UPDATED
+    ==========================================================*/
+    
+    .fixed-quiz-footer {{
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: {LITMUSQ_THEME['light_bg']}; 
+        padding: 0.8rem 1rem;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 10000;
+        border-top: 2px solid {LITMUSQ_THEME['primary']};
+    }}
+    
+    .fixed-quiz-footer button {{
+        padding: 8px 20px !important;
+        border-radius: 6px !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        min-width: 120px !important;
+    }}
+    
+    .fixed-quiz-footer button:hover:not(:disabled) {{
+        transform: translateY(-2px) !important;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+    }}
+    
+    .fixed-quiz-footer button:disabled {{
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+    }}
+    
+    /* Add padding to main content to prevent overlap with fixed footer */
+    .main .block-container {{
+        padding-bottom: 120px !important;
+    }}
+    
+    /* Hide the hidden Streamlit buttons */
+    [data-testid="column"] {{
+        visibility: hidden !important;
+        height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }}
+    
+    /* =========================================================
        GLOBAL SAFE SPACING (NO OVERLAPS, NO HUGE MARGINS)
     ==========================================================*/
 
@@ -2672,6 +2720,131 @@ def show_exam_config_screen():
 # =============================
 # Enhanced Question Display in Quiz
 # =============================
+def show_fixed_quiz_footer():
+    """Display fixed navigation buttons at the bottom of the quiz."""
+    df = st.session_state.quiz_questions
+    current_idx = st.session_state.current_idx
+    
+    # Create the fixed footer using HTML/CSS
+    footer_html = f"""
+    <div class="fixed-quiz-footer">
+        <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            max-width: 1200px;
+            margin: 0 auto;
+        ">
+            <div style="flex: 1; display: flex; justify-content: flex-start;">
+                <span style="font-weight: 600; color: {LITMUSQ_THEME['primary']};">
+                    Q{current_idx + 1} of {len(df)}
+                </span>
+            </div>
+            
+            <div style="flex: 2; display: flex; justify-content: center; gap: 10px;">
+                <button onclick="handlePrevious()" 
+                        style="
+                            padding: 8px 20px;
+                            background-color: {LITMUSQ_THEME['primary']};
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-weight: 500;
+                            transition: all 0.2s;
+                            opacity: {0.5 if current_idx == 0 else 1};
+                        "
+                        {'disabled' if current_idx == 0 else ''}>
+                    ◀ Previous
+                </button>
+                
+                <button onclick="handleNext()" 
+                        style="
+                            padding: 8px 20px;
+                            background-color: {LITMUSQ_THEME['primary']};
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-weight: 500;
+                            transition: all 0.2s;
+                            opacity: {0.5 if current_idx == len(df) - 1 else 1};
+                        "
+                        {'disabled' if current_idx == len(df) - 1 else ''}>
+                    Next ▶
+                </button>
+                
+                <button onclick="handleMarkReview()" 
+                        style="
+                            padding: 8px 20px;
+                            background-color: {LITMUSQ_THEME['warning']};
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-weight: 500;
+                            transition: all 0.2s;
+                        ">
+                    {'↩️ Unmark Review' if st.session_state.question_status[current_idx]['marked'] else '🟨 Mark Review'}
+                </button>
+                
+                <button onclick="handleSubmit()" 
+                        style="
+                            padding: 8px 20px;
+                            background-color: {LITMUSQ_THEME['secondary']};
+                            color: white;
+                            border: none;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-weight: 500;
+                            transition: all 0.2s;
+                        ">
+                    📤 Submit Test
+                </button>
+            </div>
+            
+            <div style="flex: 1; display: flex; justify-content: flex-end;">
+                <span style="font-weight: 600; color: {LITMUSQ_THEME['text']};">
+                    ✅ {sum(1 for status in st.session_state.question_status.values() if status['answer'] is not None)}/{len(df)}
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    function handlePrevious() {{
+        if ({current_idx} > 0) {{
+            const streamlitDoc = window.parent.document;
+            const prevButton = streamlitDoc.querySelector('[data-testid="baseButton-secondary"][key*="prev_"]');
+            if (prevButton) prevButton.click();
+        }}
+    }}
+    
+    function handleNext() {{
+        if ({current_idx} < {len(df) - 1}) {{
+            const streamlitDoc = window.parent.document;
+            const nextButton = streamlitDoc.querySelector('[data-testid="baseButton-secondary"][key*="next_"]');
+            if (nextButton) nextButton.click();
+        }}
+    }}
+    
+    function handleMarkReview() {{
+        const streamlitDoc = window.parent.document;
+        const markButton = streamlitDoc.querySelector('[data-testid="baseButton-secondary"][key*="mark_"]');
+        if (markButton) markButton.click();
+    }}
+    
+    function handleSubmit() {{
+        const streamlitDoc = window.parent.document;
+        const submitButton = streamlitDoc.querySelector('[data-testid="baseButton-secondary"][key*="submit_"]');
+        if (submitButton) submitButton.click();
+    }}
+    </script>
+    """
+    
+    components.html(footer_html, height=100)
+    
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
@@ -2742,49 +2915,8 @@ def show_enhanced_question_interface():
     st.markdown("---")
     st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
     
-    
-    # Enhanced action buttons
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.button(
-            "◀ Previous",
-            use_container_width=True,
-            disabled=current_idx == 0,
-            key=f"prev_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
-        )
-    
-    with col2:
-        st.button(
-            "Next ▶",
-            use_container_width=True,
-            disabled=current_idx == len(df) - 1,
-            key=f"next_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
-        )
-    
-    with col3:
-        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
-        st.button(
-            button_text,
-            use_container_width=True,
-            key=f"mark_{current_idx}",
-            type="secondary",
-            on_click=lambda: toggle_mark_review(current_idx)
-        )
-    
-    with col4:
-        st.button(
-            "📤 Submit Test",
-            use_container_width=True,
-            key=f"submit_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'submitted', True)
-        )
-        
+    # NOTE: REMOVED THE BUTTONS FROM HERE - THEY'LL GO IN THE FIXED FOOTER
+    # The timer code should stay here
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
     if st.session_state.end_time and not st.session_state.submitted:
@@ -3318,7 +3450,6 @@ def show_quiz_screen():
     # Show header with timer
     show_quiz_header_with_timer()
     
-    # Rest of your existing code...
     if not st.session_state.quiz_started:
         st.error("Quiz not properly initialized. Returning to home.")
         st.session_state.current_screen = "home"
@@ -3370,8 +3501,57 @@ def show_quiz_screen():
     
     # Show question first, then header at the bottom
     if not st.session_state.submitted:
+        # HIDDEN STREAMLIT BUTTONS (for JavaScript to trigger)
+        df = st.session_state.quiz_questions
+        current_idx = st.session_state.current_idx
         
+        # Create hidden Streamlit buttons that JavaScript will click
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.button(
+                "◀ Previous",
+                use_container_width=True,
+                disabled=current_idx == 0,
+                key=f"prev_hidden_{current_idx}",
+                type="secondary",
+                on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
+            )
+        
+        with col2:
+            st.button(
+                "Next ▶",
+                use_container_width=True,
+                disabled=current_idx == len(df) - 1,
+                key=f"next_hidden_{current_idx}",
+                type="secondary",
+                on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
+            )
+        
+        with col3:
+            button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
+            st.button(
+                button_text,
+                use_container_width=True,
+                key=f"mark_hidden_{current_idx}",
+                type="secondary",
+                on_click=lambda: toggle_mark_review(current_idx)
+            )
+        
+        with col4:
+            st.button(
+                "📤 Submit Test",
+                use_container_width=True,
+                key=f"submit_hidden_{current_idx}",
+                type="secondary",
+                on_click=lambda: setattr(st.session_state, 'submitted', True)
+            )
+        
+        # Show the actual question interface
         show_enhanced_question_interface()
+        
+        # Show the fixed footer ribbon
+        show_fixed_quiz_footer()
     else:
         show_results_screen()
 
