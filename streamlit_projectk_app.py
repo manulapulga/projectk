@@ -2677,7 +2677,8 @@ def show_exam_config_screen():
 # =============================
 def show_quiz_footer_navigation():
     """Display fixed navigation and action buttons in a bottom ribbon."""
-    
+    if "question_status" not in st.session_state:
+        return
     # Check if quiz state is valid
     if 'quiz_questions' not in st.session_state or st.session_state.submitted:
         return
