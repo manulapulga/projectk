@@ -3093,7 +3093,7 @@ def get_question_display_info(q_num):
 # In the show_question_palette function, update the button creation:
 def show_question_palette():
     """Display the question palette with exam info above it."""
-    # --- COMPACT EXAM HEADER + COUNTS ---
+    # --- COMPACT EXAM HEADER + COUNTS + LEGENDS ---
     total = len(st.session_state.quiz_questions)
     current_q = st.session_state.current_idx + 1
     
@@ -3111,10 +3111,26 @@ def show_question_palette():
     <style>
     .compact-header {{
         text-align: center;
-        padding: 0.4rem 0;
-        font-size: 13px;
+        padding: 0.35rem 0;
+        font-size: 18px;
         font-weight: 600;
-        line-height: 1.4;
+        line-height: 1.35;
+    }}
+    
+    .legend-compact {{
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 6px;
+        gap: 4px;
+        font-size: 11px;
+    }}
+    
+    .legend-pill {{
+        padding: 3px 6px;
+        border-radius: 4px;
+        border: 1px solid #ccc;
+        background: {LITMUSQ_THEME['background']};
     }}
     </style>
     
@@ -3124,7 +3140,16 @@ def show_question_palette():
         <span style="color:{LITMUSQ_THEME['success']};">✅ {answered}/{total}</span> •
         <span style="color:{LITMUSQ_THEME['warning']};">🟨 {marked}</span>
     </div>
+    
+    <div class="legend-compact">
+        <div class="legend-pill">⛔ Cleared</div>
+        <div class="legend-pill">❌ Not Ans</div>
+        <div class="legend-pill">✅ Answered</div>
+        <div class="legend-pill">🟨 Marked</div>
+        <div class="legend-pill">🟩 Ans+Marked</div>
+    </div>
     """, unsafe_allow_html=True)
+
     
 
     # Question palette grid
