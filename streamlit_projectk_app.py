@@ -2026,7 +2026,7 @@ def show_student_dashboard():
         
         recent_tests = test_history[-10:]  # Show last 10 tests
         
-        for idx, test in enumerate(reversed(recent_tests)):
+        for idx, test in enumerate(recent_tests):
             test_date = datetime.fromisoformat(str(test.get("date", ""))).astimezone(
                 pytz.timezone("Asia/Kolkata")
             ).strftime("%d-%m-%Y • ⏱️ %I:%M %p")
