@@ -2677,8 +2677,7 @@ def show_exam_config_screen():
 # =============================
 def show_quiz_footer_navigation():
     """Display fixed navigation and action buttons in a bottom ribbon."""
-    if "question_status" not in st.session_state:
-        return
+    
     # Check if quiz state is valid
     if 'quiz_questions' not in st.session_state or st.session_state.submitted:
         return
@@ -2809,7 +2808,47 @@ def show_enhanced_question_interface():
     st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
     
     
+    # Enhanced action buttons
+    col1, col2, col3, col4 = st.columns(4)
     
+    with col1:
+        st.button(
+            "◀ Previous",
+            use_container_width=True,
+            disabled=current_idx == 0,
+            key=f"prev_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
+        )
+    
+    with col2:
+        st.button(
+            "Next ▶",
+            use_container_width=True,
+            disabled=current_idx == len(df) - 1,
+            key=f"next_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
+        )
+    
+    with col3:
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
+        st.button(
+            button_text,
+            use_container_width=True,
+            key=f"mark_{current_idx}",
+            type="secondary",
+            on_click=lambda: toggle_mark_review(current_idx)
+        )
+    
+    with col4:
+        st.button(
+            "📤 Submit Test",
+            use_container_width=True,
+            key=f"submit_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'submitted', True)
+        )
         
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
@@ -2867,7 +2906,6 @@ def show_enhanced_question_interface():
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("---")
-    show_quiz_footer_navigation()
 
 # =============================
 # Professional Test Interface
@@ -3953,28 +3991,20 @@ def show_results_screen():
 # Session State Optimization
 # =============================
 def optimize_session_state():
-    """Prevent cleanup during quiz and keep essential keys."""
-    
-    # 🔥 Prevent cleanup during quiz
-    if st.session_state.get("current_screen") == "quiz":
-        return
-
+    """Clean up and optimize session state to prevent bloat."""
     essential_keys = {
-        'logged_in', 'username', 'user_type', 
-        'current_screen', 'current_path',
+        'logged_in', 'username', 'user_type', 'current_screen', 'current_path',  # ← Added user_type
         'selected_sheet', 'current_qb_path', 'folder_structure',
-
-        # QUIZ KEYS (must not be removed)
-        'quiz_started', 'quiz_questions', 'current_idx',
-        'question_status', 'answers', 'submitted',
-        'exam_name', 'quiz_duration', 'use_final_key',
-        'started_at', 'end_time'
+        'quiz_started', 'quiz_questions', 'current_idx', 'answers',
+        'submitted', 'exam_name', 'question_status', 'quiz_duration',
+        'use_final_key', 'started_at', 'end_time', 'last_cleanup'
     }
-
-    keys_to_remove = [k for k in st.session_state if k not in essential_keys]
+    
+    # Remove non-essential keys
+    keys_to_remove = [key for key in st.session_state.keys() if key not in essential_keys]
     for key in keys_to_remove:
-        del st.session_state[key]
-
+        if key in st.session_state:
+            del st.session_state[key]
 
 def periodic_cleanup():
     """Perform periodic cleanup every 5 minutes."""
