@@ -1354,17 +1354,30 @@ def show_admin_analytics():
         </style>
     """, unsafe_allow_html=True)
     
-    # Display metrics
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Users", total_users)
-    with col2:
-        st.metric("Approval Rate", f"{(approved_users / total_users * 100):.1f}%")
-    with col3:
-        st.metric("Active Users", active_users)
-    with col4:
-        st.metric("Recent Registrations (30d)", recent_users)
+    # Display analytics summary (Mobile Friendly)
+    approval_rate = (approved_users / total_users * 100) if total_users > 0 else 0
     
+    st.markdown(f"""
+    <div style="
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        font-size: 1rem;
+        background: #f1f5f9;
+        padding: 12px 16px;
+        border-radius: 10px;
+        line-height: 1.6;
+    ">
+        👥 <b>Total Users:</b> {total_users}
+        &nbsp;•&nbsp;
+        ✔️ <b>Approval Rate:</b> {approval_rate:.1f}%
+        &nbsp;•&nbsp;
+        🟢 <b>Active Users:</b> {active_users}
+        &nbsp;•&nbsp;
+        🆕 <b>New Users (30d):</b> {recent_users}
+    </div>
+    """, unsafe_allow_html=True)
+
     # User registration timeline
     st.markdown("**📅 Registration Timeline**")
     st.markdown("<br>", unsafe_allow_html=True)
