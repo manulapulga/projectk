@@ -3117,7 +3117,7 @@ def show_question_palette():
     .legend-item {
         display: flex;
         align-items: center;
-        margin: 1px 0;
+        margin: 5px 0;
         font-size: 12px;
     }
     .color-box {
@@ -3153,65 +3153,65 @@ def show_question_palette():
         st.sidebar.warning("No questions loaded")
         return
     
-    cols = 5
-    rows = (total_questions + cols - 1) // cols
+    # ----- Single Column Question Palette -----
+    for q_num in range(total_questions):
     
-    for row in range(rows):
-        columns = st.sidebar.columns(cols)
-        for col_idx in range(cols):
-            q_num = row * cols + col_idx
-            if q_num < total_questions:
-                with columns[col_idx]:
-                    emoji, number, tooltip = get_question_display_info(q_num)
-                    
-                    # Create button text with both emoji and number
-                    button_text = f"{emoji} {number}".strip()
-                    
-                    # Determine if current question
-                    border_color = LITMUSQ_THEME['secondary'] if q_num == st.session_state.current_idx else "#cccccc"
-                    
-                    # Get appropriate background color
-                    status_info = st.session_state.question_status.get(q_num, {})
-                    has_answer = status_info.get('answer') is not None
-                    is_marked = status_info.get('marked', False)
-                    status = status_info.get('status', 'not_visited')
-                    
-                    if status == 'cleared':
-                        bg_color = LITMUSQ_THEME['background']
-                    elif has_answer and is_marked:
-                        bg_color = "#FFD700"  # Gold
-                    elif has_answer:
-                        bg_color = LITMUSQ_THEME['success']  # Green
-                    elif is_marked:
-                        bg_color = LITMUSQ_THEME['primary']  # Blue
-                    elif status == 'not_answered':
-                        bg_color = LITMUSQ_THEME['secondary']  # Red
-                    else:  # not_visited
-                        bg_color = LITMUSQ_THEME['background']  # White
-                    
-                    button_style = f"""
-                    <style>
-                    .qbtn-{q_num} {{
-                        background-color: {bg_color} !important;
-                        border: 2px solid {border_color} !important;
-                        border-radius: 5px !important;
-                        color: #000000 !important;
-                        font-weight: bold !important;
-                    }}
-                    </style>
-                    """
-                    st.markdown(button_style, unsafe_allow_html=True)
-                    
-                    if st.button(
-                        button_text, 
-                        key=f"palette_{q_num}", 
-                        use_container_width=True,
-                        help=f"Q{q_num + 1}: {tooltip}"
-                    ):
-                        st.session_state.current_idx = q_num
-                        if st.session_state.question_status[q_num]['status'] == 'not_visited':
-                            update_question_status(q_num, 'not_answered')
-                        st.rerun()
+        # emoji, number, tooltip
+        emoji, number, tooltip = get_question_display_info(q_num)
+    
+        button_text = f"{emoji} {number}".strip()
+    
+        # highlight current question
+        border_color = (
+            LITMUSQ_THEME['secondary']
+            if q_num == st.session_state.current_idx else "#cccccc"
+        )
+    
+        # status
+        status_info = st.session_state.question_status.get(q_num, {})
+        has_answer = status_info.get('answer') is not None
+        is_marked = status_info.get('marked', False)
+        status = status_info.get('status', 'not_visited')
+    
+        if status == 'cleared':
+            bg_color = LITMUSQ_THEME['background']
+        elif has_answer and is_marked:
+            bg_color = "#FFD700"     # Gold
+        elif has_answer:
+            bg_color = LITMUSQ_THEME['success']
+        elif is_marked:
+            bg_color = LITMUSQ_THEME['primary']
+        elif status == 'not_answered':
+            bg_color = LITMUSQ_THEME['secondary']
+        else:
+            bg_color = LITMUSQ_THEME['background']
+    
+        # Styling
+        button_style = f"""
+        <style>
+        .qbtn-{q_num} {{
+            background-color: {bg_color} !important;
+            border: 2px solid {border_color} !important;
+            border-radius: 5px !important;
+            color: #000000 !important;
+            font-weight: bold !important;
+        }}
+        </style>
+        """
+        st.sidebar.markdown(button_style, unsafe_allow_html=True)
+    
+        # Render button
+        if st.sidebar.button(
+            button_text,
+            key=f"palette_{q_num}",
+            use_container_width=True,
+            help=f"Q{q_num + 1}: {tooltip}"
+        ):
+            st.session_state.current_idx = q_num
+            if st.session_state.question_status[q_num]['status'] == 'not_visited':
+                update_question_status(q_num, 'not_answered')
+            st.rerun()
+
                         
 def live_timer_component(seconds_left: int):
     html_code = f"""
