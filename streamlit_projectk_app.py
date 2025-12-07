@@ -2061,7 +2061,7 @@ def show_student_dashboard():
                 else:
                     st.error("Failed to delete test entry")        
             st.markdown("""
-            <div style="height:3px; background: linear-gradient(to right, #4facfe, #00f2fe); border-radius:5px; margin: 10px 0;"></div>
+            <div style="height:3px; background: linear-gradient(to right, Blue, red); border-radius:5px;"></div>
             """, unsafe_allow_html=True)
 
     # Achievements
