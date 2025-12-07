@@ -363,36 +363,6 @@ def inject_custom_css():
         transform: translateY(0) scale(0.98);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }}
-    
-    /* =========================================================
-       FORM SUBMIT BUTTON
-    ==========================================================*/
-
-    .stform_submit_button > button {{
-        background: linear-gradient(135deg, #bc97e6, #9f79e6);
-        color: white !important;
-        border: none !important;
-        border-radius: 12px !important;
-        padding: 0.5rem 1.5rem !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        cursor: pointer;
-        transition: all 0.3s ease !important;
-    }}
-    
-    /* Hover effect */
-    .stform_submit_button > button:hover {{
-        transform: translateY(-3px) scale(1.05);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        background: linear-gradient(135deg, #9f79e6, #bc97e6);
-    }}
-    
-    /* Active/click effect */
-    .stform_submit_button > button:active {{
-        transform: translateY(0) scale(0.98);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }}
 
 
 
@@ -982,7 +952,7 @@ def show_login_screen():
         with st.form("login_form"):
             username = st.text_input("👤 Username", placeholder="Enter your username", key="login_username")
             password = st.text_input("🔒 Password", type="password", placeholder="Enter your password", key="login_password")
-            submit_button = st.form_submit_button("🚀 Login to LitmusQ", use_container_width=True,)
+            submit_button = st.form_submit_button("🚀 Login to LitmusQ", use_container_width=True)
             
             if submit_button:
                 if not username or not password:
