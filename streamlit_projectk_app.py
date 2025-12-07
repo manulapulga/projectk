@@ -3634,15 +3634,12 @@ def show_retest_config(original_test):
     show_litmusq_header(f"Configure Re-Test: {original_test['exam_name']}")
     
     # Navigation buttons
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🏠 Home", use_container_width=True, key="retest_home"):
-            st.session_state.current_screen = "home"
-            st.rerun()
-    with col2:
-        if st.button("← Back to Dashboard", use_container_width=True, key="retest_back"):
-            st.session_state.current_screen = "dashboard"
-            st.rerun()
+    if st.button("🏠 Home", use_container_width=True, key="retest_home"):
+        st.session_state.current_screen = "home"
+        st.rerun()
+    if st.button("← Back to Dashboard", use_container_width=True, key="retest_back"):
+        st.session_state.current_screen = "dashboard"
+        st.rerun()
     
     # Check if we have stored questions
     if 'questions_used' not in original_test or not original_test['questions_used']:
