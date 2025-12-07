@@ -3421,7 +3421,7 @@ def show_retest_config(original_test):
     
     # Original test details
     original_date = datetime.fromisoformat(original_test['date']).astimezone(
-        pytz.timezone("Asia/Kolkata")
+        pytz.timezone('Asia/Kolkata')
     ).strftime('%Y-%m-%d %H:%M')
     
     score = original_test['score']
