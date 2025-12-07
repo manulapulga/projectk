@@ -2043,26 +2043,28 @@ def show_student_dashboard():
         
                 
             """, unsafe_allow_html=True)
-            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
+            # Progress bar under the card (keeps spacing consistent)
+            st.progress(int(percentage))
+            st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
             
             # Take Retest button
             test_id = test.get('test_id', f"test_{idx}")
             if st.button("🔁", key=f"retest_{test_id}", 
-                       help="Take Re-Test"):
+                       help="Take Re-Test", use_container_width="True"):
                 st.session_state.retest_config = test
                 st.session_state.current_screen = "retest_config"
                 
             # Delete Entry button
             if st.button("🗑️", key=f"delete_{test_id}", 
-                       help="Delete this test entry"):
+                       help="Delete this test entry", use_container_width="True"):
                 if delete_test_entry(username, test_id):
                     st.success("Test entry deleted successfully!")
                     st.rerun()
                 else:
                     st.error("Failed to delete test entry")        
 
-            # Progress bar under the card (keeps spacing consistent)
-            st.progress(int(percentage))
+            
 
     # Achievements
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
