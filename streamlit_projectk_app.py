@@ -2984,6 +2984,8 @@ def show_enhanced_question_interface():
             console.warn("sendQuizAction: action_receiver input not found");
         }
     }
+    console.log("Debug: find by aria:", document.querySelector('input[aria-label="action_receiver"]'));
+    console.log("Debug: find by data-testid:", document.querySelector('input[data-testid="quiz_action_receiver"]'));
     </script>
     
     <style>
@@ -3029,10 +3031,6 @@ def show_enhanced_question_interface():
     }
     </style>
     """
-    <script>
-    console.log("Debug: find by aria:", document.querySelector('input[aria-label="action_receiver"]'));
-    console.log("Debug: find by data-testid:", document.querySelector('input[data-testid="quiz_action_receiver"]'));
-    </script>
     
     st.markdown(quiz_navbar, unsafe_allow_html=True)
     
