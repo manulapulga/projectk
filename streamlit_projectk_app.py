@@ -2659,8 +2659,8 @@ def show_exam_config_screen():
             <div style="color: #1E293B; font-weight: 600; font-size: 1rem; margin: 0.5rem 0;">
                 <span style="color:#059669;">Q: {total_questions}</span> • 
                 <span style="color:#1E3A8A;">⏱️ {duration_display}</span> • 
-                <span style="color:#D97706;">✅ {marks_per_question}M/Q</span> • 
-                <span style="color:#DC2626;">❌ {negative_marks_per_question}N/Q</span>
+                <span style="color:green;">✅ {marks_per_question}M/Q</span> • 
+                <span style="color:red;">❌ {negative_marks_per_question}N/Q</span>
             </div>
         </div>
         """
