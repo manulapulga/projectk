@@ -2023,31 +2023,62 @@ def show_student_dashboard():
     # Recent Test History
     test_history = load_test_history(username)
     if test_history:
-            
-        recent_tests = test_history      # Show ALL tests
-        
-        # --- Attempt Numbering for normal tests ---
-        attempt_counter = {}
     
-        for idx, test in enumerate(recent_tests):
-            test_date = datetime.fromisoformat(str(test.get("date", ""))).astimezone(
-                pytz.timezone("Asia/Kolkata")
-            ).strftime("%d-%m-%Y • ⏱️ %I:%M %p")
+        # --- Ensure explicit ordering: newest first (descending by date) ---
+        def parse_date_safe(d):
+            try:
+                return datetime.fromisoformat(str(d))
+            except Exception:
+                # fallback: try parsing common formats, or return epoch
+                try:
+                    return datetime.strptime(str(d), "%d-%m-%Y %H:%M:%S")
+                except Exception:
+                    return datetime.fromtimestamp(0)
     
-            percentage = float(test.get("percentage", 0))
-            score = float(test.get("score", 0))
-            total_marks = float(test.get("total_marks", 0))
-            
+        # Sort by parsed date descending (newest first)
+        test_history_sorted = sorted(
+            test_history,
+            key=lambda x: parse_date_safe(x.get("date", "")),
+            reverse=True
+        )
+    
+        # --- Precompute total (non-retest) attempts per exam name ---
+        total_attempts = {}
+        for t in test_history_sorted:
+            if not t.get("is_retest", False):
+                name = str(t.get("exam_name", "Unknown Test"))
+                total_attempts[name] = total_attempts.get(name, 0) + 1
+    
+        # We'll decrement total_attempts[name] as we render newest->oldest
+        attempt_counter_remaining = total_attempts.copy()
+    
+        # Now render ALL tests (newest first)
+        for idx, test in enumerate(test_history_sorted):
+    
+            # Date formatting (safe)
+            test_date_obj = parse_date_safe(test.get("date", ""))
+            try:
+                test_date = test_date_obj.astimezone(pytz.timezone("Asia/Kolkata")).strftime("%d-%m-%Y • ⏱️ %I:%M %p")
+            except Exception:
+                test_date = test.get("date", "")
+    
+            percentage = float(test.get("percentage", 0) or 0)
+            score = float(test.get("score", 0) or 0)
+            total_marks = float(test.get("total_marks", 0) or 0)
+    
             base_name = str(test.get("exam_name", "Unknown Test"))
     
             if not test.get("is_retest", False):
-                attempt_counter[base_name] = attempt_counter.get(base_name, 0) + 1
-                exam_name = f"{base_name} (Attempt {attempt_counter[base_name]})"
+                # Use remaining attempts (newest gets highest number)
+                remaining = attempt_counter_remaining.get(base_name, 0)
+                exam_name = f"{base_name} (Attempt {remaining})" if remaining > 0 else base_name
+                # Decrement so older entry will get remaining-1 next time
+                attempt_counter_remaining[base_name] = max(0, remaining - 1)
             else:
+                # Retest - keep your existing retest suffix icon
                 exam_name = f"{base_name}📝"
     
             test_id = test.get('test_id', f"test_{idx}")
-    
         
             # --- Clean inline metadata card ---
             st.markdown(f"""
