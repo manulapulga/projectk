@@ -2270,10 +2270,14 @@ def show_student_dashboard():
             st.progress(int(percentage))
             # Take Retest button
             test_id = test.get('test_id', f"test_{idx}")
-            if st.button("Retest 🔁", key=f"retest_{test_id}", 
+            button_key = f"retest_{test_id}_{idx}"  # More unique key
+            
+            if st.button("Retest 🔁", key=button_key, 
                        help="Take Re-Test", use_container_width="True"):
+                # Store in session state and immediately redirect
                 st.session_state.retest_config = test
                 st.session_state.current_screen = "retest_config"
+                st.rerun()
                 
             # Delete Entry button
             if st.button("Delete 🗑️", key=f"delete_{test_id}", 
