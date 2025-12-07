@@ -2821,55 +2821,20 @@ def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
     current_idx = st.session_state.current_idx
-
-    # Hidden action channel (for JS → Python communication)
-    action = st.text_input("action_receiver", "", key="quiz_action_receiver")
-
-    # Hide the action_receiver text input completely
-    st.markdown("""
-<style>
-input[aria-label="action_receiver"] {
-    display: none !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-    # Process actions immediately (before any heavy rendering)
-    # This makes the UI much more responsive.
-    if action == "prev" and current_idx > 0:
-        st.session_state.current_idx -= 1
-        st.session_state.quiz_action_receiver = ""
-        st.rerun()
-
-    elif action == "next" and current_idx < len(df) - 1:
-        st.session_state.current_idx += 1
-        st.session_state.quiz_action_receiver = ""
-        st.rerun()
-
-    elif action == "review":
-        toggle_mark_review(current_idx)
-        st.session_state.quiz_action_receiver = ""
-        st.rerun()
-
-    elif action == "submit":
-        st.session_state.submitted = True
-        st.session_state.quiz_action_receiver = ""
-        st.rerun()
-
-    # Validate index
+    
     if current_idx >= len(df):
         st.error("Invalid question index")
         return
-
+        
     row = df.iloc[current_idx]
-
+    
     if st.session_state.question_status[current_idx]['status'] == 'not_visited':
         update_question_status(current_idx, 'not_answered')
-
+    
     # Get formatted content
     file_path = st.session_state.get('current_qb_path', '')
     sheet_name = st.session_state.get('selected_sheet', '')
-
+    
     formatted_question = get_formatted_content(
         file_path, sheet_name, current_idx, "question", row['Question']
     )
@@ -2877,29 +2842,32 @@ input[aria-label="action_receiver"] {
     formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get('Option B', ''))
     formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
     formatted_d = get_formatted_content(file_path, sheet_name, current_idx, "option_d", row.get('Option D', ''))
-
-    # Render question
+    
+    # Enhanced question card with formatted content
+    # Render formatted question
     sl_no = row.get("Sl No", current_idx + 1)
     render_formatted_content(formatted_question, sl_no)
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("**Select your answer:**")
-
+    
     current_answer = st.session_state.question_status[current_idx]['answer']
+    
+    # -------- RADIO BUTTON ANSWER SELECTION --------
 
-    # RADIO BUTTON
     options_dict = {
         "A": formatted_a,
         "B": formatted_b,
         "C": formatted_c,
         "D": formatted_d
     }
-
+    
+    # None selected by default
     default_radio_value = (
         current_answer if current_answer in options_dict else None
     )
-
+    
     selected_option = st.radio(
         "options",
         options=["A", "B", "C", "D", None],
@@ -2909,25 +2877,73 @@ input[aria-label="action_receiver"] {
         label_visibility="collapsed"
     )
 
+    
+    # Update session state when user selects an option
     if selected_option is not None:
         update_question_status(current_idx, 'answered', selected_option)
         st.session_state.answers[current_idx] = selected_option
-
+    
+    
     st.markdown("---")
     st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
-
-    # TIMER BLOCK
+    
+    
+    # Enhanced action buttons
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        st.button(
+            "◀ Previous",
+            use_container_width=True,
+            disabled=current_idx == 0,
+            key=f"prev_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
+        )
+    
+    with col2:
+        st.button(
+            "Next ▶",
+            use_container_width=True,
+            disabled=current_idx == len(df) - 1,
+            key=f"next_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
+        )
+    
+    with col3:
+        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
+        st.button(
+            button_text,
+            use_container_width=True,
+            key=f"mark_{current_idx}",
+            type="secondary",
+            on_click=lambda: toggle_mark_review(current_idx)
+        )
+    
+    with col4:
+        st.button(
+            "📤 Submit Test",
+            use_container_width=True,
+            key=f"submit_{current_idx}",
+            type="secondary",
+            on_click=lambda: setattr(st.session_state, 'submitted', True)
+        )
+        
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
-
+    
     if st.session_state.end_time and not st.session_state.submitted:
+        # Calculate remaining time
         time_left = st.session_state.end_time - datetime.now()
         seconds_left = int(time_left.total_seconds())
-
+        
+        # Auto-submit when time reaches zero
         if seconds_left <= 0:
             st.session_state.submitted = True
             st.rerun()
-            return
-
+            return  # Exit early to prevent further rendering
+        
+        # Create timer with JavaScript
         html_code = f"""
         <div id="timer" style="
             font-size: 24px;
@@ -2942,8 +2958,11 @@ input[aria-label="action_receiver"] {
             function updateTimer() {{
                 if (timeLeft <= 0) {{
                     document.getElementById('timer').innerHTML = "⏰ 00:00:00";
+                    // Trigger automatic submission when timer reaches zero
                     const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
-                    if (submitButton) submitButton.click();
+                    if (submitButton) {{
+                        submitButton.click();
+                    }}
                     return;
                 }}
 
@@ -2961,80 +2980,12 @@ input[aria-label="action_receiver"] {
         </script>
         """
         components.html(html_code, height=60)
-
     else:
         st.metric("⏰ Time Left", "No Limit")
 
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # FIXED NAVIGATION RIBBON
-    quiz_navbar = """
-<div class="quiz-fixed-bar">
-<button class="qbtn prev" onclick="sendQuizAction('prev')">⬅ Previous</button>
-<button class="qbtn next" onclick="sendQuizAction('next')">Next ➡</button>
-<button class="qbtn review" onclick="sendQuizAction('review')">⭐ Mark Review</button>
-<button class="qbtn submit" onclick="sendQuizAction('submit')">✔ Submit</button>
-</div>
-
-<script>
-function sendQuizAction(a) {
-    var input = document.querySelector('input[aria-label="action_receiver"]');
-    if (input) {
-        input.value = a;
-        input.dispatchEvent(new Event('input', { bubbles: true }));
-    } else {
-        console.warn("action_receiver input not found");
-    }
-}
-</script>
-
-<style>
-.quiz-fixed-bar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(135deg, #ffcf70, #ffa53a);
-    padding: 12px;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.25);
-    z-index: 999999;
-}
-.quiz-fixed-bar .qbtn {
-    padding: 10px 20px;
-    border-radius: 12px;
-    border: none;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    background: white;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
-    transition: 0.15s ease-in-out;
-}
-.quiz-fixed-bar .qbtn:hover {
-    transform: scale(1.05);
-}
-.quiz-fixed-bar .submit {
-    background: #ff5252;
-    color: white;
-}
-.quiz-fixed-bar .review {
-    background: #fff4be;
-}
-@media (max-width: 480px) {
-    .quiz-fixed-bar .qbtn {
-        padding: 8px 12px;
-        font-size: 14px;
-    }
-}
-</style>
-"""
-    st.markdown(quiz_navbar, unsafe_allow_html=True)
-
     st.markdown("---")
-
 
 # =============================
 # Professional Test Interface
