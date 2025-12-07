@@ -3439,6 +3439,9 @@ def show_retest_config(original_test):
         st.info("Note: This feature requires tests taken after this update.")
         return
     
+    # Store the original test questions in a special format for retests
+    st.session_state.retest_questions_data = original_test['questions_used']
+    
     # Analyze original test performance
     total_questions = original_test['total_questions']
     incorrect_questions = []
@@ -3541,10 +3544,11 @@ def show_retest_config(original_test):
     questions_data = original_test['questions_used']
     
     # Convert to DataFrame format
+    # Create questions list - MODIFY THIS SECTION:
     questions_list = []
-    for q_data in questions_data:
+    for q_data in original_test['questions_used']:
         questions_list.append({
-            'Question': q_data.get('question_text', ''),
+            'Question': q_data.get('question', ''),
             'Option A': q_data.get('option_a', ''),
             'Option B': q_data.get('option_b', ''),
             'Option C': q_data.get('option_c', ''),
