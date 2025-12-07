@@ -1999,57 +1999,69 @@ def show_student_dashboard():
     
     # Recent Test History
     test_history = load_test_history(username)
-    if test_history:
-        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-
-        recent_tests = test_history[-10:]  # Show last 10 tests
-        
-        exam_name = str(test.get("exam_name", "Unknown Test"))
-        if test.get("is_retest", False):
-            exam_name += " 📝"
-        
+    for idx, test in enumerate(reversed(recent_tests)):
+        test_date = datetime.fromisoformat(str(test.get("date", ""))).astimezone(
+            pytz.timezone("Asia/Kolkata")
+        ).strftime("%Y-%m-%d %H:%M")
+    
+        percentage = float(test.get("percentage", 0))
         score = float(test.get("score", 0))
         total_marks = float(test.get("total_marks", 0))
-        percentage = float(test.get("percentage", 0))
-        
-        # Test card (without buttons)
+    
+        exam_name = str(test.get('exam_name', 'Unknown Test'))
+        if test.get('is_retest', False):
+            exam_name += "📝"
+    
+        test_id = test.get('test_id', f"test_{idx}")
+    
+        # ==== Clean metadata card ====
         st.markdown(f"""
         <div style="
-            margin-bottom: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
             padding: 12px 14px;
             background: #f8fafc;
             border-radius: 10px;
             border: 1px solid #e2e8f0;
+            margin-bottom: 6px;
             font-size: 0.95rem;
-            line-height: 1.6;
         ">
-            <b>{exam_name}</b>
-            &nbsp;•&nbsp;
-            🧮 <b>Score:</b> {score:.0f}/{total_marks:.0f}
-            &nbsp;•&nbsp;
-            🎯 <b>Accuracy:</b> {percentage:.1f}%
-            &nbsp;•&nbsp;
-            📅 <b>{test_date}</b>
+            <div style="flex-grow: 1;">
+                📘 <b>{exam_name}</b>
+                &nbsp;•&nbsp; 🧮 <b>{score:.0f}/{total_marks:.0f}</b>
+                &nbsp;•&nbsp; 🎯 <b>{percentage:.1f}%</b>
+                &nbsp;•&nbsp; 📅 {test_date}
+            </div>
+    
+            <div style="display: flex; gap: 8px;">
+                <button onclick="window.location.href='?action=retest_{test_id}'"
+                    style="background:none;border:none;font-size:20px;cursor:pointer;">🔁</button>
+    
+                <button onclick="window.location.href='?action=delete_{test_id}'"
+                    style="background:none;border:none;font-size:20px;cursor:pointer;">🗑️</button>
+            </div>
         </div>
         """, unsafe_allow_html=True)
-        
-        # FULL-WIDTH BUTTONS BELOW THE CARD
-        test_id = test.get("test_id", f"test_{idx}")
-        
-        if st.button("🔁 Take Retest", key=f"retest_{test_id}", use_container_width=True):
+    
+        # ==== Progress bar ====
+        st.progress(int(percentage))
+    
+        # ==== Handle UI actions ====
+        if f"action=retest_{test_id}" in st.query_params:
             st.session_state.retest_config = test
             st.session_state.current_screen = "retest_config"
             st.rerun()
-        
-        if st.button("🗑️ Delete This Test Entry", key=f"delete_{test_id}", use_container_width=True):
+    
+        if f"action=delete_{test_id}" in st.query_params:
             if delete_test_entry(username, test_id):
                 st.success("Test entry deleted successfully!")
                 st.rerun()
             else:
                 st.error("Failed to delete test entry")
-        
-        # Progress bar under everything
-        st.progress(int(percentage))
+
 
 
     # Achievements
