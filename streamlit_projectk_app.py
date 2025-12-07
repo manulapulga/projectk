@@ -3975,7 +3975,7 @@ def show_results_screen():
         color = LITMUSQ_THEME['warning']
     else:
         performance = "Needs Improvement 📚"
-        color = LITMUSQ_THEME['secondary']
+        color = Red
     
     st.markdown(f"""
     <div style="
@@ -4004,42 +4004,37 @@ def show_results_screen():
         key="download_results"
     )
     
-    # Navigation buttons in columns
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        if st.button("🏠 Home", use_container_width=True, key="results_home"):
-            st.session_state.current_screen = "home"
-            st.session_state.show_detailed_analysis = False  # Reset the flag
-            st.rerun()
-    
-    with col2:
-        analysis_visible = st.session_state.get('show_detailed_analysis', False)
-        button_label = "🙈 Hide Analysis" if analysis_visible else "📊 View Analysis"
-    
-        if st.button(button_label, use_container_width=True, key="results_analysis"):
-            st.session_state.show_detailed_analysis = not analysis_visible
-            st.session_state.current_screen = "quiz"
-            st.rerun()
+    # Navigation buttons
 
-    
-    with col3:
-        if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
-            df_exam = st.session_state.quiz_questions
-            start_quiz(
-                df_exam, 
-                len(df_exam),
-                st.session_state.quiz_duration,
-                st.session_state.use_final_key, 
-                st.session_state.exam_name
-            )
-            st.session_state.current_screen = "quiz"
-            st.rerun()
-    
-    with col4:
-        if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
-            st.session_state.current_screen = "dashboard"
-            st.rerun()
+    if st.button("🏠 Home", use_container_width=True, key="results_home"):
+        st.session_state.current_screen = "home"
+        st.session_state.show_detailed_analysis = False  # Reset the flag
+        st.rerun()
+
+    analysis_visible = st.session_state.get('show_detailed_analysis', False)
+    button_label = "🙈 Hide Analysis" if analysis_visible else "📊 View Analysis"
+
+    if st.button(button_label, use_container_width=True, key="results_analysis"):
+        st.session_state.show_detailed_analysis = not analysis_visible
+        st.session_state.current_screen = "quiz"
+        st.rerun()
+
+
+    if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
+        df_exam = st.session_state.quiz_questions
+        start_quiz(
+            df_exam, 
+            len(df_exam),
+            st.session_state.quiz_duration,
+            st.session_state.use_final_key, 
+            st.session_state.exam_name
+        )
+        st.session_state.current_screen = "quiz"
+        st.rerun()
+
+    if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
+        st.session_state.current_screen = "dashboard"
+        st.rerun()
     
     # Detailed analysis - FIXED: This should appear below the navigation buttons
     if st.session_state.get('show_detailed_analysis', False):
