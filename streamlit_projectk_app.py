@@ -952,7 +952,7 @@ def show_login_screen():
         with st.form("login_form"):
             username = st.text_input("👤 Username", placeholder="Enter your username", key="login_username")
             password = st.text_input("🔒 Password", type="password", placeholder="Enter your password", key="login_password")
-            submit_button = st.form_submit_button("🚀 Login to LitmusQ", use_container_width=True)
+            submit_button = st.form_submit_button("🚀 Login to LitmusQ", use_container_width=True, type=primary)
             
             if submit_button:
                 if not username or not password:
