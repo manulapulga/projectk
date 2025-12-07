@@ -3332,76 +3332,64 @@ def show_quiz_header_with_timer():
     """Show a fixed quiz header with ticking timer using st.components.v1.html"""
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
     if "end_time" not in st.session_state:
-        st.session_state.end_time = datetime.now() + timedelta(minutes=10)  # Example: 10 min timer
-        st.session_state.submitted = False
+        st.session_state.end_time = datetime.now() + timedelta(minutes=10)
         st.session_state.exam_name = "Sample Exam"
+        st.session_state.submitted = False
     
-    if st.session_state.end_time and not st.session_state.submitted:
-        seconds_left = max(0, int((st.session_state.end_time - datetime.now()).total_seconds()))
-        
-        # Render the header + timer in a component
-        components.html(f"""
-        <style>
-        .fixed-quiz-header {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3rem;
-            background: linear-gradient(135deg, #50fbf8, #e039d3);
-            color: black;
-            padding: 0.5rem 1rem;
-            z-index: 9999;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    # Fixed header via markdown
+    st.markdown(f"""
+    <style>
+    .fixed-quiz-header {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3rem;
+        background: linear-gradient(135deg, #50fbf8, #e039d3);
+        color: black;
+        padding: 0.5rem 1rem;
+        z-index: 9999;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }}
+    .content-wrapper {{ padding-top: 70px; }}
+    </style>
+    
+    <div class="fixed-quiz-header">
+        <div>{st.session_state.exam_name}</div>
+        <div id="header-timer">⏰ 00:00:00</div>
+    </div>
+    
+    <div class="content-wrapper"></div>
+    """, unsafe_allow_html=True)
+    
+    # Timer JS inside component
+    seconds_left = max(0, int((st.session_state.end_time - datetime.now()).total_seconds()))
+    components.html(f"""
+    <script>
+    let timeLeft = {seconds_left};
+    const timerEl = document.getElementById("header-timer");
+    
+    function updateTimer() {{
+        if(timeLeft <= 0) {{
+            timerEl.innerHTML = "⏰ 00:00:00";
+            timerEl.style.color = "red";
+            return;
         }}
-        .content-wrapper {{ padding-top: 70px; }}
-        #header-timer {{
-            font-size: 1rem;
-            padding: 0.3rem 1rem;
-            border-radius: 50px;
-            min-width: 120px;
-            text-align: center;
-            transition: all 0.3s ease;
-        }}
-        </style>
-        
-        <div class="fixed-quiz-header">
-            <div>{st.session_state.exam_name}</div>
-            <div id="header-timer">⏰ 00:00:00</div>
-        </div>
-        <div class="content-wrapper"></div>
-        
-        <script>
-        let timeLeft = {seconds_left};
-        const timerEl = document.getElementById("header-timer");
-
-        function updateTimer() {{
-            if(timeLeft <= 0) {{
-                timerEl.innerHTML = "⏰ 00:00:00";
-                timerEl.style.color = "red";
-                // Trigger submission button if needed
-                const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
-                if(submitButton) submitButton.click();
-                return;
-            }}
-            let h = String(Math.floor(timeLeft / 3600)).padStart(2,'0');
-            let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2,'0');
-            let s = String(timeLeft % 60).padStart(2,'0');
-            
-            timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
-            
-            if(timeLeft < 300) timerEl.style.color = "red";
-            timeLeft--;
-            setTimeout(updateTimer, 1000);
-        }}
-
-        updateTimer();
-        </script>
-        """, height=70)
+        let h = String(Math.floor(timeLeft / 3600)).padStart(2,'0');
+        let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2,'0');
+        let s = String(timeLeft % 60).padStart(2,'0');
+        timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
+        if(timeLeft < 300) timerEl.style.color = "red";
+        timeLeft--;
+        setTimeout(updateTimer, 1000);
+    }}
+    updateTimer();
+    </script>
+    """, height=0)
 
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
