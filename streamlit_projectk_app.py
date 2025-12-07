@@ -1215,65 +1215,53 @@ def show_user_management():
         # Display each user in an editable card
         for idx, row in df.iterrows():
             with st.expander(f"👤 {row['Full Name']} ({row['Username']})", expanded=False):
-                col1, col2 = st.columns(2)
-                
-                with col1:
-                    st.markdown(f"**Full Name:** {row['Full Name']}")
-                    st.markdown(f"**Email:** {row['Email']}")
-                    st.markdown(f"**Phone:** {row['Phone']}")
-                    st.markdown(f"**Role:** {row['Role']}")
-                
-                with col2:
-                    st.markdown(f"**Created:** {row['Created'][:10] if row['Created'] else 'N/A'}")
-                    # Check if the value is a string before trying to slice it, otherwise display 'Never'
-                    last_login_value = row['Last Login']
-                    last_login_display = last_login_value[:19] if isinstance(last_login_value, str) else 'Never'
-                    st.markdown(f"**Last Login:** {last_login_display}")
+
+                st.markdown(f"**Full Name:** {row['Full Name']}")
+                st.markdown(f"**Email:** {row['Email']}")
+                st.markdown(f"**Phone:** {row['Phone']}")
+                st.markdown(f"**Role:** {row['Role']}")
+            
+                st.markdown(f"**Created:** {row['Created'][:10] if row['Created'] else 'N/A'}")
+                # Check if the value is a string before trying to slice it, otherwise display 'Never'
+                last_login_value = row['Last Login']
+                last_login_display = last_login_value[:19] if isinstance(last_login_value, str) else 'Never'
+                st.markdown(f"**Last Login:** {last_login_display}")
                     
                     # Status indicators
-                    status_col1, status_col2 = st.columns(2)
-                    with status_col1:
-                        approval_status = "✅ Approved" if row['Approved'] else "⏳ Pending"
-                        st.markdown(f"**Approval:** {approval_status}")
-                    
-                    with status_col2:
-                        active_status = "🟢 Active" if row['Active'] else "🔴 Inactive"
-                        st.markdown(f"**Status:** {active_status}")
+                    approval_status = "✅ Approved" if row['Approved'] else "⏳ Pending"
+                    st.markdown(f"**Approval:** {approval_status}")
+                
+                    active_status = "🟢 Active" if row['Active'] else "🔴 Inactive"
+                    st.markdown(f"**Status:** {active_status}")
                 
                 # Action buttons
                 st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-                action_col1, action_col2, action_col3, action_col4 = st.columns(4)
-                
-                with action_col1:
-                    # Toggle approval
-                    new_approval = not row['Approved']
-                    if st.button("✅ Approve" if not row['Approved'] else "⏸ Revoke", 
-                               key=f"approve_{row['Username']}",
-                               use_container_width=True):
-                        if update_user_approval(row['Username'], new_approval):
-                            st.success(f"User {'approved' if new_approval else 'revoked'} successfully!")
-                            st.rerun()
-                
-                with action_col2:
-                    # Toggle active status
-                    new_active = not row['Active']
-                    if st.button("🟢 Activate" if not row['Active'] else "🔴 Deactivate",
-                               key=f"active_{row['Username']}",
-                               use_container_width=True):
-                        if update_user_status(row['Username'], new_active):
-                            st.success(f"User {'activated' if new_active else 'deactivated'} successfully!")
-                            st.rerun()
-                
-                with action_col3:
-                    # Edit user (placeholder)
-                    if st.button("📝 Edit", key=f"edit_{row['Username']}", use_container_width=True):
-                        st.info("Edit functionality coming soon!")
-                
-                with action_col4:
-                    # Delete user (with confirmation)
-                    if st.button("🗑️ Delete", key=f"delete_{row['Username']}", use_container_width=True):
-                        st.session_state.user_to_delete = row['Username']
+                # Toggle approval
+                new_approval = not row['Approved']
+                if st.button("✅ Approve" if not row['Approved'] else "⏸ Revoke", 
+                           key=f"approve_{row['Username']}",
+                           use_container_width=True):
+                    if update_user_approval(row['Username'], new_approval):
+                        st.success(f"User {'approved' if new_approval else 'revoked'} successfully!")
                         st.rerun()
+            
+                # Toggle active status
+                new_active = not row['Active']
+                if st.button("🟢 Activate" if not row['Active'] else "🔴 Deactivate",
+                           key=f"active_{row['Username']}",
+                           use_container_width=True):
+                    if update_user_status(row['Username'], new_active):
+                        st.success(f"User {'activated' if new_active else 'deactivated'} successfully!")
+                        st.rerun()
+            
+                # Edit user (placeholder)
+                if st.button("📝 Edit", key=f"edit_{row['Username']}", use_container_width=True):
+                    st.info("Edit functionality coming soon!")
+            
+                # Delete user (with confirmation)
+                if st.button("🗑️ Delete", key=f"delete_{row['Username']}", use_container_width=True):
+                    st.session_state.user_to_delete = row['Username']
+                    st.rerun()
                 
                 # Handle deletion confirmation
                 if hasattr(st.session_state, 'user_to_delete') and st.session_state.user_to_delete == row['Username']:
@@ -1291,24 +1279,21 @@ def show_user_management():
                             st.rerun()
     
     # Bulk actions
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✅ Approve All Pending", use_container_width=True):
-            pending_users = [user for user in users if not user.get('is_approved', False)]
-            for user in pending_users:
-                update_user_approval(user['username'], True)
-            st.success(f"Approved {len(pending_users)} pending users!")
-            st.rerun()
-    
-    with col2:
-        if st.button("📧 Export User List", use_container_width=True):
-            csv = df.to_csv(index=False)
-            st.download_button(
-                label="📥 Download CSV",
-                data=csv,
-                file_name="litmusq_users.csv",
-                mime="text/csv"
-            )
+    if st.button("✅ Approve All Pending", use_container_width=True):
+        pending_users = [user for user in users if not user.get('is_approved', False)]
+        for user in pending_users:
+            update_user_approval(user['username'], True)
+        st.success(f"Approved {len(pending_users)} pending users!")
+        st.rerun()
+
+    if st.button("📧 Export User List", use_container_width=True):
+        csv = df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download CSV",
+            data=csv,
+            file_name="litmusq_users.csv",
+            mime="text/csv"
+        )
             
 def show_admin_analytics():
     """Display admin analytics dashboard."""
