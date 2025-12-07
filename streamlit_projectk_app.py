@@ -2831,6 +2831,27 @@ def show_enhanced_question_interface():
     }
     </style>
     """, unsafe_allow_html=True)
+    
+    # Process action from fixed ribbon
+    if action == "prev" and current_idx > 0:
+        st.session_state.current_idx -= 1
+        st.session_state.quiz_action_receiver = ""
+        st.rerun()
+    
+    elif action == "next" and current_idx < len(df) - 1:
+        st.session_state.current_idx += 1
+        st.session_state.quiz_action_receiver = ""
+        st.rerun()
+    
+    elif action == "review":
+        toggle_mark_review(current_idx)
+        st.session_state.quiz_action_receiver = ""
+        st.rerun()
+    
+    elif action == "submit":
+        st.session_state.submitted = True
+        st.session_state.quiz_action_receiver = ""
+        st.rerun()
 
 
 
@@ -3032,26 +3053,7 @@ def show_enhanced_question_interface():
 
     st.markdown(quiz_navbar, unsafe_allow_html=True)
     
-    # Process action from fixed ribbon
-    if action == "prev" and current_idx > 0:
-        st.session_state.current_idx -= 1
-        st.session_state.quiz_action_receiver = ""
-        st.rerun()
     
-    elif action == "next" and current_idx < len(df) - 1:
-        st.session_state.current_idx += 1
-        st.session_state.quiz_action_receiver = ""
-        st.rerun()
-    
-    elif action == "review":
-        toggle_mark_review(current_idx)
-        st.session_state.quiz_action_receiver = ""
-        st.rerun()
-    
-    elif action == "submit":
-        st.session_state.submitted = True
-        st.session_state.quiz_action_receiver = ""
-        st.rerun()
 
     st.markdown("---")
 
