@@ -3752,20 +3752,19 @@ def show_results_screen():
     
     st.markdown(f"""
     <div style="
-        display: inline-block;
-        background: {color};
+        width: 100%;               /* Full width */
+        background: {color};       /* Color based on performance */
         color: white;
-        padding: 8px 16px;
-        border-radius: 12px;
-        font-size: 1.5rem;
+        padding: 6px 0;            /* Reduced height */
+        text-align: center;         /* Centered text */
+        border-radius: 8px;
+        font-size: 1.3rem;
         font-weight: bold;
-        box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+        box-shadow: 1px 1px 6px rgba(0,0,0,0.15);
     ">
         {performance}
     </div>
     """, unsafe_allow_html=True)
-
-    
     st.markdown("<br>", unsafe_allow_html=True)
     # Download button
     st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
