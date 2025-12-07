@@ -158,12 +158,29 @@ def inject_custom_css():
        GLOBAL SAFE SPACING (NO OVERLAPS, NO HUGE MARGINS)
     ==========================================================*/
 
-    /* Main content container – prevents header overlap */
+    /* Main content container – prevents header overlap AND footer overlap */
     .block-container {{
         padding-top: 0.1rem !important;   /* header clearance */
         padding-left: 0.5rem !important;
         padding-right: 0.5rem !important;
-        padding-bottom: 0.1rem !important;
+        /* INCREASED padding-bottom to clear space for the fixed footer */
+        padding-bottom: 80px !important; 
+    }}
+    
+    /* =========================================================
+       FIXED QUIZ FOOTER (The Ribbon)
+    ==========================================================*/
+    
+    .fixed-quiz-footer {{
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        /* Use light background color from theme */
+        background-color: {LITMUSQ_THEME['light_bg']}; 
+        padding: 0.8rem 1rem;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        z-index: 10000; /* Ensure it stays above other content */
     }}
 
     /* Vertical spacing between Streamlit elements */
@@ -2655,6 +2672,72 @@ def show_exam_config_screen():
 # =============================
 # Enhanced Question Display in Quiz
 # =============================
+# =============================
+# Fixed Footer Navigation
+# =============================
+def show_quiz_footer_navigation():
+    """Display fixed navigation and action buttons in a bottom ribbon."""
+    
+    # Check if quiz state is valid
+    if 'quiz_questions' not in st.session_state or st.session_state.submitted:
+        return
+
+    current_idx = st.session_state.current_idx
+    total_questions = len(st.session_state.quiz_questions)
+    
+    # Start the fixed footer div
+    st.markdown("""
+    <div class="fixed-quiz-footer">
+    """, unsafe_allow_html=True)
+    
+    # Use st.columns for button layout: [Previous] [Next] [Mark/Unmark] [Clear] [Submit]
+    # Adjust column ratios for button sizes
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1.5, 1.5, 1.5]) 
+    
+    # --- PREVIOUS Button ---
+    with col1:
+        is_disabled = current_idx == 0
+        if st.button("← Previous", use_container_width=True, key="quiz_prev", disabled=is_disabled):
+            st.session_state.current_idx = max(0, current_idx - 1)
+            st.rerun()
+
+    # --- NEXT Button ---
+    with col2:
+        is_disabled = current_idx == total_questions - 1
+        if st.button("Next →", type="primary", use_container_width=True, key="quiz_next", disabled=is_disabled):
+            st.session_state.current_idx = min(total_questions - 1, current_idx + 1)
+            # Update status if the user moves to a new question
+            if st.session_state.question_status[st.session_state.current_idx]['status'] == 'not_visited':
+                update_question_status(st.session_state.current_idx, 'not_answered')
+            st.rerun()
+
+    # --- MARK/UNMARK Button ---
+    with col3:
+        current_status = st.session_state.question_status[current_idx]
+        is_marked = current_status.get('marked', False)
+        
+        button_text = "⭐ Mark for Review" if not is_marked else "🗑️ Unmark Review"
+        if st.button(button_text, use_container_width=True, key="quiz_mark", type="secondary"):
+            new_marked_status = not is_marked
+            st.session_state.question_status[current_idx]['marked'] = new_marked_status
+            st.rerun()
+
+    # --- CLEAR RESPONSE Button ---
+    with col4:
+        if st.button("⛔ Clear Response", use_container_width=True, key="quiz_clear", type="secondary"):
+            clear_response(current_idx) # Assuming clear_response is defined elsewhere
+
+    # --- SUBMIT Button ---
+    with col5:
+        # Using 'danger' type to make the final action stand out
+        if st.button("🏁 Submit Test", use_container_width=True, key="quiz_submit", type="danger"):
+            # Set submitted state to True and rerun to trigger result screen
+            st.session_state.submitted = True
+            st.rerun() 
+            
+    # Close the fixed footer div
+    st.markdown("</div>", unsafe_allow_html=True)
+    
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
@@ -2724,7 +2807,7 @@ def show_enhanced_question_interface():
     
     st.markdown("---")
     st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
-    
+    show_quiz_footer_navigation()
     
     # Enhanced action buttons
     col1, col2, col3, col4 = st.columns(4)
