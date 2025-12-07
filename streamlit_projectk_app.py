@@ -3134,11 +3134,11 @@ def show_question_palette():
         display: flex;
         align-items: center;
         margin: 5px 0;
-        font-size: 20px;
+        font-size: 15px;
     }
     .color-box {
         width: 15px;
-        height: 20px;
+        height: 15px;
         margin-right: 8px;
         border: 1px solid #ccc;
         border-radius: 3px;
