@@ -3328,68 +3328,69 @@ from datetime import datetime, timedelta
 import streamlit.components.v1 as components
 
 def show_quiz_header_with_timer():
-  
-    """Show a fixed quiz header with ticking timer using st.components.v1.html"""
-    st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
-    if "end_time" not in st.session_state:
-        st.session_state.end_time = datetime.now() + timedelta(minutes=10)
-        st.session_state.exam_name = "Sample Exam"
-        st.session_state.submitted = False
-    
-    # Fixed header via markdown
-    st.markdown(f"""
-    <style>
-    .fixed-quiz-header {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 3rem;
-        background: linear-gradient(135deg, #50fbf8, #e039d3);
-        color: black;
-        padding: 0.5rem 1rem;
-        z-index: 9999;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-        font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    }}
-    .content-wrapper {{ padding-top: 70px; }}
-    </style>
-    
-    <div class="fixed-quiz-header">
-        <div>{st.session_state.exam_name}</div>
-        <div id="header-timer">⏰ 00:00:00</div>
-    </div>
-    
-    <div class="content-wrapper"></div>
-    """, unsafe_allow_html=True)
-    
-    # Timer JS inside component
-    seconds_left = max(0, int((st.session_state.end_time - datetime.now()).total_seconds()))
-    components.html(f"""
-    <script>
-    let timeLeft = {seconds_left};
-    const timerEl = document.getElementById("header-timer");
-    
-    function updateTimer() {{
-        if(timeLeft <= 0) {{
-            timerEl.innerHTML = "⏰ 00:00:00";
-            timerEl.style.color = "red";
-            return;
+    """Show a custom header with timer for quiz interface."""
+    if st.session_state.end_time and not st.session_state.submitted:
+        time_left = st.session_state.end_time - datetime.now()
+        seconds_left = max(0, int(time_left.total_seconds()))
+        
+        # Calculate initial time display
+        h = str(seconds_left // 3600).zfill(2)
+        m = str((seconds_left % 3600) // 60).zfill(2)
+        s = str(seconds_left % 60).zfill(2)
+        
+        # Determine color based on time remaining
+        timer_color = '#ff6b6b' if seconds_left < 300 else 'white'
+        
+        # Create a custom HTML header with timer
+        st.markdown(f"""
+        <style>
+        .fixed-quiz-header {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            margin-top: 3.5rem;
+            margin-bottom:0.2rem;
+            width: 100%;
+            height:3rem;
+            background: linear-gradient(135deg, #50fbf8, #e039d3);
+            color: black;
+            padding: 0.5rem 0.5rem;
+            z-index: 9999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }}
-        let h = String(Math.floor(timeLeft / 3600)).padStart(2,'0');
-        let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2,'0');
-        let s = String(timeLeft % 60).padStart(2,'0');
-        timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
-        if(timeLeft < 300) timerEl.style.color = "red";
-        timeLeft--;
-        setTimeout(updateTimer, 1000);
-    }}
-    updateTimer();
-    </script>
-    """, height=0)
+        .content-wrapper {{
+            padding-top: 70px; /* Make space for fixed header */
+        }}
+        </style>
+        
+        <div class="fixed-quiz-header">
+            <div style="font-size: 1rem;">
+                {st.session_state.exam_name}
+            </div>
+            <div id="header-timer" style="
+                font-size: 1rem;
+                padding: 0.3rem 1rem;
+                border-radius: 50px;
+                min-width: 120px;
+                text-align: center;
+                color: {timer_color};
+                transition: all 0.3s ease;
+            ">
+                ⏰ {h}:{m}:{s}
+            </div>
+        </div>
+        
+        <div class="content-wrapper"></div>
+        """, unsafe_allow_html=True)
+        
+        # Auto-refresh the page every second when timer is running
+        if seconds_left > 0 and not st.session_state.submitted:
+            time.sleep(1)
+            st.rerun()
 
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
