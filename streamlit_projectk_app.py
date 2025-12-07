@@ -1941,7 +1941,7 @@ def show_clear_data_section():
             "<p style='color: #286b33; font-weight: 600;'>Note: Your login credentials will remain unchanged. Only your performance data will be deleted.</p>",
             unsafe_allow_html=True
         )
-    st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
       
 def show_student_dashboard():
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
@@ -2000,8 +2000,7 @@ def show_student_dashboard():
     # Recent Test History
     test_history = load_test_history(username)
     if test_history:
-        st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-
+        
         recent_tests = test_history[-10:]  # Show last 10 tests
         
         for idx, test in enumerate(reversed(recent_tests)):
