@@ -1186,25 +1186,33 @@ def show_admin_analytics():
     """Display admin analytics dashboard."""
     st.markdown("📈 **User Analytics**")
     
-    users = get_all_users()
+    users = get_all_users()  # Your function to fetch users
     
     if not users:
         st.info("No user data available.")
         return
     
+    # Timezone
+    tz = pytz.timezone("Asia/Kolkata")
+    
     # Calculate statistics
     total_users = len(users)
     approved_users = sum(1 for user in users if user.get('is_approved', False))
-    active_users = sum(1 for user in users if user.get('is_active', True))
+    active_users = sum(1 for user in users if user.get('is_active', False))
     
     # Registration trend (last 30 days)
     thirty_days_ago = datetime.now(tz) - timedelta(days=30)
-
-    recent_users = sum(
-        1 for user in users
-        if datetime.fromisoformat(user.get('created_at', '2000-01-01T00:00:00'))
-                .astimezone(tz) > thirty_days_ago
-    )
+    
+    recent_users = 0
+    for user in users:
+        created_at = user.get('created_at', '2000-01-01T00:00:00')
+        try:
+            created_dt = datetime.fromisoformat(created_at).astimezone(tz)
+            if created_dt > thirty_days_ago:
+                recent_users += 1
+        except ValueError:
+            # Skip invalid dates
+            continue
     
     # Reduce st.metric font size
     st.markdown("""
@@ -1229,30 +1237,35 @@ def show_admin_analytics():
     with col1:
         st.metric("Total Users", total_users)
     with col2:
-        st.metric("Approval Rate", f"{(approved_users/total_users*100):.1f}%")
+        st.metric("Approval Rate", f"{(approved_users / total_users * 100):.1f}%")
     with col3:
         st.metric("Active Users", active_users)
     with col4:
         st.metric("Recent Registrations (30d)", recent_users)
-
     
     # User registration timeline
     st.markdown("**📅 Registration Timeline**")
     st.markdown("<br>", unsafe_allow_html=True)
+    
     # Group by date
     reg_dates = {}
     for user in users:
-        created_date = user.get('created_at', '')[:10]  # Get YYYY-MM-DD
-        if created_date:
-            reg_dates[created_date] = reg_dates.get(created_date, 0) + 1
+        created_at = user.get('created_at', '')
+        if created_at:
+            try:
+                created_date = datetime.fromisoformat(created_at).date().isoformat()
+                reg_dates[created_date] = reg_dates.get(created_date, 0) + 1
+            except ValueError:
+                continue
     
     if reg_dates:
-        dates = sorted(reg_dates.keys())[-30:]  # Last 30 days
-        counts = [reg_dates[d] for d in dates]
+        # Get last 30 days
+        dates = sorted([datetime.fromisoformat(d) for d in reg_dates.keys()])[-30:]
+        counts = [reg_dates[d.strftime('%Y-%m-%d')] for d in dates]
         
         # Create a simple bar chart
         chart_data = pd.DataFrame({
-            'Date': dates,
+            'Date': [d.strftime('%Y-%m-%d') for d in dates],
             'Registrations': counts
         })
         st.bar_chart(chart_data.set_index('Date'))
