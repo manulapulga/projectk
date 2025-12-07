@@ -2821,8 +2821,6 @@ def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
     current_idx = st.session_state.current_idx
-    action = st.text_input("", key="quiz_action_input", label_visibility="collapsed")
-
     
     if current_idx >= len(df):
         st.error("Invalid question index")
@@ -2986,72 +2984,6 @@ def show_enhanced_question_interface():
         st.metric("⏰ Time Left", "No Limit")
 
     st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown("""
-    <style>
-    .quiz-fixed-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: #ffcf87;
-        padding: 12px 10px;
-        box-shadow: 0 -4px 12px rgba(0,0,0,0.25);
-        z-index: 999999;
-        display: flex;
-        justify-content: space-around;
-    }
-    .quiz-btn {
-        background: #ff9e1f;
-        padding: 10px 22px;
-        border-radius: 10px;
-        color: black;
-        font-weight: 700;
-        border: none;
-        cursor: pointer;
-        font-size: 15px;
-    }
-    </style>
-    
-    <script>
-    function fireAction(a) {
-        // We wait until Streamlit fully loads the input
-        const interval = setInterval(() => {
-            const el = window.parent.document.querySelector('input[id*="quiz_action_input"]');
-            if (el) {
-                el.value = a;
-                el.dispatchEvent(new Event('input', { bubbles: true }));
-                clearInterval(interval);
-            }
-        }, 50);
-    }
-    </script>
-    
-    <div class="quiz-fixed-bar">
-        <button class="quiz-btn" onclick="fireAction('prev')">⬅ Previous</button>
-        <button class="quiz-btn" onclick="fireAction('next')">Next ➡</button>
-        <button class="quiz-btn" onclick="fireAction('review')">★ Mark</button>
-        <button class="quiz-btn" onclick="fireAction('submit')">✔ Submit</button>
-    </div>
-    """, unsafe_allow_html=True)
-    if action == "prev":
-        st.session_state.current_question -= 1
-        st.session_state.quiz_action_input = ""
-        st.rerun()
-    
-    elif action == "next":
-        st.session_state.current_question += 1
-        st.session_state.quiz_action_input = ""
-        st.rerun()
-    
-    elif action == "review":
-        toggle_review_flag(st.session_state.current_question)
-        st.session_state.quiz_action_input = ""
-        st.rerun()
-    
-    elif action == "submit":
-        finalize_quiz()
-        st.session_state.quiz_action_input = ""
-        st.rerun()
 
     st.markdown("---")
 
