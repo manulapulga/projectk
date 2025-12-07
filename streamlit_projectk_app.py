@@ -59,7 +59,7 @@ db = initialize_firebase()
 
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
-    "primary": "##50fbf8",      # Dark blue
+    "primary": "#50fbf8",      # Dark blue
     "secondary": "#e039d3",    # Red
     "accent": "#3B82F6",       # Light blue
     "background": "#F8FAFC",
