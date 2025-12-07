@@ -2047,13 +2047,13 @@ def show_student_dashboard():
             st.progress(int(percentage))
             # Take Retest button
             test_id = test.get('test_id', f"test_{idx}")
-            if st.button("🔁", key=f"retest_{test_id}", 
+            if st.button("Retest 🔁", key=f"retest_{test_id}", 
                        help="Take Re-Test", use_container_width="True"):
                 st.session_state.retest_config = test
                 st.session_state.current_screen = "retest_config"
                 
             # Delete Entry button
-            if st.button("🗑️", key=f"delete_{test_id}", 
+            if st.button("Delete 🗑️", key=f"delete_{test_id}", 
                        help="Delete this test entry", use_container_width="True"):
                 if delete_test_entry(username, test_id):
                     st.success("Test entry deleted successfully!")
