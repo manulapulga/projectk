@@ -2955,6 +2955,7 @@ def show_enhanced_question_interface():
         st.metric("⏰ Time Left", "No Limit")
 
     st.markdown("</div>", unsafe_allow_html=True)
+    
     quiz_navbar = """
     <div class="quiz-fixed-bar">
     
@@ -3023,9 +3024,6 @@ def show_enhanced_question_interface():
     }
     </style>
     """
-
-    
-    st.markdown(quiz_navbar, unsafe_allow_html=True)
     
     # Process action from fixed ribbon
     if action == "prev" and current_idx > 0:
