@@ -178,6 +178,7 @@ def inject_custom_css():
     .stNumberInput, .stTextInput, .stTextArea, .stFileUploader {{
         margin-top: 0rem !important;
         margin-bottom: 0rem !important;
+        padding-left:10px;
     }}
 
     /* fix vertical block spacing safely */
@@ -405,6 +406,8 @@ def inject_custom_css():
             padding: 1rem !important;
         }}
     }}
+    
+    
     
     </style>
     """, unsafe_allow_html=True)
