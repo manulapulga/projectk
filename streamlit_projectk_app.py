@@ -2063,7 +2063,7 @@ def show_student_dashboard():
             st.markdown("""
             <div style="height:3px; background: linear-gradient(to right, Blue, red); border-radius:5px;"></div>
             """, unsafe_allow_html=True)
-            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     # Achievements
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     if progress.get("achievements"):
