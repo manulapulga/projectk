@@ -3659,12 +3659,13 @@ def show_results_screen():
     # Clear retest state after saving results
     clear_retest_state()
     
-    # Prepare values
-    total_q = int(test_results["Total Questions"])
-    attempted = int(test_results.get("Attempted", total_q))
-    correct = int(test_results["Correct"])
-    final_score = float(test_results["Marks Obtained"])
-    overall_percent = (final_score / float(test_results["Total Marks"])) * 100
+    # Summary cards with enhanced styling
+    total_q = summary["Total Questions"]
+    attempted = summary["Attempted"]
+    correct = summary["Correct"]
+    marks_obt = summary["Marks Obtained"]
+    tot_marks = summary["Total Marks"]
+    percentage = summary["Percentage"]
     
     st.markdown(f"""
     <div style="
@@ -3683,11 +3684,17 @@ def show_results_screen():
         &nbsp;•&nbsp;
         ✅ <b>Correct:</b> {correct}
         &nbsp;•&nbsp;
-        🧮 <b>Score:</b> {final_score}
+        🧮 <b>Score:</b> {marks_obt}/{tot_marks}
         &nbsp;•&nbsp;
-        🎯 <b>Overall:</b> {overall_percent:.1f}%
+        🎯 <b>Overall:</b> {percentage:.1f}%
     </div>
     """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Percentage bar
+    st.subheader(f"Overall Score: {percentage:.1f}%")
+    st.progress(int(percentage))
 
     
     # Performance gauge
