@@ -3384,38 +3384,6 @@ def show_quiz_header_with_timer():
             updateTimer();
         </script>
         """, unsafe_allow_html=True)
-    else:
-        # Show header without timer if no time limit
-        st.markdown(f"""
-        <style>
-        .fixed-quiz-header {{
-            position: fixed;
-            top: 0;
-            left: 0;
-            margin-top: 3.5rem;
-            width: 100%;
-            background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
-            color: white;
-            padding: 0.8rem 1rem;
-            z-index: 9999;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-        }}
-        .content-wrapper {{
-            padding-top: 70px;
-        }}
-        </style>
-        
-        <div class="fixed-quiz-header">
-            <div style="font-size: 1rem;">
-                {st.session_state.exam_name}
-            </div>
-        </div>
-        <div class="content-wrapper"></div>
-        """, unsafe_allow_html=True)
 
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
