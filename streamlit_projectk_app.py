@@ -1227,12 +1227,12 @@ def show_user_management():
                 last_login_display = last_login_value[:19] if isinstance(last_login_value, str) else 'Never'
                 st.markdown(f"**Last Login:** {last_login_display}")
                     
-                    # Status indicators
-                    approval_status = "✅ Approved" if row['Approved'] else "⏳ Pending"
-                    st.markdown(f"**Approval:** {approval_status}")
-                
-                    active_status = "🟢 Active" if row['Active'] else "🔴 Inactive"
-                    st.markdown(f"**Status:** {active_status}")
+                # Status indicators
+                approval_status = "✅ Approved" if row['Approved'] else "⏳ Pending"
+                st.markdown(f"**Approval:** {approval_status}")
+            
+                active_status = "🟢 Active" if row['Active'] else "🔴 Inactive"
+                st.markdown(f"**Status:** {active_status}")
                 
                 # Action buttons
                 st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
