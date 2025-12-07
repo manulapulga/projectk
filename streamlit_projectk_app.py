@@ -151,26 +151,6 @@ def inject_mobile_css():
 inject_mobile_css()
 
 def inject_custom_css():
-    st.markdown("""
-    <style>
-    .quiz-footer {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: white;
-        padding: 10px 15px;
-        border-top: 2px solid #e5e7eb;
-        box-shadow: 0 -2px 6px rgba(0,0,0,0.08);
-        z-index: 9999;
-    }
-    
-    .quiz-footer .stButton > button {
-        width: 100% !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
     st.markdown(f"""
     <style>
 
@@ -2747,11 +2727,9 @@ def show_enhanced_question_interface():
     
     
     # Enhanced action buttons
-    st.markdown('<div class="quiz-footer">', unsafe_allow_html=True)
-
-    footer_col1, footer_col2, footer_col3, footer_col4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns(4)
     
-    with footer_col1:
+    with col1:
         st.button(
             "◀ Previous",
             use_container_width=True,
@@ -2761,7 +2739,7 @@ def show_enhanced_question_interface():
             on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
         )
     
-    with footer_col2:
+    with col2:
         st.button(
             "Next ▶",
             use_container_width=True,
@@ -2771,7 +2749,7 @@ def show_enhanced_question_interface():
             on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
         )
     
-    with footer_col3:
+    with col3:
         button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
         st.button(
             button_text,
@@ -2781,7 +2759,7 @@ def show_enhanced_question_interface():
             on_click=lambda: toggle_mark_review(current_idx)
         )
     
-    with footer_col4:
+    with col4:
         st.button(
             "📤 Submit Test",
             use_container_width=True,
@@ -2789,9 +2767,6 @@ def show_enhanced_question_interface():
             type="secondary",
             on_click=lambda: setattr(st.session_state, 'submitted', True)
         )
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
         
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
