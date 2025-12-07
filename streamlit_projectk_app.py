@@ -56,7 +56,6 @@ def initialize_firebase():
 
 # Initialize Firebase
 db = initialize_firebase()
-background: linear-gradient(135deg, #f8fafc, #e2e8f0);
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
     "primary": "#f8fafc",      # Dark blue
