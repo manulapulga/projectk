@@ -224,7 +224,7 @@ def inject_custom_css():
         margin: 0rem 0 !important;
         padding: 0rem !important;
         transition: all 0.2s ease;
-        border: 10px solid transparent !important;
+        border: 5px solid transparent !important;
     }}
 
 
