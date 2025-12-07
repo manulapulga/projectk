@@ -2868,7 +2868,14 @@ def show_enhanced_question_interface():
         """
     
         # 🔥 Reduce the height to minimum (20–30px)
-        components.html(html_code, height=30)
+        right_aligned_html = f"""
+        <div style="display: flex; justify-content: flex-end; width: 100%; margin: 0; padding: 0;">
+            {html_code}
+        </div>
+        """
+        
+        components.html(right_aligned_html, height=30)
+
     else:
         st.metric("⏰ Time Left", "No Limit")
 
