@@ -2825,11 +2825,13 @@ def show_enhanced_question_interface():
     action = st.text_input("action_receiver", "", key="quiz_action_receiver")
     st.markdown("""
     <style>
-    input[data-testid="quiz_action_receiver"] {
+    /* hide only our action receiver text input by its accessible name (aria-label) */
+    input[aria-label="action_receiver"] {
         display: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
+
 
 
 
@@ -2966,10 +2968,20 @@ def show_enhanced_question_interface():
     
     <script>
     function sendQuizAction(a) {
-        const input = window.parent.document.querySelector("input[data-testid='quiz_action_receiver']");
+        // First try: find Streamlit text input by aria-label (the label you passed to st.text_input)
+        var input = document.querySelector('input[aria-label="action_receiver"]');
+    
+        // Fallback: try the (less likely) data-testid selector if aria fails
+        if (!input) {
+            input = document.querySelector('input[data-testid="quiz_action_receiver"]') || document.querySelector('input[data-testid="stTextInput"]');
+        }
+    
         if (input) {
             input.value = a;
-            input.dispatchEvent(new Event("input", { bubbles: true }));
+            // Dispatch input event so Streamlit notices the change
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        } else {
+            console.warn("sendQuizAction: action_receiver input not found");
         }
     }
     </script>
@@ -3018,8 +3030,6 @@ def show_enhanced_question_interface():
     </style>
     """
 
-
-    
     st.markdown(quiz_navbar, unsafe_allow_html=True)
     
     # Process action from fixed ribbon
