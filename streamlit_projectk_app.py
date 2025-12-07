@@ -2041,16 +2041,25 @@ def show_student_dashboard():
                     &nbsp;•&nbsp; 📅 {test_date}
                 </div>
         
-                <div style="display: flex; gap: 8px;">
-                    <button onclick="window.location.href='?action=retest_{test_id}'"
-                        style="background:none;border:none;font-size:20px;cursor:pointer;">🔁</button>
-        
-                    <button onclick="window.location.href='?action=delete_{test_id}'"
-                        style="background:none;border:none;font-size:20px;cursor:pointer;">🗑️</button>
-                </div>
-            </div>
+                
             """, unsafe_allow_html=True)
         
+                        # Buttons use Streamlit so they trigger Python events reliably
+            with btn_col1:
+                if st.button("🔁", key=f"retest_{test_id}", help="Take Re-Test"):
+                    st.session_state.retest_config = test
+                    st.session_state.current_screen = "retest_config"
+                    st.rerun()
+        
+            with btn_col2:
+                if st.button("🗑️", key=f"delete_{test_id}", help="Delete this test entry"):
+                    if delete_test_entry(username, test_id):
+                        st.success("Test entry deleted successfully!")
+                        st.rerun()
+                    else:
+                        st.error("Failed to delete test entry")
+        
+            # Progress bar under the card (keeps spacing consistent)
             st.progress(int(percentage))
 
 
