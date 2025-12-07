@@ -2819,6 +2819,56 @@ def show_exam_config_screen():
 # =============================
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
+    if st.session_state.end_time and not st.session_state.submitted:
+        # Calculate remaining time
+        time_left = st.session_state.end_time - datetime.now()
+        seconds_left = int(time_left.total_seconds())
+        
+        # Auto-submit when time reaches zero
+        if seconds_left <= 0:
+            st.session_state.submitted = True
+            st.rerun()
+            return  # Exit early to prevent further rendering
+        
+        # Create timer with JavaScript
+        html_code = f"""
+        <div id="timer" style="
+            font-size: 24px;
+            font-weight: bold;
+            color: {'red' if seconds_left < 300 else 'green'};
+            text-align: center;
+        "></div>
+
+        <script>
+            let timeLeft = {seconds_left};
+
+            function updateTimer() {{
+                if (timeLeft <= 0) {{
+                    document.getElementById('timer').innerHTML = "⏰ 00:00:00";
+                    // Trigger automatic submission when timer reaches zero
+                    const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
+                    if (submitButton) {{
+                        submitButton.click();
+                    }}
+                    return;
+                }}
+
+                let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+                let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+                let s = String(timeLeft % 60).padStart(2, '0');
+
+                document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
+
+                timeLeft--;
+                setTimeout(updateTimer, 1000);
+            }}
+
+            updateTimer();
+        </script>
+        """
+        components.html(html_code, height=60)
+    else:
+        st.metric("⏰ Time Left", "No Limit")
     df = st.session_state.quiz_questions
     current_idx = st.session_state.current_idx
     
@@ -2932,56 +2982,7 @@ def show_enhanced_question_interface():
         
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
-    if st.session_state.end_time and not st.session_state.submitted:
-        # Calculate remaining time
-        time_left = st.session_state.end_time - datetime.now()
-        seconds_left = int(time_left.total_seconds())
-        
-        # Auto-submit when time reaches zero
-        if seconds_left <= 0:
-            st.session_state.submitted = True
-            st.rerun()
-            return  # Exit early to prevent further rendering
-        
-        # Create timer with JavaScript
-        html_code = f"""
-        <div id="timer" style="
-            font-size: 24px;
-            font-weight: bold;
-            color: {'red' if seconds_left < 300 else 'green'};
-            text-align: center;
-        "></div>
-
-        <script>
-            let timeLeft = {seconds_left};
-
-            function updateTimer() {{
-                if (timeLeft <= 0) {{
-                    document.getElementById('timer').innerHTML = "⏰ 00:00:00";
-                    // Trigger automatic submission when timer reaches zero
-                    const submitButton = document.querySelector('[data-testid="baseButton-secondary"]');
-                    if (submitButton) {{
-                        submitButton.click();
-                    }}
-                    return;
-                }}
-
-                let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
-                let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
-                let s = String(timeLeft % 60).padStart(2, '0');
-
-                document.getElementById('timer').innerHTML = "⏰ " + h + ":" + m + ":" + s;
-
-                timeLeft--;
-                setTimeout(updateTimer, 1000);
-            }}
-
-            updateTimer();
-        </script>
-        """
-        components.html(html_code, height=60)
-    else:
-        st.metric("⏰ Time Left", "No Limit")
+    
 
     st.markdown("</div>", unsafe_allow_html=True)
 
