@@ -58,8 +58,8 @@ def initialize_firebase():
 db = initialize_firebase()
 # LitmusQ Color Theme
 LITMUSQ_THEME = {
-    "primary": "#f8fafc",      # Dark blue
-    "secondary": "#e2e8f0",    # Red
+    "primary": "#bc97e",      # Dark blue
+    "secondary": "#9f79e6",    # Red
     "accent": "#3B82F6",       # Light blue
     "background": "#F8FAFC",
     "text": "#1E293B",
