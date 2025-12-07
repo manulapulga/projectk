@@ -1152,13 +1152,13 @@ def show_user_management():
                     st.warning(f"⚠️ Are you sure you want to delete user {row['Username']}?")
                     confirm_col1, confirm_col2 = st.columns(2)
                     with confirm_col1:
-                        if st.button("✅ Yes, Delete", key=f"confirm_delete_{row['Username']}"):
+                        if st.button("✅ Yes, Delete", key=f"confirm_delete_{row['Username']}", use_container_width="True"):
                             if delete_user(row['Username']):
                                 st.success("User deleted successfully!")
                                 del st.session_state.user_to_delete
                                 st.rerun()
                     with confirm_col2:
-                        if st.button("❌ Cancel", key=f"cancel_delete_{row['Username']}"):
+                        if st.button("❌ Cancel", key=f"cancel_delete_{row['Username']}", use_container_width="True"):
                             del st.session_state.user_to_delete
                             st.rerun()
     
