@@ -2823,6 +2823,14 @@ def show_enhanced_question_interface():
     current_idx = st.session_state.current_idx
     # Hidden action channel (for JS → Python communication)
     action = st.text_input("action_receiver", "", key="quiz_action_receiver")
+    st.markdown("""
+    <style>
+    input[data-testid="quiz_action_receiver"] {
+        display: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 
     
     if current_idx >= len(df):
@@ -3015,8 +3023,10 @@ def show_enhanced_question_interface():
     }
     </style>
     """
+
     
     st.markdown(quiz_navbar, unsafe_allow_html=True)
+    
     # Process action from fixed ribbon
     if action == "prev" and current_idx > 0:
         st.session_state.current_idx -= 1
