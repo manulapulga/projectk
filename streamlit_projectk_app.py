@@ -3969,13 +3969,14 @@ def show_results_screen():
     # Performance gauge
     if percentage >= 80:
         performance = "Excellent! 🎉"
-        color = LITMUSQ_THEME['success']
+        color = "#28C76F"      # Green
     elif percentage >= 60:
         performance = "Good! 👍"
-        color = LITMUSQ_THEME['warning']
+        color = "#F2C94C"      # Amber/Yellow
     else:
         performance = "Needs Improvement 📚"
-        color = Red
+        color = "#EF5350"      # Soft red
+    
     
     st.markdown(f"""
     <div style="
