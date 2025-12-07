@@ -1915,8 +1915,7 @@ def update_achievements(progress, test_results):
 
 def show_clear_data_section():
     """Show section to clear performance data."""
-    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-    # Confirmation workflow
+        # Confirmation workflow
     if not st.session_state.get('show_clear_confirmation', False):
         if st.button("🚮 Clear All My Performance Data", type="secondary", key="clear_data_init", use_container_width="True"):
             st.session_state.show_clear_confirmation = True
@@ -1942,7 +1941,7 @@ def show_clear_data_section():
             "<p style='color: #286b33; font-weight: 600;'>Note: Your login credentials will remain unchanged. Only your performance data will be deleted.</p>",
             unsafe_allow_html=True
         )
-
+      st.markdown("<div style='margin-top: 1.5rem;'></div>", unsafe_allow_html=True)
 def show_student_dashboard():
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
     """Display student dashboard with progress analytics."""
