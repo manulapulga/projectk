@@ -338,7 +338,7 @@ def inject_custom_css():
     ==========================================================*/
 
     .stButton > button {{
-        background-color: {LITMUSQ_THEME['primary']};
+        background-color: background: linear-gradient(135deg, #f8fafc, #e2e8f0);
         color: white !important;
         border: none !important;
         border-radius: 8px !important;
