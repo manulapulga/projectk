@@ -3186,10 +3186,10 @@ def show_quiz_header_with_timer():
             margin-top: 3.5rem;
             margin-bottom:0.2rem;
             width: 100%;
-            height:2rem;
-            background: linear-gradient(135deg, {LITMUSQ_THEME['primary']}, {LITMUSQ_THEME['secondary']});
+            height:3rem;
+            background: linear-gradient(135deg, #50fbf8, #e039d3);
             color: white;
-            padding: 0.8rem 1rem;
+            padding: 0.5rem 0.5rem;
             z-index: 9999;
             display: flex;
             justify-content: space-between;
