@@ -2043,11 +2043,8 @@ def show_student_dashboard():
         
                 
             """, unsafe_allow_html=True)
-            st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
             # Progress bar under the card (keeps spacing consistent)
             st.progress(int(percentage))
-            st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
-            
             # Take Retest button
             test_id = test.get('test_id', f"test_{idx}")
             if st.button("🔁", key=f"retest_{test_id}", 
@@ -2063,8 +2060,9 @@ def show_student_dashboard():
                     st.rerun()
                 else:
                     st.error("Failed to delete test entry")        
-
-            
+            st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
+            st.markdown("---")  # Separator between tests
+            st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
 
     # Achievements
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
