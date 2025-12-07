@@ -2004,86 +2004,52 @@ def show_student_dashboard():
 
         recent_tests = test_history[-10:]  # Show last 10 tests
         
-        for idx, test in enumerate(reversed(recent_tests)):
-            test_date = datetime.fromisoformat(str(test.get("date", ""))).astimezone(
-                pytz.timezone("Asia/Kolkata")
-            ).strftime("%Y-%m-%d %H:%M")
+        exam_name = str(test.get("exam_name", "Unknown Test"))
+        if test.get("is_retest", False):
+            exam_name += " 📝"
         
-            percentage = float(test.get("percentage", 0))
-            score = float(test.get("score", 0))
-            total_marks = float(test.get("total_marks", 0))
+        score = float(test.get("score", 0))
+        total_marks = float(test.get("total_marks", 0))
+        percentage = float(test.get("percentage", 0))
         
-            exam_name = str(test.get('exam_name', 'Unknown Test'))
-            if test.get('is_retest', False):
-                exam_name += " 📝"
+        st.markdown(f"""
+        <div style="
+            margin-bottom: 8px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        ">
+            <b>{exam_name}</b>
+            &nbsp;•&nbsp;
+            🧮 <b>Score:</b> {score:.0f}/{total_marks:.0f}
+            &nbsp;•&nbsp;
+            🎯 <b>Accuracy:</b> {percentage:.1f}%
+            &nbsp;•&nbsp;
+            📅 <b>{test_date}</b>
+        </div>
+        """, unsafe_allow_html=True)
         
-            test_id = test.get('test_id', f"test_{idx}")
-        
-            # Build the metadata HTML (left side)
-            metadata_html = f"""
-            <div style="
-                display: inline-block;
-                font-size: 0.95rem;
-            ">
-                📘 <b>{exam_name}</b>
-                &nbsp;•&nbsp; 🧮 <b>{score:.0f}/{total_marks:.0f}</b>
-                &nbsp;•&nbsp; 🎯 <b>{percentage:.1f}%</b>
-                &nbsp;•&nbsp; 📅 {test_date}
-            </div>
-            """
-        
-            # Use columns: big left column for metadata, two small for buttons
-            left_col, btn_col1, btn_col2 = st.columns([10, 1, 1])
-        
-            with left_col:
-                # Render metadata inside a styled container to match the card look
-                st.markdown(f"""
-                <div style="
-                    padding: 12px 14px;
-                    background: #f8fafc;
-                    border-radius: 10px;
-                    border: 1px solid #e2e8f0;
-                    margin-bottom: 6px;
-                ">
-                    {metadata_html}
-                </div>
-                """, unsafe_allow_html=True)
-        
-            # Buttons use Streamlit so they trigger Python events reliably
-            with btn_col1:
-                if st.button("🔁", key=f"retest_{test_id}", help="Take Re-Test"):
-                    st.session_state.retest_config = test
-                    st.session_state.current_screen = "retest_config"
-                    st.rerun()
-        
-            with btn_col2:
-                if st.button("🗑️", key=f"delete_{test_id}", help="Delete this test entry"):
-                    if delete_test_entry(username, test_id):
-                        st.success("Test entry deleted successfully!")
-                        st.rerun()
-                    else:
-                        st.error("Failed to delete test entry")
-        
-            # Progress bar under the card (keeps spacing consistent)
-            st.progress(int(percentage))
+        st.progress(int(percentage))
 
-        
-            # ==== Handle UI actions ====
-            if f"action=retest_{test_id}" in st.query_params:
+            # Take Retest button
+            test_id = test.get('test_id', f"test_{idx}")
+            if st.button("🔁", key=f"retest_{test_id}", 
+                       help="Take Re-Test"):
                 st.session_state.retest_config = test
                 st.session_state.current_screen = "retest_config"
                 st.rerun()
-        
-            if f"action=delete_{test_id}" in st.query_params:
+            # Delete Entry button
+            if st.button("🗑️", key=f"delete_{test_id}", 
+                       help="Delete this test entry"):
                 if delete_test_entry(username, test_id):
                     st.success("Test entry deleted successfully!")
                     st.rerun()
                 else:
                     st.error("Failed to delete test entry")
-
-            
-            # Progress bar
-            st.progress(int(percentage))
+            st.markdown("---")
 
     # Achievements
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
@@ -3323,10 +3289,10 @@ def show_quiz_screen():
 # Add this function to handle auto-submits from JavaScript
 def handle_auto_submit():
     """Handle auto-submit from JavaScript timer."""
-    params = st.query_params  # new API
-    if params.get("auto_submit"):
+    # Check if this is an auto-submit request
+    if st.experimental_get_query_params().get('auto_submit'):
         st.session_state.submitted = True
-        st.rerun()
+        st.rerun()        
 
 # =============================
 # Enhanced Results Screen
