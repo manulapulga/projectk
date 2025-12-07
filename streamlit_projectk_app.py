@@ -3484,7 +3484,7 @@ def show_retest_config(original_test):
     </div>
     """, unsafe_allow_html=True)
 
-    
+    st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     # Retest options
     retest_option = st.radio(
         "Select Re-Test Type:",
@@ -3541,7 +3541,7 @@ def show_retest_config(original_test):
     
     df_questions = pd.DataFrame(questions_list)
     
-    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     # Store retest configuration in session state
     if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
         if question_count == 0:
