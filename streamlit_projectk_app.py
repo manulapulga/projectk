@@ -3147,27 +3147,32 @@ def show_question_palette():
     """, unsafe_allow_html=True)
     
 
-    # Question palette grid
+    # Question palette grid (Responsive CSS Grid)
     total_questions = len(st.session_state.quiz_questions)
     if total_questions == 0:
         st.sidebar.warning("No questions loaded")
         return
     
-    # ----- Single Column Question Palette -----
+    # --- CSS GRID FOR RESPONSIVE PALETTE ---
+    st.sidebar.markdown("""
+    <style>
+    .q-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);   /* 5 columns always */
+        gap: 6px;
+    }
+    .q-grid button {
+        width: 100%;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    html_buttons = "<div class='q-grid'>"
+    
     for q_num in range(total_questions):
     
-        # emoji, number, tooltip
         emoji, number, tooltip = get_question_display_info(q_num)
     
-        button_text = f"{emoji} {number}".strip()
-    
-        # highlight current question
-        border_color = (
-            LITMUSQ_THEME['secondary']
-            if q_num == st.session_state.current_idx else "#cccccc"
-        )
-    
-        # status
         status_info = st.session_state.question_status.get(q_num, {})
         has_answer = status_info.get('answer') is not None
         is_marked = status_info.get('marked', False)
@@ -3176,7 +3181,7 @@ def show_question_palette():
         if status == 'cleared':
             bg_color = LITMUSQ_THEME['background']
         elif has_answer and is_marked:
-            bg_color = "#FFD700"     # Gold
+            bg_color = "#FFD700"
         elif has_answer:
             bg_color = LITMUSQ_THEME['success']
         elif is_marked:
@@ -3186,31 +3191,41 @@ def show_question_palette():
         else:
             bg_color = LITMUSQ_THEME['background']
     
-        # Styling
-        button_style = f"""
-        <style>
-        .qbtn-{q_num} {{
-            background-color: {bg_color} !important;
-            border: 2px solid {border_color} !important;
-            border-radius: 5px !important;
-            color: #000000 !important;
-            font-weight: bold !important;
-        }}
-        </style>
-        """
-        st.sidebar.markdown(button_style, unsafe_allow_html=True)
+        border_color = (
+            LITMUSQ_THEME['secondary']
+            if q_num == st.session_state.current_idx
+            else "#cccccc"
+        )
     
-        # Render button
-        if st.sidebar.button(
-            button_text,
-            key=f"palette_{q_num}",
-            use_container_width=True,
-            help=f"Q{q_num + 1}: {tooltip}"
-        ):
-            st.session_state.current_idx = q_num
-            if st.session_state.question_status[q_num]['status'] == 'not_visited':
-                update_question_status(q_num, 'not_answered')
-            st.rerun()
+        html_buttons += f"""
+            <button 
+                style="
+                    background:{bg_color};
+                    border:2px solid {border_color};
+                    border-radius:6px;
+                    padding:6px;
+                    font-weight:bold;
+                "
+                onclick="parent.postMessage({{type: 'streamlit:setComponentValue', key: 'jump_to_q', value: {q_num}}}, '*')"
+                title="Q{q_num + 1}: {tooltip}"
+            >
+                {emoji} {number}
+            </button>
+        """
+    
+    html_buttons += "</div>"
+    
+    st.sidebar.markdown(html_buttons, unsafe_allow_html=True)
+    
+    # Capture JS event
+    jump_to = st.session_state.get("jump_to_q", None)
+    if jump_to is not None:
+        st.session_state.current_idx = jump_to
+        st.session_state.jump_to_q = None
+        if st.session_state.question_status[jump_to]['status'] == 'not_visited':
+            update_question_status(jump_to, 'not_answered')
+        st.rerun()
+
 
                         
 def live_timer_component(seconds_left: int):
