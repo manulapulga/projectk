@@ -1997,8 +1997,6 @@ def show_student_dashboard():
     """, unsafe_allow_html=True)
 
     
-    st.markdown("---")
-    
     # Recent Test History
     test_history = load_test_history(username)
     if test_history:
