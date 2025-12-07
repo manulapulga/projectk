@@ -3693,7 +3693,6 @@ def show_results_screen():
     st.markdown("<br>", unsafe_allow_html=True)
     
     # Percentage bar
-    st.subheader(f"Overall Score: {percentage:.1f}%")
     st.progress(int(percentage))
 
     
