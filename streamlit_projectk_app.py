@@ -3947,7 +3947,7 @@ def show_results_screen():
     )
     
     # Navigation buttons in columns
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         if st.button("🏠 Home", use_container_width=True, key="results_home"):
@@ -3956,11 +3956,6 @@ def show_results_screen():
             st.rerun()
     
     with col2:
-        if st.button("← Back to Config", use_container_width=True, key="results_back"):
-            st.session_state.current_screen = "exam_config"
-            st.rerun()
-    
-    with col3:
         analysis_visible = st.session_state.get('show_detailed_analysis', False)
         button_label = "🙈 Hide Analysis" if analysis_visible else "📊 View Analysis"
     
@@ -3970,7 +3965,7 @@ def show_results_screen():
             st.rerun()
 
     
-    with col4:
+    with col3:
         if st.button("🔁 Retake Test", use_container_width=True, key="results_retake"):
             df_exam = st.session_state.quiz_questions
             start_quiz(
@@ -3983,7 +3978,7 @@ def show_results_screen():
             st.session_state.current_screen = "quiz"
             st.rerun()
     
-    with col5:
+    with col4:
         if st.button("📈 Performance", use_container_width=True, key="results_dashboard"):
             st.session_state.current_screen = "dashboard"
             st.rerun()
