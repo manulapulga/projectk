@@ -1164,68 +1164,34 @@ def show_user_management():
     
     df = pd.DataFrame(user_list)
     
-    # Display statistics
+    # Display statistics (Mobile-Friendly Flex Box)
+    total_users = len(users)
+    approved_users = sum(1 for user in users if user.get('is_approved', False))
+    active_users = sum(1 for user in users if user.get('is_active', True))
+    pending_users = total_users - approved_users
+    
     st.markdown(f"""
     <div style="
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
-        padding: 12px;
+        font-size: 1rem;
         background: #f1f5f9;
+        padding: 12px 16px;
         border-radius: 10px;
-        font-size: 0.95rem;
+        line-height: 1.6;
     ">
-    
-        <div style="
-            flex: 1 1 45%;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        ">
-            👥 <b>Total Users</b><br>
-            <span>{total_users}</span>
-        </div>
-    
-        <div style="
-            flex: 1 1 45%;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        ">
-            ✔️ <b>Approved</b><br>
-            <span>{approved_users}</span>
-        </div>
-    
-        <div style="
-            flex: 1 1 45%;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        ">
-            🟢 <b>Active</b><br>
-            <span>{active_users}</span>
-        </div>
-    
-        <div style="
-            flex: 1 1 45%;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        ">
-            ⏳ <b>Pending</b><br>
-            <span>{pending_users}</span>
-        </div>
-    
+        👥 <b>Total Users:</b> {total_users}
+        &nbsp;•&nbsp;
+        ✅ <b>Approved:</b> {approved_users}
+        &nbsp;•&nbsp;
+        🔵 <b>Active:</b> {active_users}
+        &nbsp;•&nbsp;
+        ⏳ <b>Pending:</b> {pending_users}
     </div>
     """, unsafe_allow_html=True)
+    
+    st.markdown("---")
 
     
     # Search and filter
