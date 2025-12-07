@@ -998,11 +998,6 @@ def show_admin_panel():
     with subtab1:
         show_user_management()
     
-    with subtab2:
-        show_admin_analytics()
-    
-    with subtab3:
-        show_system_settings()
 
 def show_user_management():
     """Display and manage all registered users."""
