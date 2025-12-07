@@ -1967,29 +1967,35 @@ def show_student_dashboard():
     st.markdown("📈 **Performance Overview**")
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     
-    col1, col2, col3, col4 = st.columns(4)
+    tests_taken = int(progress.get("tests_taken", 0))
+    avg_score = float(progress.get("average_score", 0))
+    test_history = load_test_history(username)
+    total_correct = sum(int(entry.get("correct_answers", 0)) for entry in test_history)
+    total_questions = sum(int(entry.get("total_questions", 0)) for entry in test_history)
+    accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
+    achievements = progress.get("achievements", [])
+    ach_count = len(achievements) if isinstance(achievements, list) else 0
     
-    with col1:
-        tests_taken = int(progress.get("tests_taken", 0))
-        st.metric("Tests Taken", tests_taken)
-    
-    with col2:
-        avg_score = float(progress.get("average_score", 0))
-        st.metric("Average Score", f"{avg_score:.1f}")
-    
-    with col3:
-        test_history = load_test_history(username)
-        total_correct = sum(int(entry.get("correct_answers", 0)) for entry in test_history)
-        total_questions = sum(int(entry.get("total_questions", 0)) for entry in test_history)
-        accuracy = (total_correct / total_questions * 100) if total_questions > 0 else 0
-        st.metric("Overall Accuracy", f"{accuracy:.1f}%")
-    
-    with col4:
-        achievements = progress.get("achievements", [])
-        if isinstance(achievements, list):
-            st.metric("Achievements", len(achievements))
-        else:
-            st.metric("Achievements", 0)
+    st.markdown(f"""
+    <div style="
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 1rem;
+        background: #f1f5f9;
+        padding: 10px 14px;
+        border-radius: 10px;
+    ">
+        📝 <b>Tests:</b> {tests_taken}
+        &nbsp;•&nbsp;
+        📊 <b>Avg Score:</b> {avg_score:.1f}
+        &nbsp;•&nbsp;
+        🎯 <b>Accuracy:</b> {accuracy:.1f}%
+        &nbsp;•&nbsp;
+        🏆 <b>Achievements:</b> {ach_count}
+    </div>
+    """, unsafe_allow_html=True)
+
     
     st.markdown("---")
     
