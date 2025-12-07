@@ -2819,6 +2819,7 @@ def show_exam_config_screen():
 # =============================
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
+    st.markdown("<div style='margin-top: 0.1rem;'></div>", unsafe_allow_html=True)
     if st.session_state.end_time and not st.session_state.submitted:
         # Calculate remaining time
         time_left = st.session_state.end_time - datetime.now()
