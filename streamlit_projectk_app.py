@@ -2029,7 +2029,7 @@ def show_student_dashboard():
         for idx, test in enumerate(reversed(recent_tests)):
             test_date = datetime.fromisoformat(str(test.get("date", ""))).astimezone(
                 pytz.timezone("Asia/Kolkata")
-            ).strftime("%d-%m-%Y %I:%M %p")
+            ).strftime("%d-%m-%Y  %I:%M %p")
 
             percentage = float(test.get("percentage", 0))
             score = float(test.get("score", 0))
