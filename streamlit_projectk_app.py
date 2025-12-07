@@ -229,20 +229,108 @@ def inject_custom_css():
 
 
     /* =========================================================
-       RADIO BUTTONS (FULL WIDTH + THEME COLORS)
+       FIX FOR RADIO BUTTON VISIBILITY
     ==========================================================*/
-
-    .stRadio > div {{
-        padding: 0rem !important;
-        width: 100% !important;
+    
+    /* Target Streamlit's radio button container */
+    div[data-testid="stRadio"] > div {{
+        background-color: {LITMUSQ_THEME['light_bg']} !important;
+        padding: 1rem !important;
+        border-radius: 10px !important;
+        border: 2px solid {LITMUSQ_THEME['primary']} !important;
+        margin: 0.5rem 0 !important;
     }}
-
-    .stRadio > div > label {{
-        width: 100% !important;
-        margin: 0rem 0 !important;
-        padding: 0rem !important;
-        transition: all 0.2s ease;
-        border: 5px solid transparent !important;
+    
+    /* Make radio button circles larger and more visible */
+    div[data-testid="stRadio"] input[type="radio"] {{
+        width: 20px !important;
+        height: 20px !important;
+        margin-right: 12px !important;
+        accent-color: {LITMUSQ_THEME['primary']} !important;
+        transform: scale(1.3);
+    }}
+    
+    /* Radio button labels */
+    div[data-testid="stRadio"] label {{
+        color: {LITMUSQ_THEME['text']} !important;
+        font-weight: 500 !important;
+        font-size: 16px !important;
+        padding: 8px 0 !important;
+    }}
+    
+    /* Selected radio button */
+    div[data-testid="stRadio"] input[type="radio"]:checked + label {{
+        color: {LITMUSQ_THEME['primary']} !important;
+        font-weight: 700 !important;
+    }}
+    
+    /* Hover effect */
+    div[data-testid="stRadio"] > div:hover {{
+        background-color: {LITMUSQ_THEME['accent']}15 !important;
+        border-color: {LITMUSQ_THEME['accent']} !important;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2) !important;
+    }}
+    
+    /* Focus state */
+    div[data-testid="stRadio"] input[type="radio"]:focus {{
+        outline: 2px solid {LITMUSQ_THEME['accent']} !important;
+        outline-offset: 2px !important;
+    }}
+    
+    /* Individual radio items */
+    .stRadio > div > div > label {{
+        display: flex !important;
+        align-items: center !important;
+        padding: 12px 16px !important;
+        margin: 4px 0 !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease !important;
+    }}
+    
+    .stRadio > div > div > label:hover {{
+        background-color: {LITMUSQ_THEME['accent']}10 !important;
+    }}
+    
+    /* Active/checked item */
+    .stRadio > div > div > input:checked + label {{
+        background-color: {LITMUSQ_THEME['accent']}15 !important;
+        border-left: 4px solid {LITMUSQ_THEME['primary']} !important;
+    }}
+    
+    /* Radio button indicator dot */
+    .stRadio > div > div > label::before {{
+        content: "";
+        width: 20px;
+        height: 20px;
+        border: 2px solid {LITMUSQ_THEME['primary']};
+        border-radius: 50%;
+        margin-right: 12px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }}
+    
+    .stRadio > div > div > input:checked + label::before {{
+        background-color: {LITMUSQ_THEME['primary']};
+        background-image: radial-gradient(circle, white 30%, transparent 35%);
+    }}
+    
+    /* Mobile optimization */
+    @media (max-width: 768px) {{
+        div[data-testid="stRadio"] > div {{
+            padding: 0.8rem !important;
+        }}
+        
+        div[data-testid="stRadio"] input[type="radio"] {{
+            width: 18px !important;
+            height: 18px !important;
+            margin-right: 10px !important;
+        }}
+        
+        .stRadio > div > div > label {{
+            padding: 10px 12px !important;
+        }}
     }}
 
 
