@@ -337,7 +337,7 @@ def inject_custom_css():
        PRIMARY BUTTONS
     ==========================================================*/
 
-    .stButton > button {
+    .stButton > button {{
         background: linear-gradient(135deg, #bc97e6, #9f79e6);
         color: white !important;
         border: none !important;
@@ -348,19 +348,22 @@ def inject_custom_css():
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
         cursor: pointer;
         transition: all 0.3s ease !important;
-    }
+    }}
     
     /* Hover effect */
-    .stButton > button:hover {
+    .stButton > button:hover {{
         transform: translateY(-3px) scale(1.05);
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
         background: linear-gradient(135deg, #9f79e6, #bc97e6);
-    }
+    }}
     
     /* Active/click effect */
-    .stButton > button:active {
+    .stButton > button:active {{
         transform: translateY(0) scale(0.98);
-        box-
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }}
+
+
 
 
     /* =========================================================
