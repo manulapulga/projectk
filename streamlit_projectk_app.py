@@ -14,6 +14,8 @@ from firebase_admin import credentials, firestore
 import json
 from datetime import datetime
 import pytz
+from streamlit_js_event import streamlit_js_event
+
 
 
 # =============================
@@ -2817,6 +2819,12 @@ def show_exam_config_screen():
 # =============================
 # Enhanced Question Display in Quiz
 # =============================
+def toggle_review_flag(q):
+    st.session_state.review_flags[q] = not st.session_state.review_flags[q]
+
+def finalize_quiz():
+    st.session_state.quiz_finished = True
+
 def show_enhanced_question_interface():
     """Display the current question with formatted content using buttons for selection."""
     df = st.session_state.quiz_questions
@@ -2986,6 +2994,65 @@ def show_enhanced_question_interface():
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("---")
+    
+    st.markdown("""
+    <style>
+    .quiz-fixed-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: linear-gradient(135deg, #ffdfa2, #ffc56b);
+        padding: 12px 10px;
+        box-shadow: 0 -4px 12px rgba(0,0,0,0.2);
+        z-index: 9999;
+        display: flex;
+        justify-content: space-around;
+    }
+    .quiz-btn {
+        background: #ff9e1f;
+        padding: 10px 22px;
+        border-radius: 10px;
+        color: black;
+        font-weight: 700;
+        border: none;
+        cursor: pointer;
+        font-size: 15px;
+    }
+    .quiz-btn:active {
+        background: #ff7b00;
+    }
+    </style>
+
+    <div class="quiz-fixed-bar">
+        <button class="quiz-btn" onclick="window.parent.postMessage({type:'quiz_action', action:'prev'}, '*')">⬅ Previous</button>
+        <button class="quiz-btn" onclick="window.parent.postMessage({type:'quiz_action', action:'next'}, '*')">Next ➡</button>
+        <button class="quiz-btn" onclick="window.parent.postMessage({type:'quiz_action', action:'review'}, '*')">★ Mark</button>
+        <button class="quiz-btn" onclick="window.parent.postMessage({type:'quiz_action', action:'submit'}, '*')">✔ Submit</button>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ======================================================
+    # LISTEN FOR JS EVENTS
+    # ======================================================
+    event = streamlit_js_event()
+
+    if event and isinstance(event, dict) and event.get("type") == "quiz_action":
+        action = event.get("action")
+
+        if action == "prev":
+            st.session_state.current_question -= 1
+
+        elif action == "next":
+            st.session_state.current_question += 1
+
+        elif action == "review":
+            toggle_review_flag(st.session_state.current_question)
+
+        elif action == "submit":
+            finalize_quiz()
+
+        st.rerun()
 
 # =============================
 # Professional Test Interface
