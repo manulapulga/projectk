@@ -2723,9 +2723,6 @@ def show_quiz_footer_navigation():
             st.rerun()
 
     # --- CLEAR RESPONSE Button ---
-    with col4:
-        if st.button("⛔ Clear Response", use_container_width=True, key="quiz_clear", type="secondary"):
-            clear_response(current_idx) # Assuming clear_response is defined elsewhere
 
     # --- SUBMIT Button ---
     with col5:
