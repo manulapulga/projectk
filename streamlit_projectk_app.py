@@ -1168,27 +1168,77 @@ def show_user_management():
     total_users = len(users)
     approved_users = sum(1 for user in users if user.get('is_approved', False))
     active_users = sum(1 for user in users if user.get('is_active', True))
+    pending_users = total_users - approved_users
     
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.metric("Total Users", total_users)
-    with col2:
-        st.metric("Approved Users", approved_users)
-    with col3:
-        st.metric("Active Users", active_users)
-    with col4:
-        st.metric("Pending Approval", total_users - approved_users)
+    st.markdown(f"""
+    <div style="
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 12px;
+        background: #f1f5f9;
+        border-radius: 10px;
+        font-size: 0.95rem;
+    ">
+    
+        <div style="
+            flex: 1 1 45%;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        ">
+            👥 <b>Total Users</b><br>
+            <span>{total_users}</span>
+        </div>
+    
+        <div style="
+            flex: 1 1 45%;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        ">
+            ✔️ <b>Approved</b><br>
+            <span>{approved_users}</span>
+        </div>
+    
+        <div style="
+            flex: 1 1 45%;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        ">
+            🟢 <b>Active</b><br>
+            <span>{active_users}</span>
+        </div>
+    
+        <div style="
+            flex: 1 1 45%;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        ">
+            ⏳ <b>Pending</b><br>
+            <span>{pending_users}</span>
+        </div>
+    
+    </div>
+    """, unsafe_allow_html=True)
     
     st.markdown("---")
+
     
     # Search and filter
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        search_term = st.text_input("🔍 Search users", placeholder="Search by name, username, or email")
-    with col2:
-        filter_approved = st.selectbox("Approval Status", ["All", "Approved", "Pending"])
-    with col3:
-        filter_active = st.selectbox("Active Status", ["All", "Active", "Inactive"])
+    search_term = st.text_input("🔍 Search users", placeholder="Search by name, username, or email")
+    filter_approved = st.selectbox("Approval Status", ["All", "Approved", "Pending"])
+    filter_active = st.selectbox("Active Status", ["All", "Active", "Inactive"])
     
     # Apply filters
     if search_term:
