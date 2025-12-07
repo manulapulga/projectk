@@ -2060,9 +2060,9 @@ def show_student_dashboard():
                     st.rerun()
                 else:
                     st.error("Failed to delete test entry")        
-            st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
-            st.markdown("---")  # Separator between tests
-            st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
+            st.markdown("""
+            <div style="height:3px; background: linear-gradient(to right, #4facfe, #00f2fe); border-radius:5px; margin: 10px 0;"></div>
+            """, unsafe_allow_html=True)
 
     # Achievements
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
