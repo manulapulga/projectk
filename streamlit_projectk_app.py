@@ -3750,8 +3750,23 @@ def show_results_screen():
         performance = "Needs Improvement 📚"
         color = LITMUSQ_THEME['secondary']
     
-    st.markdown(f"<h3 style='color: {color};'>{performance}</h3>", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div style="
+        display: inline-block;
+        background: {color};
+        color: white;
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        box-shadow: 2px 2px 8px rgba(0,0,0,0.2);
+    ">
+        {performance}
+    </div>
+    """, unsafe_allow_html=True)
+
     
+    st.markdown("<br>", unsafe_allow_html=True)
     # Download button
     st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     st.download_button(
