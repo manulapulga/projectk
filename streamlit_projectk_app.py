@@ -3659,20 +3659,36 @@ def show_results_screen():
     # Clear retest state after saving results
     clear_retest_state()
     
-    # Summary cards with enhanced styling
-    st.metric("Total Questions", summary["Total Questions"])
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.metric("Attempted", summary["Attempted"])
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.metric("Correct Answers", summary["Correct"])
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.metric("Final Score", f"{summary['Marks Obtained']}/{summary['Total Marks']}")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Prepare values
+    total_q = int(test_results["Total Questions"])
+    attempted = int(test_results.get("Attempted", total_q))
+    correct = int(test_results["Correct"])
+    final_score = float(test_results["Marks Obtained"])
+    overall_percent = (final_score / float(test_results["Total Marks"])) * 100
     
-    # Score visualization
-    percentage = summary['Percentage']
-    st.subheader(f"Overall Score: {percentage:.1f}%")
-    st.progress(int(percentage))
+    st.markdown(f"""
+    <div style="
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 1rem;
+        background: #f1f5f9;
+        padding: 10px 14px;
+        border-radius: 10px;
+        line-height: 1.6;
+    ">
+        ❓ <b>Total:</b> {total_q}
+        &nbsp;•&nbsp;
+        ✏️ <b>Attempted:</b> {attempted}
+        &nbsp;•&nbsp;
+        ✅ <b>Correct:</b> {correct}
+        &nbsp;•&nbsp;
+        🧮 <b>Score:</b> {final_score}
+        &nbsp;•&nbsp;
+        🎯 <b>Overall:</b> {overall_percent:.1f}%
+    </div>
+    """, unsafe_allow_html=True)
+
     
     # Performance gauge
     if percentage >= 80:
