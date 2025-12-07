@@ -2809,48 +2809,7 @@ def show_enhanced_question_interface():
     st.markdown("<div style='margin-top: 0.2rem;'></div>", unsafe_allow_html=True)
     show_quiz_footer_navigation()
     
-    # Enhanced action buttons
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.button(
-            "◀ Previous",
-            use_container_width=True,
-            disabled=current_idx == 0,
-            key=f"prev_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx - 1)
-        )
-    
-    with col2:
-        st.button(
-            "Next ▶",
-            use_container_width=True,
-            disabled=current_idx == len(df) - 1,
-            key=f"next_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'current_idx', current_idx + 1)
-        )
-    
-    with col3:
-        button_text = "🟨 Mark Review" if not st.session_state.question_status[current_idx]['marked'] else "↩️ Unmark Review"
-        st.button(
-            button_text,
-            use_container_width=True,
-            key=f"mark_{current_idx}",
-            type="secondary",
-            on_click=lambda: toggle_mark_review(current_idx)
-        )
-    
-    with col4:
-        st.button(
-            "📤 Submit Test",
-            use_container_width=True,
-            key=f"submit_{current_idx}",
-            type="secondary",
-            on_click=lambda: setattr(st.session_state, 'submitted', True)
-        )
-        
+
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
     if st.session_state.end_time and not st.session_state.submitted:
