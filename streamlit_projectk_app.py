@@ -2831,8 +2831,7 @@ def show_enhanced_question_interface():
     
         html_code = f"""
         <div id="timer" style="
-            font-size: 22px;
-            font-weight: bold;
+            font-size: 15px;
             color: {'red' if seconds_left < 300 else 'green'};
             text-align: center;
             margin: 0;
