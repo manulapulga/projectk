@@ -1632,20 +1632,34 @@ def get_formatted_content(file_path, sheet_name, question_index, field, original
     """Get formatted content if available, otherwise return original."""
     # For retests, we might not have the original file path
     if hasattr(st.session_state, 'is_retest') and st.session_state.is_retest:
-        # Try to get from formatted questions cache first
-        formatted_questions = load_formatted_questions()
-        key = get_question_key(file_path, sheet_name, question_index, field)
-        formatted_content = formatted_questions.get(key, original_content)
+        # For retests, we need a different approach since we don't have the original file
+        # Try to get from formatted questions using the original test's file path
+        # If we don't have it, return the original content from the stored question
         
-        # If not found in formatted questions, use the original content
-        # (which for retests should be the stored question content)
-        return formatted_content
+        # First, check if we have formatted content in cache
+        formatted_questions = load_formatted_questions()
+        
+        # Try to construct a key that might match
+        # Since we don't have the original file path in retests, we need to store it differently
+        if hasattr(st.session_state, 'retest_original_path'):
+            # Try with stored original path
+            key = get_question_key(
+                st.session_state.retest_original_path,
+                st.session_state.retest_original_sheet,
+                question_index,
+                field
+            )
+            formatted_content = formatted_questions.get(key)
+            if formatted_content:
+                return formatted_content
+        
+        # If no formatted version found, return the original content from stored question
+        return original_content
     else:
         # Original behavior for non-retests
         formatted_questions = load_formatted_questions()
         key = get_question_key(file_path, sheet_name, question_index, field)
         return formatted_questions.get(key, original_content)
-
 # =============================
 # Firebase User Progress & Analytics
 # =============================
@@ -3561,6 +3575,7 @@ def show_retest_config(original_test):
     
     st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     # Store retest configuration in session state
+    # Store retest configuration in session state
     if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
         if question_count == 0:
             st.error("No questions selected for re-test! Choose a different option.")
@@ -3577,17 +3592,29 @@ def show_retest_config(original_test):
         st.session_state.original_test_id = original_test.get('test_id')
         st.session_state.retest_type = retest_option
         
+        # Store the original questions data for reference during formatting
+        st.session_state.retest_questions_data = original_test['questions_used']
+        
         # Get exam name
         exam_name = original_test['exam_name']
         if original_test.get('is_retest', False):
             # This is a retest of a retest, add level indicator
             exam_name = f"{exam_name}📝"
         
-        # Start the retest
+        # Set dummy file path and sheet name for formatting lookup
+        st.session_state.retest_original_path = "retest_" + str(original_test.get('test_id', 'unknown'))
+        st.session_state.retest_original_sheet = exam_name
+        
+        # Get the original duration or use default
+        original_duration = original_test.get('duration_minutes', 60)
+        if original_duration == 0:
+            original_duration = 60  # Default to 60 minutes if unlimited
+        
+        # Start the retest with proper duration
         start_quiz(
             filtered_df,
             len(filtered_df),
-            st.session_state.quiz_duration,
+            original_duration,  # Use original test duration
             st.session_state.use_final_key,
             exam_name
         )
