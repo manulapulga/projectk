@@ -1165,11 +1165,6 @@ def show_user_management():
     df = pd.DataFrame(user_list)
     
     # Display statistics
-    total_users = len(users)
-    approved_users = sum(1 for user in users if user.get('is_approved', False))
-    active_users = sum(1 for user in users if user.get('is_active', True))
-    pending_users = total_users - approved_users
-    
     st.markdown(f"""
     <div style="
         display: flex;
@@ -1231,8 +1226,6 @@ def show_user_management():
     
     </div>
     """, unsafe_allow_html=True)
-    
-    st.markdown("---")
 
     
     # Search and filter
