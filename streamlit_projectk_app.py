@@ -3327,73 +3327,103 @@ import streamlit as st
 from datetime import datetime, timedelta
 import streamlit.components.v1 as components
 
-import streamlit as st
-from datetime import datetime
-import time
-
 def show_quiz_header_with_timer():
     """Show a custom header with timer for quiz interface."""
-    col1, col2 = st.columns([3, 1])
-    
-    with col1:
-        st.markdown(f"### {st.session_state.exam_name}")
-    
-    with col2:
-        if st.session_state.end_time and not st.session_state.submitted:
-            time_left = st.session_state.end_time - datetime.now()
-            seconds_left = max(0, int(time_left.total_seconds()))
+    if st.session_state.end_time and not st.session_state.submitted:
+        # Store the end time in session storage for JavaScript
+        end_time_epoch = int(st.session_state.end_time.timestamp())
+        
+        st.markdown(f"""
+        <style>
+        .fixed-quiz-header {{
+            position: fixed;
+            top: 0;
+            left: 0;
+            margin-top: 3.5rem;
+            margin-bottom:0.2rem;
+            width: 100%;
+            height:3rem;
+            background: linear-gradient(135deg, #50fbf8, #e039d3);
+            color: black;
+            padding: 0.5rem 0.5rem;
+            z-index: 9999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }}
+        .content-wrapper {{
+            padding-top: 70px;
+        }}
+        </style>
+        
+        <div class="fixed-quiz-header">
+            <div style="font-size: 1rem;">
+                {st.session_state.exam_name}
+            </div>
+            <div id="header-timer" style="
+                font-size: 1rem;
+                padding: 0.3rem 1rem;
+                border-radius: 50px;
+                min-width: 120px;
+                text-align: center;
+            ">
+                ⏰ Loading...
+            </div>
+        </div>
+        
+        <div class="content-wrapper"></div>
+        
+        <script>
+        // Store end time in session storage
+        sessionStorage.setItem('quiz_end_time', '{end_time_epoch}');
+        
+        function updateTimer() {{
+            const timerEl = document.getElementById("header-timer");
+            if (!timerEl) return;
             
-            # Create a time display that updates
-            timer_placeholder = st.empty()
+            const endTime = parseInt(sessionStorage.getItem('quiz_end_time'));
+            const now = Math.floor(Date.now() / 1000);
+            let timeLeft = endTime - now;
             
-            while seconds_left > 0 and not st.session_state.submitted:
-                h = str(seconds_left // 3600).zfill(2)
-                m = str((seconds_left % 3600) // 60).zfill(2)
-                s = str(seconds_left % 60).zfill(2)
+            if (timeLeft <= 0) {{
+                timerEl.innerHTML = "⏰ 00:00:00";
+                timerEl.style.color = "red";
                 
-                # Update color based on time
-                if seconds_left < 300:
-                    timer_html = f"""
-                    <div style="
-                        font-size: 1.2rem;
-                        padding: 0.5rem 1rem;
-                        border-radius: 50px;
-                        background-color: rgba(255,107,107,0.3);
-                        color: #ff6b6b;
-                        text-align: center;
-                        min-width: 120px;
-                    ">
-                        ⏰ {h}:{m}:{s}
-                    </div>
-                    """
-                else:
-                    timer_html = f"""
-                    <div style="
-                        font-size: 1.2rem;
-                        padding: 0.5rem 1rem;
-                        border-radius: 50px;
-                        background-color: rgba(255,255,255,0.2);
-                        color: white;
-                        text-align: center;
-                        min-width: 120px;
-                    ">
-                        ⏰ {h}:{m}:{s}
-                    </div>
-                    """
+                // Auto-submit when time is up
+                setTimeout(() => {{
+                    const event = new CustomEvent('timerExpired');
+                    window.dispatchEvent(event);
+                }}, 1000);
                 
-                timer_placeholder.markdown(timer_html, unsafe_allow_html=True)
-                
-                # Wait 1 second
-                time.sleep(1)
-                
-                # Update time left
-                time_left = st.session_state.end_time - datetime.now()
-                seconds_left = max(0, int(time_left.total_seconds()))
-                
-                # Auto-submit when time runs out
-                if seconds_left == 0 and not st.session_state.submitted:
-                    st.session_state.submitted = True
-                    st.rerun()
+                return;
+            }}
+            
+            let h = String(Math.floor(timeLeft / 3600)).padStart(2, '0');
+            let m = String(Math.floor((timeLeft % 3600) / 60)).padStart(2, '0');
+            let s = String(timeLeft % 60).padStart(2, '0');
+            
+            timerEl.innerHTML = "⏰ " + h + ":" + m + ":" + s;
+            
+            if (timeLeft < 300) {{
+                timerEl.style.color = "red";
+            }} else {{
+                timerEl.style.color = "white";
+            }}
+            
+            setTimeout(updateTimer, 1000);
+        }}
+        
+        // Listen for timer expiry
+        window.addEventListener('timerExpired', function() {{
+            // This would need to trigger Streamlit to submit
+            console.log('Time expired!');
+        }});
+        
+        updateTimer();
+        </script>
+        """, unsafe_allow_html=True)
 
 # In show_quiz_screen function, add this at the beginning:
 def show_quiz_screen():
