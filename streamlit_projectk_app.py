@@ -2018,49 +2018,54 @@ def show_student_dashboard():
         
             test_id = test.get('test_id', f"test_{idx}")
         
-            # --- Light Blue Card ---
+            # --- Full light-blue card wrapper ---
             st.markdown(f"""
             <div style="
-                display: flex;
-                flex-direction: column;
-                padding: 14px 16px;
-                background: #d0ebff;  /* Light blue background */
+                background: #e0f2ff;  /* light blue background */
+                padding: 16px;
                 border-radius: 12px;
-                border: 1px solid #74c0fc;
+                border: 1px solid #90caf9;
                 margin-bottom: 12px;
-                font-size: 0.95rem;
             ">
-                <div style="display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; align-items: center;">
-                    <div>
+                <div style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 10px;
+                    font-size: 0.95rem;
+                ">
+                    <div style="flex-grow: 1;">
                         📘 <b>{exam_name}</b>
                         &nbsp;•&nbsp; 🧮 <b>{score:.0f}/{total_marks:.0f}</b>
                         &nbsp;•&nbsp; 🎯 <b>{percentage:.1f}%</b>
                         &nbsp;•&nbsp; 📅 {test_date}
                     </div>
-                    <div style="display:flex; gap:6px; flex-wrap: wrap;">
+                </div>
+    
+                <!-- Progress bar -->
+                <div style="margin-top: 10px; margin-bottom: 10px;">
             """, unsafe_allow_html=True)
     
-            # Retest button
-            if st.button("Retest 🔁", key=f"retest_{test_id}", help="Take Re-Test", use_container_width=True):
-                st.session_state.retest_config = test
-                st.session_state.current_screen = "retest_config"
+            st.progress(int(percentage))
+    
+            # Buttons inside the card
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Retest 🔁", key=f"retest_{test_id}", 
+                             help="Take Re-Test", use_container_width=True):
+                    st.session_state.retest_config = test
+                    st.session_state.current_screen = "retest_config"
+            with col2:
+                if st.button("Delete 🗑️", key=f"delete_{test_id}", 
+                             help="Delete this test entry", use_container_width=True):
+                    if delete_test_entry(username, test_id):
+                        st.success("Test entry deleted successfully!")
+                        st.experimental_rerun()
+                    else:
+                        st.error("Failed to delete test entry")
             
-            # Delete button
-            if st.button("Delete 🗑️", key=f"delete_{test_id}", help="Delete this test entry", use_container_width=True):
-                if delete_test_entry(username, test_id):
-                    st.success("Test entry deleted successfully!")
-                    st.rerun()
-                else:
-                    st.error("Failed to delete test entry")
-            
-            st.markdown(f"""
-                    </div>
-                </div>
-                <div style="margin-top:10px;">
-                    <progress value="{percentage}" max="100" style="width:100%; height:12px; border-radius:6px;"></progress>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
     # Achievements
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
