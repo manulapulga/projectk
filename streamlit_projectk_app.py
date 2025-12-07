@@ -3093,56 +3093,36 @@ def get_question_display_info(q_num):
 # In the show_question_palette function, update the button creation:
 def show_question_palette():
     """Display the question palette with exam info above it."""
-    # Show exam info above the palette
-    st.sidebar.markdown(f"### 📝 {st.session_state.exam_name}")
-    st.sidebar.markdown(f"**Question {st.session_state.current_idx + 1} of {len(st.session_state.quiz_questions)}**")
-
-    # Show answered and marked counts
-    if 'question_status' in st.session_state:
-        total = len(st.session_state.quiz_questions)
-        answered = sum(1 for status in st.session_state.question_status.values() 
-                       if status['answer'] is not None)
-        marked = sum(1 for status in st.session_state.question_status.values() 
-                     if status['marked'])
-        
-        col1, col2 = st.sidebar.columns(2)
-        with col1:
-            st.metric("✅ Answered", f"{answered}/{total}") 
-        with col2:
-            st.metric("🟨 Marked", f"{marked}")
+    # --- COMPACT EXAM HEADER + COUNTS ---
+    total = len(st.session_state.quiz_questions)
+    current_q = st.session_state.current_idx + 1
     
-    # Legend
-    st.sidebar.markdown("""
+    answered = sum(
+        1 for status in st.session_state.question_status.values()
+        if status['answer'] is not None
+    ) if 'question_status' in st.session_state else 0
+    
+    marked = sum(
+        1 for status in st.session_state.question_status.values()
+        if status['marked']
+    ) if 'question_status' in st.session_state else 0
+    
+    st.sidebar.markdown(f"""
     <style>
-    .legend-item {
-        display: flex;
-        align-items: center;
-        margin: 5px 0;
-        font-size: 12px;
-    }
-    .color-box {
-        width: 15px;
-        height: 15px;
-        margin-right: 8px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-    }
+    .compact-header {{
+        text-align: center;
+        padding: 0.4rem 0;
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.4;
+    }}
     </style>
     
-    <div class="legend-item">
-        <span>⛔: Response cleared</span>
-    </div>
-    <div class="legend-item">
-        <span>❌: Not Answered</span>
-    </div>
-    <div class="legend-item">
-        <span>✅: Answered</span>
-    </div>
-    <div class="legend-item">
-        <span>🟨: Marked for Review</span>
-    </div>
-    <div class="legend-item">
-        <span>🟩: Answered & marked for review</span>
+    <div class="compact-header">
+        📝 <b>{st.session_state.exam_name}</b><br>
+        <span style="color:{LITMUSQ_THEME['primary']};">Q {current_q}/{total}</span><br>
+        <span style="color:{LITMUSQ_THEME['success']};">✅ {answered}/{total}</span> •
+        <span style="color:{LITMUSQ_THEME['warning']};">🟨 {marked}</span>
     </div>
     """, unsafe_allow_html=True)
     
