@@ -1996,7 +1996,7 @@ def show_student_dashboard():
     </div>
     """, unsafe_allow_html=True)
 
-    
+    st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
     # Recent Test History
     test_history = load_test_history(username)
     if test_history:
@@ -2043,7 +2043,8 @@ def show_student_dashboard():
         
                 
             """, unsafe_allow_html=True)
-        
+            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+            
             # Take Retest button
             test_id = test.get('test_id', f"test_{idx}")
             if st.button("🔁", key=f"retest_{test_id}", 
@@ -2061,25 +2062,6 @@ def show_student_dashboard():
                     st.error("Failed to delete test entry")        
 
             # Progress bar under the card (keeps spacing consistent)
-            st.progress(int(percentage))
-
-
-        
-            # ==== Handle UI actions ====
-            if f"action=retest_{test_id}" in st.query_params:
-                st.session_state.retest_config = test
-                st.session_state.current_screen = "retest_config"
-                st.rerun()
-        
-            if f"action=delete_{test_id}" in st.query_params:
-                if delete_test_entry(username, test_id):
-                    st.success("Test entry deleted successfully!")
-                    st.rerun()
-                else:
-                    st.error("Failed to delete test entry")
-
-            
-            # Progress bar
             st.progress(int(percentage))
 
     # Achievements
