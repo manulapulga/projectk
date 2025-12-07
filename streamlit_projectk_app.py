@@ -3107,92 +3107,60 @@ def show_question_palette():
         if status['marked']
     ) if 'question_status' in st.session_state else 0
     
-    cleared = sum(
-        1 for status in st.session_state.question_status.values()
-        if status['answer'] is None and not status['marked']
-    ) if 'question_status' in st.session_state else 0
-    
-    not_answered = total - answered
-    
-    
-    # ---------------------------
-    # HEADER PANEL (New Responsive Styling)
-    # ---------------------------
-    
     st.sidebar.markdown(f"""
-    <div style="
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        background: #f1f5f9;
-        padding: 12px;
-        border-radius: 10px;
-        font-size: 0.9rem;
+    <style>
+    .compact-header {{
+        text-align: center;
+        padding: 0.4rem 0;
+        font-size: 13px;
+        font-weight: 600;
         line-height: 1.4;
-    ">
-        📝 <b>{st.session_state.exam_name}</b>
-        <div style="margin-top: 4px;">
-            <span style="color:{LITMUSQ_THEME['primary']};">
-                📄 <b>Q {current_q}/{total}</b>
-            </span>
-        </div>
-        <div style="margin-top: 4px;">
-            <span style="color:{LITMUSQ_THEME['success']};">
-                ✅ <b>{answered}</b>
-            </span>
-            &nbsp;•&nbsp;
-            <span style="color:{LITMUSQ_THEME['warning']};">
-                🟨 <b>{marked}</b>
-            </span>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    }}
+    </style>
     
-    
-    # ---------------------------
-    # LEGEND PANEL (Counts + Flex Layout)
-    # ---------------------------
-    
-    st.sidebar.markdown(f"""
-    <div style="
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        background: #f1f5f9;
-        padding: 12px;
-        margin-top: 10px;
-        border-radius: 10px;
-        font-size: 0.85rem;
-    ">
-    
-        <div style="display:flex; justify-content:space-between;">
-            <span>⛔ <b>Response cleared</b></span>
-            <span><b>{cleared}</b></span>
-        </div>
-    
-        <div style="display:flex; justify-content:space-between;">
-            <span>❌ <b>Not answered</b></span>
-            <span><b>{not_answered}</b></span>
-        </div>
-    
-        <div style="display:flex; justify-content:space-between;">
-            <span>✅ <b>Answered</b></span>
-            <span><b>{answered}</b></span>
-        </div>
-    
-        <div style="display:flex; justify-content:space-between;">
-            <span>🟨 <b>Marked for review</b></span>
-            <span><b>{marked}</b></span>
-        </div>
-    
-        <div style="display:flex; justify-content:space-between;">
-            <span>🟩 <b>Answered & marked</b></span>
-            <span><b>{sum(1 for s in st.session_state.question_status.values() if s['answer'] and s['marked'])}</b></span>
-        </div>
-    
+    <div class="compact-header">
+        📝 <b>{st.session_state.exam_name}</b><br>
+        <span style="color:{LITMUSQ_THEME['primary']};">Q {current_q}/{total}</span><br>
+        <span style="color:{LITMUSQ_THEME['success']};">✅ {answered}/{total}</span> •
+        <span style="color:{LITMUSQ_THEME['warning']};">🟨 {marked}</span>
     </div>
     """, unsafe_allow_html=True)
 
+    
+    # Legend
+    st.sidebar.markdown("""
+    <style>
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin: 5px 0;
+        font-size: 12px;
+    }
+    .color-box {
+        width: 15px;
+        height: 15px;
+        margin-right: 8px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+    }
+    </style>
+    
+    <div class="legend-item">
+        <span>⛔: Response cleared</span>
+    </div>
+    <div class="legend-item">
+        <span>❌: Not Answered</span>
+    </div>
+    <div class="legend-item">
+        <span>✅: Answered</span>
+    </div>
+    <div class="legend-item">
+        <span>🟨: Marked for Review</span>
+    </div>
+    <div class="legend-item">
+        <span>🟩: Answered & marked for review</span>
+    </div>
+    """, unsafe_allow_html=True)
     
 
     # Question palette grid
