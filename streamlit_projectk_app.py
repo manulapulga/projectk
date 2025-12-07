@@ -3419,9 +3419,6 @@ def show_retest_config(original_test):
             st.session_state.current_screen = "dashboard"
             st.rerun()
     
-    st.markdown(f"**Original Test Date:** {datetime.fromisoformat(original_test['date']).astimezone(pytz.timezone("Asia/Kolkata")).strftime('%Y-%m-%d %H:%M')}")
-    st.markdown(f"**Original Score:** {original_test['score']}/{original_test['total_marks']} ({original_test['percentage']:.1f}%)")
-    
     # Check if we have stored questions
     if 'questions_used' not in original_test or not original_test['questions_used']:
         st.error("Original questions data not available. Cannot create retest.")
