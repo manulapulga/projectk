@@ -3290,9 +3290,11 @@ def show_quiz_screen():
 # Add this function to handle auto-submits from JavaScript
 def handle_auto_submit():
     """Handle auto-submit from JavaScript timer."""
-    if st.experimental_get_query_params().get('auto_submit'):
+    params = st.query_params  # new API
+    if params.get("auto_submit"):
         st.session_state.submitted = True
         st.rerun()
+
        
 
 # =============================
