@@ -2832,6 +2832,7 @@ def show_enhanced_question_interface():
     """, unsafe_allow_html=True)
 
 
+
     
     if current_idx >= len(df):
         st.error("Invalid question index")
@@ -2957,12 +2958,10 @@ def show_enhanced_question_interface():
     st.markdown("</div>", unsafe_allow_html=True)
     quiz_navbar = """
     <div class="quiz-fixed-bar">
-    
-        <button class="qbtn prev" onclick="sendQuizAction('prev')">⬅ Previous</button>
-        <button class="qbtn next" onclick="sendQuizAction('next')">Next ➡</button>
-        <button class="qbtn review" onclick="sendQuizAction('review')">⭐ Mark Review</button>
-        <button class="qbtn submit" onclick="sendQuizAction('submit')">✔ Submit</button>
-    
+    <button class="qbtn prev" onclick="sendQuizAction('prev')">⬅ Previous</button>
+    <button class="qbtn next" onclick="sendQuizAction('next')">Next ➡</button>
+    <button class="qbtn review" onclick="sendQuizAction('review')">⭐ Mark Review</button>
+    <button class="qbtn submit" onclick="sendQuizAction('submit')">✔ Submit</button>
     </div>
     
     <script>
@@ -2989,7 +2988,6 @@ def show_enhanced_question_interface():
         box-shadow: 0 -4px 12px rgba(0,0,0,0.25);
         z-index: 999999;
     }
-    
     .quiz-fixed-bar .qbtn {
         padding: 10px 20px;
         border-radius: 12px;
@@ -3001,20 +2999,16 @@ def show_enhanced_question_interface():
         box-shadow: 0 3px 8px rgba(0,0,0,0.15);
         transition: 0.15s ease-in-out;
     }
-    
     .quiz-fixed-bar .qbtn:hover {
         transform: scale(1.05);
     }
-    
     .quiz-fixed-bar .submit {
         background: #ff5252;
         color: white;
     }
-    
     .quiz-fixed-bar .review {
         background: #fff4be;
     }
-    
     @media (max-width: 480px) {
         .quiz-fixed-bar .qbtn {
             padding: 8px 12px;
@@ -3023,6 +3017,7 @@ def show_enhanced_question_interface():
     }
     </style>
     """
+
 
     
     st.markdown(quiz_navbar, unsafe_allow_html=True)
