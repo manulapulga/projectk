@@ -1260,10 +1260,6 @@ def show_user_management():
                         st.success(f"User {'activated' if new_active else 'deactivated'} successfully!")
                         st.rerun()
             
-                # Edit user (placeholder)
-                if st.button("📝 Edit", key=f"edit_{row['Username']}", use_container_width=True):
-                    st.info("Edit functionality coming soon!")
-            
                 # Delete user (with confirmation)
                 if st.button("🗑️ Delete", key=f"delete_{row['Username']}", use_container_width=True):
                     st.session_state.user_to_delete = row['Username']
