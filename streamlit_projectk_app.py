@@ -748,49 +748,37 @@ def delete_user(username):
             st.error("Firebase not initialized.")
             return False
 
-        # 1) Delete from users collection
-        try:
-            user_ref = db.collection("users").document(username)
-            if user_ref.get().exists:
-                user_ref.delete()
-        except Exception as e:
-            st.warning(f"Could not delete users/{username}: {e}")
+        # --- DELETE users/<username> ---
+        user_doc = db.collection("users").document(username)
+        if user_doc.get().exists:
+            user_doc.delete()
+        else:
+            st.info(f"No entry in users/{username}")
 
-        # 2) Delete from user_progress (doc id is EXACT username)
-        prog_ref = db.collection("user_progress").document(username)
+        # --- DELETE user_progress/<username> ---
+        progress_doc = db.collection("user_progress").document(username)
 
-        if prog_ref.get().exists:
+        if progress_doc.get().exists:
 
-            # Delete tests subcollection
-            try:
-                tests_ref = prog_ref.collection("tests")
-                for t in tests_ref.stream():
-                    t.reference.delete()
-            except Exception as e:
-                st.warning(f"Failed deleting tests for {username}: {e}")
+            # delete tests subcollection
+            for t in progress_doc.collection("tests").stream():
+                t.reference.delete()
 
-            # Delete meta subcollection
-            try:
-                meta_ref = prog_ref.collection("meta")
-                for m in meta_ref.stream():
-                    m.reference.delete()
-            except Exception as e:
-                st.warning(f"Failed deleting meta for {username}: {e}")
+            # delete meta subcollection
+            for m in progress_doc.collection("meta").stream():
+                m.reference.delete()
 
-            # Delete main progress doc
-            try:
-                prog_ref.delete()
-            except Exception as e:
-                st.warning(f"Failed deleting progress doc for {username}: {e}")
+            # delete the main progress doc
+            progress_doc.delete()
 
         else:
-            st.info(f"No progress data found for {username}")
+            st.info(f"No entry in user_progress/{username}")
 
-        st.success(f"User '{username}' and their progress deleted.")
+        st.success(f"Deleted user '{username}' and all their progress.")
         return True
 
     except Exception as e:
-        st.error(f"Deletion failed: {e}")
+        st.error(f"Error deleting user: {e}")
         return False
 
 def update_user_approval(username, is_approved):
