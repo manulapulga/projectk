@@ -742,6 +742,8 @@ def update_user_status(username, is_active):
         st.error(f"Error updating user: {e}")
         return False
 
+from google.cloud import firestore
+
 def delete_user(username):
     try:
         if db is None:
@@ -752,29 +754,20 @@ def delete_user(username):
         user_doc = db.collection("users").document(username)
         if user_doc.get().exists:
             user_doc.delete()
-        else:
-            st.info(f"No entry in users/{username}")
 
-        # --- DELETE user_progress/<username> ---
+        # --- RECURSIVELY DELETE user_progress/<username> ---
         progress_doc = db.collection("user_progress").document(username)
-
         if progress_doc.get().exists:
+            batch = firestore.Client().batch()
 
-            # delete tests subcollection
-            for t in progress_doc.collection("tests").stream():
-                t.reference.delete()
+            # Firestore recursive delete
+            db_recursive = firestore.Client()
+            firestore.DeleteOptions = getattr(firestore, 'DeleteOptions', None)
 
-            # delete meta subcollection
-            for m in progress_doc.collection("meta").stream():
-                m.reference.delete()
+            # This deletes the document and ALL subcollections
+            db_recursive.recursive_delete(progress_doc)
 
-            # delete the main progress doc
-            progress_doc.delete()
-
-        else:
-            st.info(f"No entry in user_progress/{username}")
-
-        st.success(f"Deleted user '{username}' and all their progress.")
+        st.success(f"User '{username}' and all progress deleted.")
         return True
 
     except Exception as e:
