@@ -4591,7 +4591,7 @@ def main():
     
     # Scan folder structure on first load with error handling
     if not st.session_state.folder_structure:
-        with st.spinner("📁 Scanning question banks..."):
+        with st.spinner("📁 Scanning Question Banks..."):
             st.session_state.folder_structure = safe_execute(scan_folder_structure) or {}
     
     # Route to appropriate screen with error handling
