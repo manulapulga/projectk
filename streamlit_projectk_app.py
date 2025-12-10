@@ -743,29 +743,26 @@ def update_user_status(username, is_active):
         return False
 
 def delete_user(username):
-    """Delete a user from the system."""
+    import requests
+
+    if username not in st.session_state.users:
+        st.error(f"User '{username}' does not exist.")
+        return
+
+    # 1. Delete user from users list
+    del st.session_state.users[username]
+    save_users_to_db(st.session_state.users)
+
+    # 2. Delete user's performance/progress data
+    progress_key = f"progress_{username}"
+    db_url = f"{firebase_url}/{progress_key}.json"  # firebase_url already exists in your app
+
     try:
-        if db is None:
-            return False
-        
-        # Check if user is an admin (from Excel)
-        admin_credentials = load_admin_credentials()
-        if username in admin_credentials:
-            st.error("Cannot delete admin users")
-            return False
-        
-        # Check if user is an editor (from Excel)
-        editor_credentials = load_editor_credentials()
-        if username in editor_credentials:
-            st.error("Cannot delete editor users")
-            return False
-        
-        user_ref = db.collection('users').document(username)
-        user_ref.delete()
-        return True
+        requests.delete(db_url)
+        st.success(f"User '{username}' and their performance data have been deleted.")
     except Exception as e:
-        st.error(f"Error deleting user: {e}")
-        return False
+        st.warning(f"User deleted, but failed to delete performance data: {e}")
+
 
 def update_user_approval(username, is_approved):
     """Update user approval status."""
