@@ -2991,7 +2991,7 @@ def show_enhanced_question_interface():
         use_container_width=True,
         key=f"submit_{current_idx}",
         type="secondary",
-        on_click=lambda: setattr(st.session_state, 'submitted', True)
+        on_click=lambda: setattr(st.session_state, 'show_submit_confirm', True)
     )
         
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
