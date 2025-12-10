@@ -3589,51 +3589,48 @@ def compute_results():
     return df, summary
     
 def delete_test_entry(username, test_id):
-    """Delete a specific test entry from user progress."""
+    """Delete a specific test entry and update progress."""
     try:
         if db is None:
             st.error("Firebase not initialized")
             return False
-        
-        progress = load_user_progress(username)
-        if not progress:
+
+        # ---- 1) Delete test document in Firestore ----
+        test_ref = db.collection("user_progress") \
+                     .document(username) \
+                     .collection("tests") \
+                     .document(test_id)
+
+        if test_ref.get().exists:
+            test_ref.delete()
+        else:
             return False
-        
-        # Convert progress data to ensure proper types
+
+        # ---- 2) Reload updated test history ----
+        updated_history = load_test_history(username)
+
+        # ---- 3) Load and update progress profile ----
+        progress = load_user_progress(username)
         progress = convert_numpy_to_python(progress)
-        
-        # Find and remove the test
-        test_history = load_test_history(username)
-        test_to_delete = None
-        updated_history = []
-        
-        for test in test_history:
-            if test.get("test_id") == test_id:
-                test_to_delete = test
-            else:
-                updated_history.append(test)
-        
-        if test_to_delete:
-            # Update progress statistics with proper types
-            test_history = load_test_history(username)
-            progress["tests_taken"] = int(len(updated_history))
-            
-            # Recalculate total score and average
-            if updated_history:
-                progress["total_score"] = float(sum(float(t["score"]) for t in updated_history))
-                progress["average_score"] = float(progress["total_score"]) / float(len(updated_history))
-            else:
-                progress["total_score"] = 0.0
-                progress["average_score"] = 0.0
-            
-            # Save updated progress
-            save_user_progress(username, progress)
-            return True
-        
-        return False
+
+        progress["tests_taken"] = len(updated_history)
+
+        if updated_history:
+            progress["total_score"] = float(sum(float(t.get("score", 0)) for t in updated_history))
+            progress["average_score"] = progress["total_score"] / len(updated_history)
+        else:
+            progress["total_score"] = 0.0
+            progress["average_score"] = 0.0
+
+        # ---- 4) Save updated progress ----
+        save_user_progress(username, progress)
+
+        return True
+
     except Exception as e:
         st.error(f"Error deleting test entry: {e}")
         return False
+
         
 def show_retest_config(original_test):
     """Show configuration for retest based on original test."""
