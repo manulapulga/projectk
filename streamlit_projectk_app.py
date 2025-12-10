@@ -41,15 +41,46 @@ class PerformanceConfig:
 # Firebase Configuration
 # =============================
 def initialize_firebase():
-    """Initialize Firebase connection."""
+    """Initialize Firebase for both Streamlit Cloud and Railway deployment."""
     try:
         if not firebase_admin._apps:
-            # Read from Streamlit secrets
-            firebase_config = dict(st.secrets["firebase"])
+
+            firebase_config = None
+
+            # 1️⃣ STREAMLIT CLOUD MODE
+            if "firebase" in st.secrets:
+                firebase_config = dict(st.secrets["firebase"])
+
+            # 2️⃣ RAILWAY MODE (environment variables)
+            elif os.getenv("project_id"):
+                firebase_config = {
+                    "type": os.getenv("type"),
+                    "project_id": os.getenv("project_id"),
+                    "private_key_id": os.getenv("private_key_id"),
+                    "private_key": os.getenv("private_key", "").replace("\\n", "\n"),
+                    "client_email": os.getenv("client_email"),
+                    "client_id": os.getenv("client_id"),
+                    "auth_uri": os.getenv("auth_uri"),
+                    "token_uri": os.getenv("token_uri"),
+                    "auth_provider_x509_cert_url": os.getenv("auth_provider_x509_cert_url"),
+                    "client_x509_cert_url": os.getenv("client_x509_cert_url"),
+                    "universe_domain": os.getenv("universe_domain"),
+                }
+
+            # 3️⃣ LOCAL DEVELOPMENT MODE
+            elif os.path.exists("serviceAccount.json"):
+                firebase_config = json.load(open("serviceAccount.json"))
+
+            else:
+                st.error("❌ No Firebase configuration found.")
+                return None
+
+            # Initialize Firebase
             cred = credentials.Certificate(firebase_config)
             firebase_admin.initialize_app(cred)
-            # Note: No databaseURL needed for Firestore
+
         return firestore.client()
+
     except Exception as e:
         st.error(f"❌ Firebase initialization failed: {e}")
         return None
