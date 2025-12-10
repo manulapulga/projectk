@@ -2986,6 +2986,11 @@ def show_enhanced_question_interface():
         on_click=lambda: toggle_mark_review(current_idx)
     )
 
+    # =============================
+    # QUIZ SUBMIT BUTTON + CONFIRMATION
+    # =============================
+    
+    # 1) Main Submit button (opens confirmation)
     st.button(
         "📤 Submit Test",
         use_container_width=True,
@@ -2993,6 +2998,27 @@ def show_enhanced_question_interface():
         type="secondary",
         on_click=lambda: setattr(st.session_state, 'show_submit_confirm', True)
     )
+    
+    # 2) Confirmation popup
+    if st.session_state.get("show_submit_confirm", False):
+    
+        st.warning("⚠️ Are you sure you want to submit the test? You cannot change answers once submitted.")
+    
+        col1, col2 = st.columns(2)
+    
+        # YES → Final submit
+        with col1:
+            if st.button("✅ Yes, Submit Now", use_container_width=True, key=f"confirm_submit_{current_idx}"):
+                st.session_state.show_submit_confirm = False
+                st.session_state.submitted = True   # your original behaviour
+                st.rerun()
+    
+        # NO → Cancel
+        with col2:
+            if st.button("❌ Cancel", use_container_width=True, key=f"cancel_submit_{current_idx}"):
+                st.session_state.show_submit_confirm = False
+                st.rerun()
+
         
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
     
