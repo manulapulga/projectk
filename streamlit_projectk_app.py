@@ -743,20 +743,12 @@ def update_user_status(username, is_active):
         return False
 
 def delete_user(username):
-    """Delete a user and their performance data from Firestore."""
     try:
         if db is None:
             st.error("Firebase not initialized.")
             return False
 
-        # Don't delete admin or editor accounts
-        admin_credentials = load_admin_credentials()
-        editor_credentials = load_editor_credentials()
-        if username in admin_credentials or username in editor_credentials:
-            st.error("Cannot delete admin/editor users.")
-            return False
-
-        # 1) Delete from users collection (if present)
+        # 1) Delete from users collection
         try:
             user_ref = db.collection("users").document(username)
             if user_ref.get().exists:
@@ -764,42 +756,42 @@ def delete_user(username):
         except Exception as e:
             st.warning(f"Could not delete users/{username}: {e}")
 
-        # 2) Delete user progress stored in Firestore
-        # Your app uses two possible progress document IDs
-        progress_ids = [
-            username,
-            get_user_progress_doc_id(username)  # usually "user_<username>"
-        ]
+        # 2) Delete from user_progress (doc id is EXACT username)
+        prog_ref = db.collection("user_progress").document(username)
 
-        for doc_id in progress_ids:
-            doc_ref = db.collection("user_progress").document(doc_id)
+        if prog_ref.get().exists:
 
-            # Check if progress document exists
-            if doc_ref.get().exists:
+            # Delete tests subcollection
+            try:
+                tests_ref = prog_ref.collection("tests")
+                for t in tests_ref.stream():
+                    t.reference.delete()
+            except Exception as e:
+                st.warning(f"Failed deleting tests for {username}: {e}")
 
-                # Delete subcollections (tests and meta)
-                for sub in ["tests", "meta"]:
-                    try:
-                        sub_ref = doc_ref.collection(sub)
-                        for sub_doc in sub_ref.stream():
-                            sub_doc.reference.delete()
-                    except Exception as e:
-                        st.warning(f"Failed deleting {doc_id}/{sub}: {e}")
+            # Delete meta subcollection
+            try:
+                meta_ref = prog_ref.collection("meta")
+                for m in meta_ref.stream():
+                    m.reference.delete()
+            except Exception as e:
+                st.warning(f"Failed deleting meta for {username}: {e}")
 
-                # Delete main progress doc
-                try:
-                    doc_ref.delete()
-                except Exception as e:
-                    st.warning(f"Failed deleting user_progress/{doc_id}: {e}")
+            # Delete main progress doc
+            try:
+                prog_ref.delete()
+            except Exception as e:
+                st.warning(f"Failed deleting progress doc for {username}: {e}")
 
-        st.success(f"User '{username}' and all progress data deleted.")
+        else:
+            st.info(f"No progress data found for {username}")
+
+        st.success(f"User '{username}' and their progress deleted.")
         return True
 
     except Exception as e:
-        st.error(f"Error while deleting user: {e}")
+        st.error(f"Deletion failed: {e}")
         return False
-
-
 
 def update_user_approval(username, is_approved):
     """Update user approval status."""
