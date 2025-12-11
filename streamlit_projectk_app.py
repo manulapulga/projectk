@@ -226,7 +226,8 @@ def inject_custom_css():
     .stNumberInput, .stTextInput, .stTextArea, .stFileUploader {{
         margin-top: 0rem !important;
         margin-bottom: 0rem !important;
-        padding-left:10px;
+        padding-left:5px;
+        padding-right: 5px;
     }}
 
     /* fix vertical block spacing safely */
@@ -249,7 +250,8 @@ def inject_custom_css():
     .stMarkdown ol,
     .stMarkdown li {{
         margin: 0.2rem 0 !important;
-        padding-left: 10px;
+        padding-left: 5px;
+        padding-right: 5px;
     }}
 
     /* horizontal rule */
