@@ -4246,6 +4246,7 @@ def show_enhanced_detailed_analysis(res_df):
             if formatted_explanation and str(formatted_explanation).strip():
                 st.markdown("**Explanation:**")
                 render_formatted_content(formatted_explanation)
+            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)    
             # Show explanation video if available
             if 'Explanation Media' in row:
                 media_url = row['Explanation Media']
