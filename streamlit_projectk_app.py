@@ -2338,7 +2338,7 @@ def update_user_progress(test_results):
             # NEW
             "question_image": row.get("Question Image", ""),
             "explanation_image": row.get("Explanation Image", ""),
-            "explanation_media": row.get("Explanation Video", "")
+            "explanation_video": row.get("Explanation Video", "")
         })
 
 
@@ -4093,7 +4093,7 @@ def show_retest_config(original_test):
             # NEW: add these ↓↓↓
             'Question Image': q_data.get('question_image', ''),
             'Explanation Image': q_data.get('explanation_image', ''),
-            'Explanation Video': q_data.get('explanation_media', '')
+            'Explanation Video': q_data.get('explanation_video', '')
         })
 
     
