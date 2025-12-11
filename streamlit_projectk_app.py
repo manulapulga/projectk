@@ -3164,12 +3164,15 @@ def show_enhanced_question_interface():
     # Render formatted question WITH image
     sl_no = row.get("Sl No", current_idx + 1)
     
-    # Display image first (if available), then question
-    if image_url and str(image_url).strip() != "":
-        display_question_image(image_url)
+    
     
     # Now render the question text
     render_formatted_content(formatted_question, sl_no)
+    
+    # Display image first (if available), then question
+    if image_url and str(image_url).strip() != "":
+        display_question_image(image_url)
+        
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
