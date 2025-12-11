@@ -159,48 +159,6 @@ LITMUSQ_THEME = {
 def now_ist():
     ist = pytz.timezone("Asia/Kolkata")
     return datetime.now(ist)
-    
-# =============================
-# Robust Sidebar Collapse Helper (targets the icon text)
-# =============================
-def collapse_sidebar_by_icon():
-    """Click the sidebar minimize icon which contains the text
-       'keyboard_double_arrow_left'. Retries a few times if not immediately found.
-    """
-    js = """
-    <script>
-    (function(){
-      function tryClick() {
-        // 1) Primary target: span elements used by the material icon with that exact text
-        const spans = Array.from(document.querySelectorAll('span[data-testid="stIconMaterial"]'));
-        const primary = spans.find(s => s.textContent && s.textContent.trim() === 'keyboard_double_arrow_left');
-        if (primary) { primary.click(); return true; }
-
-        // 2) Fallback: Streamlit older/newer collapsed control
-        const fallback = document.querySelector('[data-testid=\"collapsedControl\"]');
-        if (fallback) { fallback.click(); return true; }
-
-        // 3) Another fallback: any button with aria-label or title suggesting collapse
-        const possible = Array.from(document.querySelectorAll('button, div')).find(el => {
-          const txt = (el.getAttribute('aria-label') || el.title || el.textContent || '').toLowerCase();
-          return txt.includes('collapse') || txt.includes('minimi') || txt.includes('toggle sidebar');
-        });
-        if (possible) { possible.click(); return true; }
-
-        return false;
-      }
-
-      if (!tryClick()) {
-        let tries = 0;
-        const iv = setInterval(() => {
-          tries += 1;
-          if (tryClick() || tries > 12) clearInterval(iv);
-        }, 150);
-      }
-    })();
-    </script>
-    """
-    st.markdown(js, unsafe_allow_html=True)
 
 # =============================
 # Custom CSS Injection
@@ -4773,7 +4731,6 @@ def quick_actions_panel():
         
     if st.sidebar.button("ℹ️ About LitmusQ", use_container_width=True, key="home_guide"):
         st.session_state.current_screen = "guide"
-        st.session_state.collapse_sidebar_now = True
         st.rerun()
         
 # =============================
