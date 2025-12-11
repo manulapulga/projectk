@@ -2327,15 +2327,27 @@ def update_user_progress(test_results):
     for i in range(len(df)):
         row = df.iloc[i]
         detailed_questions.append({
-            "q_index": i,
-            "question": str(row.get('Question', '')),
-            "option_a": str(row.get('Option A', '')),
-            "option_b": str(row.get('Option B', '')),
-            "option_c": str(row.get('Option C', '')),
-            "option_d": str(row.get('Option D', '')),
-            "explanation": str(row.get('Explanation', '')),
-            "correct_option": str(row.get('Correct Option (Final Answer Key)', ''))  # Add this
+            "question_index": int(i),
+            "user_answer": user_answer,
+            "correct_answer": correct_answer,
+            "is_correct": is_correct,
+            "marked": bool(st.session_state.question_status.get(i, {}).get('marked', False)),
+        
+            # ⭐ ADD THESE FIELDS
+            "question": str(row.get("Question", "")),
+            "option_a": str(row.get("Option A", "")),
+            "option_b": str(row.get("Option B", "")),
+            "option_c": str(row.get("Option C", "")),
+            "option_d": str(row.get("Option D", "")),
+            "explanation": str(row.get("Explanation", "")),
+            "correct_option": str(correct_answer),
+        
+            # ⭐ ADD MEDIA + IMAGE FIELDS
+            "question_image": str(row.get("Question Image", "")),
+            "explanation_image": str(row.get("Explanation Image", "")),
+            "explanation_media": str(row.get("Explanation Media", "")),
         })
+
 
     test_entry = {
         "test_id": str(now_ist().timestamp()),
@@ -4083,8 +4095,14 @@ def show_retest_config(original_test):
             'Option C': q_data.get('option_c', ''),
             'Option D': q_data.get('option_d', ''),
             'Explanation': q_data.get('explanation', ''),
-            'Correct Option (Final Answer Key)': q_data.get('correct_option', '')
+            'Correct Option (Final Answer Key)': q_data.get('correct_option', ''),
+    
+            # ⭐ ADD THESE THREE
+            'Question Image': q_data.get('question_image', ''),
+            'Explanation Image': q_data.get('explanation_image', ''),
+            'Explanation Media': q_data.get('explanation_media', ''),
         })
+
     
     df_questions = pd.DataFrame(questions_list)
     
