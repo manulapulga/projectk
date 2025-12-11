@@ -4830,6 +4830,35 @@ def main():
     # Inject custom CSS with sidebar auto-collapse functionality
     inject_custom_css()
     
+    # Add JavaScript for sidebar auto-collapse
+    st.markdown("""
+    <script>
+    // Auto-collapse sidebar after clicking any sidebar button
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        const sidebarContent = sidebar.querySelector('.st-emotion-cache-16txtl3');
+        
+        // Function to collapse sidebar
+        function collapseSidebar() {
+            if (sidebarContent) {
+                sidebarContent.style.transform = 'translateX(-100%)';
+                sidebarContent.style.transition = 'transform 300ms ease';
+            }
+        }
+        
+        // Add click event listeners to all sidebar buttons
+        setTimeout(function() {
+            const sidebarButtons = sidebar.querySelectorAll('button');
+            sidebarButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    setTimeout(collapseSidebar, 100); // Small delay to allow button click to register
+                });
+            });
+        }, 1000); // Delay to ensure DOM is fully loaded
+    });
+    </script>
+    """, unsafe_allow_html=True)
+    
     # Initialize Firebase
     global db
     if 'db' not in globals():
