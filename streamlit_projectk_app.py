@@ -41,50 +41,123 @@ class PerformanceConfig:
 # Firebase Configuration
 # =============================
 def initialize_firebase():
-    """Initialize Firebase for both Streamlit Cloud and Railway deployment."""
+    """Robust Firebase initialization that works with Streamlit Cloud (st.secrets),
+    Railway (uppercased env vars), or a single JSON env var.
+    """
     try:
         if not firebase_admin._apps:
-
             firebase_config = None
 
-            # 1️⃣ STREAMLIT CLOUD MODE
-            if "firebase" in st.secrets:
-                firebase_config = dict(st.secrets["firebase"])
+            # 1) Streamlit Cloud: st.secrets['firebase']
+            try:
+                if "firebase" in st.secrets and isinstance(st.secrets["firebase"], dict):
+                    firebase_config = dict(st.secrets["firebase"])
+                    st.info("Firebase config: loaded from st.secrets['firebase']")
+            except Exception:
+                # ignore st.secrets errors in non-streamlit envs
+                pass
 
-            # 2️⃣ RAILWAY MODE (environment variables)
-            elif os.getenv("PROJECT_ID"):
-              firebase_config = {
-                  "type": os.getenv("TYPE"),
-                  "project_id": os.getenv("PROJECT_ID"),
-                  "private_key_id": os.getenv("PRIVATE_KEY_ID"),
-                  "private_key": os.getenv("PRIVATE_KEY", "").replace("\\n", "\n"),
-                  "client_email": os.getenv("CLIENT_EMAIL"),
-                  "client_id": os.getenv("CLIENT_ID"),
-                  "auth_uri": os.getenv("AUTH_URI"),
-                  "token_uri": os.getenv("TOKEN_URI"),
-                  "auth_provider_x509_cert_url": os.getenv("AUTH_PROVIDER_X509_CERT_URL"),
-                  "client_x509_cert_url": os.getenv("CLIENT_X509_CERT_URL"),
-                  "universe_domain": os.getenv("UNIVERSE_DOMAIN"),
-              }
+            # 2) Single env var containing the full service account JSON (common pattern)
+            if firebase_config is None:
+                for single_key in ("FIREBASE_SERVICE_ACCOUNT", "SERVICE_ACCOUNT_JSON", "GOOGLE_SERVICE_ACCOUNT"):
+                    raw = os.getenv(single_key)
+                    if raw:
+                        try:
+                            # If the service account was set with newlines escaped, fix them
+                            raw_fixed = raw.replace("\\n", "\n")
+                            firebase_config = json.loads(raw_fixed)
+                            st.info(f"Firebase config: loaded from env {single_key}")
+                            break
+                        except Exception:
+                            # try without replacing newlines (maybe already valid)
+                            try:
+                                firebase_config = json.loads(raw)
+                                st.info(f"Firebase config: loaded from env {single_key}")
+                                break
+                            except Exception:
+                                firebase_config = None
 
+            # 3) Individual env vars (case-insensitive search)
+            if firebase_config is None:
+                # normalize env to lowercase map for case-insensitive lookup
+                env_lower = {k.lower(): v for k, v in os.environ.items()}
+                # keys we expect
+                keys = {
+                    "type": ["type"],
+                    "project_id": ["project_id", "project", "projectid"],
+                    "private_key_id": ["private_key_id", "privatekeyid"],
+                    "private_key": ["private_key", "privatekey"],
+                    "client_email": ["client_email", "clientemail"],
+                    "client_id": ["client_id", "clientid"],
+                    "auth_uri": ["auth_uri", "authuri"],
+                    "token_uri": ["token_uri", "tokenuri"],
+                    "auth_provider_x509_cert_url": ["auth_provider_x509_cert_url", "authproviderx509certurl"],
+                    "client_x509_cert_url": ["client_x509_cert_url", "clientx509certurl"],
+                    "universe_domain": ["universe_domain", "universe"]
+                }
 
-            # 3️⃣ LOCAL DEVELOPMENT MODE
-            elif os.path.exists("serviceAccount.json"):
-                firebase_config = json.load(open("serviceAccount.json"))
+                found = {}
+                for canonical, variants in keys.items():
+                    for v in variants:
+                        if v in env_lower:
+                            found[canonical] = env_lower[v]
+                            break
 
-            else:
-                st.error("❌ No Firebase configuration found.")
+                # If we found at least project_id and private_key (very likely), build config
+                if "project_id" in found and "private_key" in found:
+                    # ensure private_key has actual newline characters
+                    found["private_key"] = found["private_key"].replace("\\n", "\n")
+                    firebase_config = {
+                        "type": found.get("type", "service_account"),
+                        "project_id": found.get("project_id"),
+                        "private_key_id": found.get("private_key_id"),
+                        "private_key": found.get("private_key"),
+                        "client_email": found.get("client_email"),
+                        "client_id": found.get("client_id"),
+                        "auth_uri": found.get("auth_uri", "https://accounts.google.com/o/oauth2/auth"),
+                        "token_uri": found.get("token_uri", "https://oauth2.googleapis.com/token"),
+                        "auth_provider_x509_cert_url": found.get("auth_provider_x509_cert_url", "https://www.googleapis.com/oauth2/v1/certs"),
+                        "client_x509_cert_url": found.get("client_x509_cert_url"),
+                        "universe_domain": found.get("universe_domain", "googleapis.com")
+                    }
+                    st.info("Firebase config: built from individual environment variables")
+
+            # 4) Local file fallback
+            if firebase_config is None and os.path.exists("serviceAccount.json"):
+                try:
+                    firebase_config = json.load(open("serviceAccount.json", "r", encoding="utf-8"))
+                    st.info("Firebase config: loaded from local serviceAccount.json")
+                except Exception as e:
+                    st.warning(f"Failed to load local serviceAccount.json: {e}")
+
+            # DEBUG: show which relevant env keys are present (do NOT print values)
+            try:
+                relevant_keys = ["PROJECT_ID", "project_id", "PRIVATE_KEY", "private_key", 
+                                 "FIREBASE_SERVICE_ACCOUNT", "SERVICE_ACCOUNT_JSON"]
+                present = {k: (k in os.environ or k.lower() in (ek.lower() for ek in os.environ)) for k in relevant_keys}
+                st.write("Debug: presence of common Firebase env vars:", present)
+            except Exception:
+                # don't break if logging fails
+                pass
+
+            if firebase_config is None:
+                st.error("❌ No Firebase configuration found. Checked st.secrets, common env vars, and serviceAccount.json")
                 return None
 
-            # Initialize Firebase
-            cred = credentials.Certificate(firebase_config)
-            firebase_admin.initialize_app(cred)
+            # Initialize Firebase with credential object
+            try:
+                cred = credentials.Certificate(firebase_config)
+                firebase_admin.initialize_app(cred)
+            except Exception as e:
+                st.error(f"❌ Firebase credential initialization failed: {e}")
+                return None
 
         return firestore.client()
 
     except Exception as e:
-        st.error(f"❌ Firebase initialization failed: {e}")
+        st.error(f"❌ Firebase initialization failed (outer): {e}")
         return None
+
 
 # Initialize Firebase
 db = initialize_firebase()
@@ -4407,7 +4480,7 @@ def quick_actions_panel():
     
     # Admin-only actions
     if is_admin_user():
-        if st.sidebar.button("Admin Dashboard", use_container_width=True, key="sidebar_admin"):
+        if st.sidebar.button("Admin Panel", use_container_width=True, key="sidebar_admin"):
             st.session_state.current_screen = "admin_panel"
             st.rerun()
     
