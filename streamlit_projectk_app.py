@@ -4395,10 +4395,8 @@ def quick_actions_panel():
     # Don't show quick actions panel during quiz
     if st.session_state.current_screen == "quiz":
         return
-    
-    st.sidebar.markdown("---")
-    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-    
+    st.sidebar.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+
     # Home Button - Always available (except during quiz)
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
         st.session_state.current_screen = "home"
