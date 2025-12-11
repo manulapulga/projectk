@@ -1036,9 +1036,9 @@ def save_formatted_questions(formatted_data):
         return False
 
 def display_question_image(image_url, alt_text="Question Image"):
-    """Safely display question image from URL with error handling."""
+    """Safely display question image from URL with error handling - SILENT FAILURE."""
     if not image_url or pd.isna(image_url) or str(image_url).strip() == "":
-        return False
+        return
     
     image_url = str(image_url).strip()
     
@@ -1051,8 +1051,8 @@ def display_question_image(image_url, alt_text="Question Image"):
     )
     
     if not url_pattern.match(image_url):
-        st.warning(f"⚠️ Invalid image URL format: {image_url[:50]}...")
-        return False
+        # Silent failure - just don't display
+        return
     
     # Check for Google Drive specific patterns
     if "drive.google.com" in image_url:
@@ -1066,13 +1066,12 @@ def display_question_image(image_url, alt_text="Question Image"):
         st.markdown(f"""
         <div class="image-container">
             <img src="{image_url}" alt="{alt_text}" class="question-image" 
-                 onerror="this.style.display='none';">
+                 onerror="this.style.display='none'; console.log('Failed to load image: {image_url[:50]}...')">
         </div>
         """, unsafe_allow_html=True)
-        return True
     except Exception as e:
-        st.warning(f"⚠️ Could not load image: {e}")
-        return False  
+        # Silent failure - don't throw exception
+        pass  
 
 def process_google_drive_url(url):
     """Convert Google Drive shareable link to direct image link."""
@@ -3154,6 +3153,7 @@ def show_enhanced_question_interface():
         formatted_image_url = formatted_questions.get(image_key)
         if formatted_image_url:
             image_url = formatted_image_url
+    
     formatted_a = get_formatted_content(file_path, sheet_name, current_idx, "option_a", row.get('Option A', ''))
     formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get('Option B', ''))
     formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
@@ -3164,15 +3164,17 @@ def show_enhanced_question_interface():
     # Render formatted question WITH image
     sl_no = row.get("Sl No", current_idx + 1)
     
-    
-    
-    # Now render the question text
+    # Display question text first, then image (if available) - FIXED ORDER
     render_formatted_content(formatted_question, sl_no)
     
-    # Display image first (if available), then question
+    # Now display image if available - WITH SAFE WRAPPING
     if image_url and str(image_url).strip() != "":
-        display_question_image(image_url)
-        
+        try:
+            display_question_image(image_url)
+        except Exception as e:
+            # Silently fail - don't affect navigation
+            st.warning(f"⚠️ Could not load image: {str(e)[:50]}...")
+    
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
