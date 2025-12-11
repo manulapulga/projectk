@@ -3301,7 +3301,7 @@ def show_enhanced_question_interface():
     
         st.warning("⚠️ Are you sure you want to submit the test? You cannot change answers once submitted.")
     
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(1, 1, 10)
     
         # YES → Final submit
         with col1:
