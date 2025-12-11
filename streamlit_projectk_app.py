@@ -1637,8 +1637,9 @@ def render_formatted_content(content, sl_no=None, image_url=None):
         prefix_html = f"<b>Q. {sl_no}</b> "
     
     # First display image if available
-    if image_url and str(image_url).strip() != "":
+    if image_url is not None and not pd.isna(image_url) and str(image_url).strip() != "":
         display_question_image(image_url)
+
     
     # Then display question text
     if any(tag in content for tag in ['<b>', '<strong>', '<i>', '<em>', '<u>', '<br>', '<span', '<div', '<p>']):
@@ -3169,8 +3170,9 @@ def show_enhanced_question_interface():
     render_formatted_content(formatted_question, sl_no)
     
     # Display image
-    if image_url and str(image_url).strip() != "":
+    if image_url is not None and not pd.isna(image_url) and str(image_url).strip() != "":
         display_question_image(image_url)
+
         
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
@@ -4161,8 +4163,9 @@ def show_enhanced_detailed_analysis(res_df):
             """, unsafe_allow_html=True)
             
              # Display image if available
-            if image_url and str(image_url).strip() != "":
+            if image_url is not None and not pd.isna(image_url) and str(image_url).strip() != "":
                 display_question_image(image_url, f"Question {i+1} Image")
+
                 
             # Question text
             st.markdown("**Question:**")
