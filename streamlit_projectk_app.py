@@ -16,6 +16,16 @@ from datetime import datetime
 import pytz
 import re
 
+# =============================
+# Sidebar Collapse Helper
+# =============================
+def collapse_sidebar():
+    collapse_script = """
+        <script>
+            document.querySelector("[data-testid='collapsedControl']").click();
+        </script>
+    """
+    st.markdown(collapse_script, unsafe_allow_html=True)
 
 # =============================
 # Configuration & Theme
@@ -1235,7 +1245,7 @@ def show_login_screen():
                         st.success(f"✅ Welcome back, {username}!")
                     elif user_type == "admin":
                         st.success(f"✅ Welcome, Admin {username}!")
-                    
+                    st.session_state.collapse_sidebar_now = True
                     st.rerun()
                 else:
                     if message == "Account pending admin approval":
@@ -4450,7 +4460,17 @@ def safe_execute(func, *args, **kwargs):
         if st.session_state.get('logged_in'):
             st.session_state.current_screen = "home"
             optimize_session_state()
+        
+            # Request sidebar collapse on next load
+            st.session_state.collapse_sidebar_now = True
+        
             st.rerun()
+        
+        # Collapse sidebar if requested
+        if st.session_state.get("collapse_sidebar_now"):
+            collapse_sidebar()
+            st.session_state.collapse_sidebar_now = False
+        
         return None
         
 # =============================
@@ -4710,27 +4730,32 @@ def quick_actions_panel():
     # Home Button - Always available (except during quiz)
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
         st.session_state.current_screen = "home"
+        st.session_state.collapse_sidebar_now = True
         st.rerun()
     
     # Admin-only actions
     if is_admin_user():
         if st.sidebar.button("Admin Panel", use_container_width=True, key="sidebar_admin"):
             st.session_state.current_screen = "admin_panel"
+            st.session_state.collapse_sidebar_now = True
             st.rerun()
     
     # Editor and Admin can edit questions
     if is_admin_or_editor():  # Changed from is_admin_user()
         if st.sidebar.button("📝 Edit Questions", use_container_width=True, key="sidebar_editor"):
             st.session_state.current_screen = "question_editor"
+            st.session_state.collapse_sidebar_now = True
             st.rerun()
     
     # All users can access these
     if st.sidebar.button("📈 Performance", use_container_width=True, key="sidebar_dashboard"):
         st.session_state.current_screen = "dashboard"
+        st.session_state.collapse_sidebar_now = True
         st.rerun()
         
     if st.sidebar.button("ℹ️ About LitmusQ", use_container_width=True, key="home_guide"):
         st.session_state.current_screen = "guide"
+        st.session_state.collapse_sidebar_now = True
         st.rerun()
         
 # =============================
@@ -4791,13 +4816,55 @@ def optimized_show_folder_view():
 # =============================
 # Main App
 # =============================
+# =============================
+# Main App
+# =============================
 def main():
     st.set_page_config(
         page_title="LitmusQ - Professional MCQ Platform",
         page_icon="🧪",
         layout="wide",
-        initial_sidebar_state="expanded"
+        initial_sidebar_state="collapsed"  # Start with collapsed sidebar
     )
+    
+    # Inject custom CSS with sidebar auto-collapse functionality
+    inject_custom_css()
+    
+    # Add JavaScript for sidebar auto-collapse
+    st.markdown("""
+    <script>
+    // Auto-collapse sidebar after clicking any sidebar button
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.querySelector('[data-testid="stSidebar"]');
+        const sidebarContent = sidebar.querySelector('.st-emotion-cache-16txtl3');
+        
+        // Function to collapse sidebar
+        function collapseSidebar() {
+            if (sidebarContent) {
+                sidebarContent.style.transform = 'translateX(-100%)';
+                sidebarContent.style.transition = 'transform 300ms ease';
+            }
+        }
+        
+        // Add click event listeners to all sidebar buttons
+        setTimeout(function() {
+            const sidebarButtons = sidebar.querySelectorAll('button');
+            sidebarButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    setTimeout(collapseSidebar, 100); // Small delay to allow button click to register
+                });
+            });
+        }, 1000); // Delay to ensure DOM is fully loaded
+    });
+    </script>
+    """, unsafe_allow_html=True)
+    
+    # Initialize Firebase
+    global db
+    if 'db' not in globals():
+        db = initialize_firebase()
+    
+    # ... rest of your existing main function code ...
     
     # Inject custom CSS
     inject_custom_css()
@@ -4896,6 +4963,7 @@ def main():
             optimize_session_state()  # Clean up before logout
             for key in list(st.session_state.keys()):
                 del st.session_state[key]
+            st.session_state.collapse_sidebar_now = True    
             st.rerun()
     
     # Scan folder structure on first load with error handling
