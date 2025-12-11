@@ -4396,7 +4396,8 @@ def quick_actions_panel():
     if st.session_state.current_screen == "quiz":
         return
     
-    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+    st.sidebar.markdown("---")
+    
     # Home Button - Always available (except during quiz)
     if st.sidebar.button("🏠 Home", use_container_width=True, key="sidebar_home"):
         st.session_state.current_screen = "home"
@@ -4404,7 +4405,7 @@ def quick_actions_panel():
     
     # Admin-only actions
     if is_admin_user():
-        if st.sidebar.button("Admin Panel", use_container_width=True, key="sidebar_admin"):
+        if st.sidebar.button("Admin Dashboard", use_container_width=True, key="sidebar_admin"):
             st.session_state.current_screen = "admin_panel"
             st.rerun()
     
