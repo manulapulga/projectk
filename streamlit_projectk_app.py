@@ -1067,7 +1067,6 @@ def display_question_image(image_url, alt_text="Question Image"):
         <div class="image-container">
             <img src="{image_url}" alt="{alt_text}" class="question-image" 
                  onerror="this.style.display='none';">
-            <div class="image-caption">📷 Question Image</div>
         </div>
         """, unsafe_allow_html=True)
         return True
@@ -4408,7 +4407,28 @@ def safe_execute(func, *args, **kwargs):
 def _normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     mapping = {c: str(c).strip() for c in df.columns}
     return df.rename(columns=mapping)
-
+    
+def convert_google_drive_url(url):
+    """Convert any Google Drive URL to the working thumbnail format."""
+    if not url or pd.isna(url):
+        return url
+    
+    url = str(url).strip()
+    
+    # If it's already in the working format, keep it
+    if "lh3.googleusercontent.com/d/" in url:
+        return url
+    
+    # Convert from other Google Drive formats
+    if "drive.google.com" in url:
+        # Extract file ID from: /file/d/FILE_ID/view
+        if "/file/d/" in url:
+            file_id = url.split("/file/d/")[1].split("/")[0]
+            return f"https://lh3.googleusercontent.com/d/{file_id}"
+    
+    # Return unchanged if not a Google Drive URL
+    return url
+    
 def load_questions(file_path):
     """Load questions from Excel file with memory optimization."""
     try:
@@ -4431,6 +4451,10 @@ def load_questions(file_path):
         clean_dict = {}
         for sheet, df in df_dict.items():
             df = _normalize_columns(df)
+            
+            # Optional: Convert image URLs if the column exists
+            if 'Question Image' in df.columns:
+                df['Question Image'] = df['Question Image'].apply(convert_google_drive_url)
             
             # Optimize memory usage
             for col in df.columns:
