@@ -4254,8 +4254,8 @@ def show_enhanced_detailed_analysis(res_df):
                     display_question_image(exp_img, f"Explanation Image {i+1}")
             st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
             # Show explanation video if available
-            if 'Explanation Media' in row:
-                media_url = row['Explanation Media']
+            if 'Explanation Video' in row:
+                media_url = row['Explanation Video']
                 if media_url is not None and not pd.isna(media_url) and str(media_url).strip() != "":
                     display_youtube_video(media_url)
 
