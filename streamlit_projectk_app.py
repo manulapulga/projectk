@@ -1034,6 +1034,47 @@ def save_formatted_questions(formatted_data):
     except Exception as e:
         st.error(f"Error saving formatted questions: {e}")
         return False
+        
+def display_youtube_video(url):
+    """Safely embed a YouTube video."""
+    if not url or pd.isna(url) or str(url).strip() == "":
+        return False
+
+    url = str(url).strip()
+
+    # Extract video ID from common YouTube link formats
+    youtube_patterns = [
+        r"youtube\.com/watch\?v=([^&]+)",
+        r"youtu\.be/([^?&]+)",
+        r"youtube\.com/embed/([^?&]+)"
+    ]
+
+    video_id = None
+    for pattern in youtube_patterns:
+        match = re.search(pattern, url)
+        if match:
+            video_id = match.group(1)
+            break
+
+    if not video_id:
+        st.warning("⚠️ Invalid YouTube URL format")
+        return False
+
+    embed_url = f"https://www.youtube.com/embed/{video_id}"
+
+    st.markdown(
+        f"""
+        <iframe width="100%" height="250"
+                src="{embed_url}"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen>
+        </iframe>
+        """,
+        unsafe_allow_html=True
+    )
+    return True
+
 
 def display_question_image(image_url, alt_text="Question Image"):
     """Safely display question image from URL with error handling."""
@@ -4205,7 +4246,11 @@ def show_enhanced_detailed_analysis(res_df):
             if formatted_explanation and str(formatted_explanation).strip():
                 st.markdown("**Explanation:**")
                 render_formatted_content(formatted_explanation)
-            
+            # Show explanation video if available
+            if 'Explanation Media' in row:
+                media_url = row['Explanation Media']
+                if media_url is not None and not pd.isna(media_url) and str(media_url).strip() != "":
+                    display_youtube_video(media_url)
             # Add some spacing
             st.markdown("")
 
