@@ -250,8 +250,8 @@ def inject_custom_css():
     .stMarkdown ol,
     .stMarkdown li {{
         margin: 0.2rem 0 !important;
-        padding-left: 5px;
-        padding-right: 5px;
+        padding-left: 10px;
+        padding-right: 10px;
     }}
 
     /* horizontal rule */
