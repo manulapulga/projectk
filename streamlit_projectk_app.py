@@ -1054,15 +1054,13 @@ def display_question_image(image_url, alt_text="Question Image"):
         st.warning(f"⚠️ Invalid image URL format: {image_url[:50]}...")
         return False
     
-    # Check for Google Drive specific patterns
+    # Google Drive fix
     if "drive.google.com" in image_url:
-        # Convert Google Drive URL to direct image link if needed
         if "/file/d/" in image_url:
             file_id = image_url.split("/file/d/")[1].split("/")[0]
             image_url = f"https://drive.google.com/uc?export=view&id={file_id}"
     
     try:
-        # Display the image
         st.markdown(f"""
         <div class="image-container">
             <img src="{image_url}" alt="{alt_text}" class="question-image" 
@@ -1072,7 +1070,8 @@ def display_question_image(image_url, alt_text="Question Image"):
         return True
     except Exception as e:
         st.warning(f"⚠️ Could not load image: {e}")
-        return False  
+        return False
+ 
 
 def process_google_drive_url(url):
     """Convert Google Drive shareable link to direct image link."""
