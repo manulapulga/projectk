@@ -2327,15 +2327,20 @@ def update_user_progress(test_results):
     for i in range(len(df)):
         row = df.iloc[i]
         detailed_questions.append({
-            "q_index": i,
-            "question": str(row.get('Question', '')),
-            "option_a": str(row.get('Option A', '')),
-            "option_b": str(row.get('Option B', '')),
-            "option_c": str(row.get('Option C', '')),
-            "option_d": str(row.get('Option D', '')),
-            "explanation": str(row.get('Explanation', '')),
-            "correct_option": str(row.get('Correct Option (Final Answer Key)', ''))  # Add this
+            "question": row['Question'],
+            "option_a": row['Option A'],
+            "option_b": row['Option B'],
+            "option_c": row['Option C'],
+            "option_d": row['Option D'],
+            "explanation": row.get('Explanation', ''),
+            "correct_option": correct_option,
+        
+            # NEW
+            "question_image": row.get("Question Image", ""),
+            "explanation_image": row.get("Explanation Image", ""),
+            "explanation_media": row.get("Explanation Media", "")
         })
+
 
     test_entry = {
         "test_id": str(now_ist().timestamp()),
@@ -4083,8 +4088,14 @@ def show_retest_config(original_test):
             'Option C': q_data.get('option_c', ''),
             'Option D': q_data.get('option_d', ''),
             'Explanation': q_data.get('explanation', ''),
-            'Correct Option (Final Answer Key)': q_data.get('correct_option', '')
+            'Correct Option (Final Answer Key)': q_data.get('correct_option', ''),
+            
+            # NEW: add these ↓↓↓
+            'Question Image': q_data.get('question_image', ''),
+            'Explanation Image': q_data.get('explanation_image', ''),
+            'Explanation Media': q_data.get('explanation_media', '')
         })
+
     
     df_questions = pd.DataFrame(questions_list)
     
