@@ -1148,7 +1148,7 @@ def is_admin_or_editor():
 def show_admin_panel():
     """Admin panel for managing users."""
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
-    show_litmusq_header("Admin Dashboard")
+    show_litmusq_header("Admin Panel")
     
     # Check if user is admin
     if not is_admin_user():
