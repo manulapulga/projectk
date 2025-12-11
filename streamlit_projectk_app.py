@@ -2071,45 +2071,30 @@ def show_question_editing_interface(question_row, question_index, file_path, she
 
 def get_formatted_content(file_path, sheet_name, question_index, field, original_content):
     """Get formatted content if available, otherwise return original."""
-    # For retests, we need to use the original file's formatting
+    # For retests, we might not have the original file path
     if hasattr(st.session_state, 'is_retest') and st.session_state.is_retest:
-        # First, check if we have the original file path and sheet name
-        original_file_path = st.session_state.get('retest_original_path', '')
-        original_sheet_name = st.session_state.get('retest_original_sheet', '')
+        # For retests, we need a different approach since we don't have the original file
+        # Try to get from formatted questions using the original test's file path
+        # If we don't have it, return the original content from the stored question
         
-        if original_file_path and original_sheet_name:
-            # Try to get formatted content from the original file
-            formatted_questions = load_formatted_questions()
-            original_key = get_question_key(original_file_path, original_sheet_name, question_index, field)
-            formatted_content = formatted_questions.get(original_key)
-            
+        # First, check if we have formatted content in cache
+        formatted_questions = load_formatted_questions()
+        
+        # Try to construct a key that might match
+        # Since we don't have the original file path in retests, we need to store it differently
+        if hasattr(st.session_state, 'retest_original_path'):
+            # Try with stored original path
+            key = get_question_key(
+                st.session_state.retest_original_path,
+                st.session_state.retest_original_sheet,
+                question_index,
+                field
+            )
+            formatted_content = formatted_questions.get(key)
             if formatted_content:
                 return formatted_content
         
-        # If no formatted version found, check if we have stored question data
-        if hasattr(st.session_state, 'retest_questions_data'):
-            retest_data = st.session_state.retest_questions_data
-            if question_index < len(retest_data):
-                # Return the stored content from the original test
-                q_data = retest_data[question_index]
-                # Map field names to stored data keys
-                field_map = {
-                    "question": "question",
-                    "question_image": "question_image",
-                    "image": "question_image",
-                    "option_a": "option_a",
-                    "option_b": "option_b",
-                    "option_c": "option_c",
-                    "option_d": "option_d",
-                    "explanation": "explanation",
-                    "explanation_media": "explanation_media",
-                    "explanation_image": "explanation_image"
-                }
-                stored_key = field_map.get(field)
-                if stored_key in q_data:
-                    return q_data.get(stored_key, original_content)
-        
-        # Fallback to original content
+        # If no formatted version found, return the original content from stored question
         return original_content
     else:
         # Original behavior for non-retests
@@ -2349,10 +2334,7 @@ def update_user_progress(test_results):
             "option_c": str(row.get('Option C', '')),
             "option_d": str(row.get('Option D', '')),
             "explanation": str(row.get('Explanation', '')),
-            "question_image": str(row.get('Question Image', '')),  # ADD THIS
-            "explanation_media": str(row.get('Explanation Media', '')),  # ADD THIS
-            "explanation_image": str(row.get('Explanation Image', '')),  # ADD THIS
-            "correct_option": str(row.get('Correct Option (Final Answer Key)', ''))
+            "correct_option": str(row.get('Correct Option (Final Answer Key)', ''))  # Add this
         })
 
     test_entry = {
@@ -2364,19 +2346,17 @@ def update_user_progress(test_results):
         "percentage": float((test_results["Marks Obtained"] / test_results["Total Marks"]) * 100),
         "correct": int(test_results["Correct"]),
         "total_questions": int(test_results["Total Questions"]),
-        "duration_minutes": int(st.session_state.get('quiz_duration', 60)),
+        "duration_minutes": int(st.session_state.get('quiz_duration', 60)),  # ADD THIS LINE
         "detailed_answers": test_results.get("detailed_answers", []),
         "questions_used": detailed_questions,
         "is_retest": bool(test_results.get("is_retest", False)),
         "original_test_id": test_results.get("original_test_id"),
-        "retest_type": test_results.get("retest_type", "full"),
-        # ADD THESE FOR RETEST SUPPORT:
-        "file_path": str(st.session_state.get('current_qb_path', '')),
-        "sheet_name": str(st.session_state.get('selected_sheet', ''))
+        "retest_type": test_results.get("retest_type", "full")
     }
 
     # Save heavy test data separately
     save_test_result(username, test_entry)
+
 
 def update_achievements(progress, test_results):
     """Update user achievements based on test performance."""
@@ -3207,26 +3187,14 @@ def show_enhanced_question_interface():
     
     # NEW: Get image URL if available
     image_url = None
-    if is_retest and hasattr(st.session_state, 'retest_questions_data'):
-        # For retests, get image from stored data
-        retest_data = st.session_state.retest_questions_data
-        if current_idx < len(retest_data):
-            image_url = retest_data[current_idx].get('question_image', '')
-    else:
-        # For normal tests, get from row
-        if 'Question Image' in row:
-            image_url = row['Question Image']
-            # Also try to get formatted image URL if exists
-            formatted_questions = load_formatted_questions()
-            image_key = get_question_key(file_path, sheet_name, current_idx, "question_image")
-            formatted_image_url = formatted_questions.get(image_key)
-            if formatted_image_url:
-                image_url = formatted_image_url
-    
-    # Display image if available
-    if image_url is not None and not pd.isna(image_url) and str(image_url).strip() != "":
-        display_question_image(image_url)
-        
+    if 'Question Image' in row:
+        image_url = row['Question Image']
+        # Also try to get formatted image URL if exists
+        image_key = get_question_key(file_path, sheet_name, current_idx, "question_image")
+        formatted_questions = load_formatted_questions()
+        formatted_image_url = formatted_questions.get(image_key)
+        if formatted_image_url:
+            image_url = formatted_image_url
     formatted_a = get_formatted_content(file_path, sheet_name, current_idx, "option_a", row.get('Option A', ''))
     formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get('Option B', ''))
     formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
@@ -4003,12 +3971,6 @@ def show_retest_config(original_test):
     # Store the original test questions in a special format for retests
     st.session_state.retest_questions_data = original_test['questions_used']
     
-    # Store original file metadata if available
-    if 'file_path' in original_test:
-        st.session_state.retest_original_path = original_test['file_path']
-    if 'sheet_name' in original_test:
-        st.session_state.retest_original_sheet = original_test['sheet_name']
-    
     # Analyze original test performance
     total_questions = original_test['total_questions']
     incorrect_questions = []
@@ -4121,15 +4083,13 @@ def show_retest_config(original_test):
             'Option C': q_data.get('option_c', ''),
             'Option D': q_data.get('option_d', ''),
             'Explanation': q_data.get('explanation', ''),
-            'Question Image': q_data.get('question_image', ''),  # ADD THIS
-            'Explanation Media': q_data.get('explanation_media', ''),  # ADD THIS
-            'Explanation Image': q_data.get('explanation_image', ''),  # ADD THIS
             'Correct Option (Final Answer Key)': q_data.get('correct_option', '')
         })
     
     df_questions = pd.DataFrame(questions_list)
     
     st.markdown("<div style='margin-top: 2rem;'></div>", unsafe_allow_html=True)
+    # Store retest configuration in session state
     # Store retest configuration in session state
     if st.button("🚀 Start Re-Test", type="primary", use_container_width=True, key="start_retest"):
         if question_count == 0:
@@ -4156,18 +4116,9 @@ def show_retest_config(original_test):
             # This is a retest of a retest, add level indicator
             exam_name = f"{exam_name}📝"
         
-        # Use original file path and sheet name if available, otherwise create placeholders
-        original_file_path = original_test.get('file_path', '')
-        original_sheet_name = original_test.get('sheet_name', '')
-        
-        if original_file_path and original_sheet_name:
-            # Store the original file path and sheet name for formatting lookup
-            st.session_state.retest_original_path = original_file_path
-            st.session_state.retest_original_sheet = original_sheet_name
-        else:
-            # Create a unique identifier for retest formatting lookup
-            st.session_state.retest_original_path = f"retest_{original_test.get('test_id', 'unknown')}"
-            st.session_state.retest_original_sheet = exam_name
+        # Set dummy file path and sheet name for formatting lookup
+        st.session_state.retest_original_path = "retest_" + str(original_test.get('test_id', 'unknown'))
+        st.session_state.retest_original_sheet = exam_name
         
         # Get the original duration or use default
         original_duration = original_test.get('duration_minutes', 60)
@@ -4184,60 +4135,29 @@ def show_retest_config(original_test):
         )
         st.session_state.current_screen = "quiz"
         st.rerun()
-        
 def show_enhanced_detailed_analysis(res_df):
     """Show detailed analysis with formatted content and question status in headings."""
     for i, row in res_df.iterrows():
-        # Determine if this is a retest
-        is_retest = st.session_state.get('is_retest', False)
+        file_path = st.session_state.get('current_qb_path', '')
+        sheet_name = st.session_state.get('selected_sheet', '')
         
-        if is_retest:
-            # For retests, use stored original metadata
-            file_path = st.session_state.get('retest_original_path', '')
-            sheet_name = st.session_state.get('retest_original_sheet', '')
-        else:
-            # For normal tests, use current file metadata
-            file_path = st.session_state.get('current_qb_path', '')
-            sheet_name = st.session_state.get('selected_sheet', '')
-        
-        # Get formatted content using the appropriate source
+        # Get formatted content
         formatted_question = get_formatted_content(file_path, sheet_name, i, "question", row['Question'])
-        
-        # Get image URL - check multiple possible sources
+        # NEW: Get image URL
         image_url = None
         if 'Question Image' in row:
             image_url = row['Question Image']
-        # Check for formatted image URL
-        image_key = get_question_key(file_path, sheet_name, i, "question_image")
-        formatted_questions = load_formatted_questions()
-        formatted_image_url = formatted_questions.get(image_key)
-        if formatted_image_url:
-            image_url = formatted_image_url
-        
-        # Get other formatted content
+            # Check for formatted image URL
+            image_key = get_question_key(file_path, sheet_name, i, "question_image")
+            formatted_questions = load_formatted_questions()
+            formatted_image_url = formatted_questions.get(image_key)
+            if formatted_image_url:
+                image_url = formatted_image_url
         formatted_a = get_formatted_content(file_path, sheet_name, i, "option_a", row.get('Option A', ''))
         formatted_b = get_formatted_content(file_path, sheet_name, i, "option_b", row.get('Option B', ''))
         formatted_c = get_formatted_content(file_path, sheet_name, i, "option_c", row.get('Option C', ''))
         formatted_d = get_formatted_content(file_path, sheet_name, i, "option_d", row.get('Option D', ''))
         formatted_explanation = get_formatted_content(file_path, sheet_name, i, "explanation", row.get('Explanation', ''))
-        
-        # Get explanation media and images
-        explanation_media = None
-        explanation_image = None
-        
-        if is_retest and hasattr(st.session_state, 'retest_questions_data'):
-            # Try to get from stored retest data
-            retest_data = st.session_state.retest_questions_data
-            if i < len(retest_data):
-                q_data = retest_data[i]
-                explanation_media = q_data.get('explanation_media')
-                explanation_image = q_data.get('explanation_image')
-        else:
-            # For normal tests, get from row
-            if 'Explanation Media' in row:
-                explanation_media = row['Explanation Media']
-            if 'Explanation Image' in row:
-                explanation_image = row['Explanation Image']
         
         # Determine question status for heading
         correct = row["Correct Option Used"]
@@ -4277,14 +4197,16 @@ def show_enhanced_detailed_analysis(res_df):
             </div>
             """, unsafe_allow_html=True)
             
-            # Display image if available
+             # Display image if available
             if image_url is not None and not pd.isna(image_url) and str(image_url).strip() != "":
                 display_question_image(image_url, f"Question {i+1} Image")
+
                 
             # Question text
             st.markdown("**Question:**")
             sl_no = row.get("Sl No", i + 1)
             render_formatted_content(formatted_question, sl_no)
+
             
             # Options with status indicators
             def render_formatted_option(label, text, is_correct, is_chosen):
@@ -4318,18 +4240,18 @@ def show_enhanced_detailed_analysis(res_df):
             if formatted_explanation and str(formatted_explanation).strip():
                 st.markdown("**Explanation:**")
                 render_formatted_content(formatted_explanation)
-            
             st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-            
             # Show explanation image if available
-            if explanation_image is not None and not pd.isna(explanation_image) and str(explanation_image).strip() != "":
-                display_question_image(explanation_image, f"Explanation Image {i+1}")
-            
+            if 'Explanation Image' in row:
+                exp_img = row['Explanation Image']
+                if exp_img is not None and not pd.isna(exp_img) and str(exp_img).strip() != "":
+                    display_question_image(exp_img, f"Explanation Image {i+1}")
             st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
-            
             # Show explanation video if available
-            if explanation_media is not None and not pd.isna(explanation_media) and str(explanation_media).strip() != "":
-                display_youtube_video(explanation_media)
+            if 'Explanation Media' in row:
+                media_url = row['Explanation Media']
+                if media_url is not None and not pd.isna(media_url) and str(media_url).strip() != "":
+                    display_youtube_video(media_url)
 
             # Add some spacing
             st.markdown("")
