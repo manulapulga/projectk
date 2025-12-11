@@ -3301,20 +3301,21 @@ def show_enhanced_question_interface():
     
         st.warning("⚠️ Are you sure you want to submit the test? You cannot change answers once submitted.")
     
-        col1, col2, col3 = st.columns(1, 1, 10)
-    
+        col1, col2, col3 = st.columns([1, 1, 10])   # adjust ratio as needed
+
         # YES → Final submit
         with col1:
-            if st.button("✅ Yes, Submit Noww", use_container_width=True, key=f"confirm_submit_{current_idx}"):
+            if st.button("✅ Yes, Submit Now", use_container_width=True, key=f"confirm_submit_{current_idx}"):
                 st.session_state.show_submit_confirm = False
-                st.session_state.submitted = True   # your original behaviour
+                st.session_state.submitted = True
                 st.rerun()
-    
+        
         # NO → Cancel
         with col2:
             if st.button("❌ Cancel", use_container_width=True, key=f"cancel_submit_{current_idx}"):
                 st.session_state.show_submit_confirm = False
                 st.rerun()
+        
 
         
     st.markdown("<div style='text-align:center;'>", unsafe_allow_html=True)
