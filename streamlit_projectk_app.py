@@ -1148,7 +1148,7 @@ def is_admin_or_editor():
 def show_admin_panel():
     """Admin panel for managing users."""
     st.markdown("<div style='margin-top: 3.5rem;'></div>", unsafe_allow_html=True)
-    show_litmusq_header("Admin Panel")
+    show_litmusq_header("Admin Dashboard")
     
     # Check if user is admin
     if not is_admin_user():
@@ -4406,7 +4406,7 @@ def quick_actions_panel():
     
     # Admin-only actions
     if is_admin_user():
-        if st.sidebar.button("Admin Dashboard", use_container_width=True, key="sidebar_admin"):
+        if st.sidebar.button("Admin Panel", use_container_width=True, key="sidebar_admin"):
             st.session_state.current_screen = "admin_panel"
             st.rerun()
     
