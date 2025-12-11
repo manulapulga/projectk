@@ -2333,7 +2333,7 @@ def update_user_progress(test_results):
             "is_correct": is_correct,
             "marked": bool(st.session_state.question_status.get(i, {}).get('marked', False)),
         
-            # ⭐ ADD THESE FIELDS
+            # ⭐ Store complete question content for retest
             "question": str(row.get("Question", "")),
             "option_a": str(row.get("Option A", "")),
             "option_b": str(row.get("Option B", "")),
@@ -2342,11 +2342,12 @@ def update_user_progress(test_results):
             "explanation": str(row.get("Explanation", "")),
             "correct_option": str(correct_answer),
         
-            # ⭐ ADD MEDIA + IMAGE FIELDS
+            # ⭐ Store media fields
             "question_image": str(row.get("Question Image", "")),
             "explanation_image": str(row.get("Explanation Image", "")),
             "explanation_media": str(row.get("Explanation Media", "")),
         })
+
 
 
     test_entry = {
