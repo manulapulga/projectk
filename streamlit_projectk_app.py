@@ -2338,9 +2338,8 @@ def update_user_progress(test_results):
             # NEW
             "question_image": row.get("Question Image", ""),
             "explanation_image": row.get("Explanation Image", ""),
-            "explanation_video": row.get("Explanation Video", "")
+            "explanation_media": row.get("Explanation Media", "")
         })
-
 
     test_entry = {
         "test_id": str(now_ist().timestamp()),
@@ -4093,9 +4092,8 @@ def show_retest_config(original_test):
             # NEW: add these ↓↓↓
             'Question Image': q_data.get('question_image', ''),
             'Explanation Image': q_data.get('explanation_image', ''),
-            'Explanation Video': q_data.get('explanation_video', '')
+            'Explanation Media': q_data.get('explanation_media', '')
         })
-
     
     df_questions = pd.DataFrame(questions_list)
     
@@ -4259,8 +4257,8 @@ def show_enhanced_detailed_analysis(res_df):
                     display_question_image(exp_img, f"Explanation Image {i+1}")
             st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
             # Show explanation video if available
-            if 'Explanation Video' in row:
-                media_url = row['Explanation Video']
+            if 'Explanation Media' in row:
+                media_url = row['Explanation Media']
                 if media_url is not None and not pd.isna(media_url) and str(media_url).strip() != "":
                     display_youtube_video(media_url)
 
