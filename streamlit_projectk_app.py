@@ -4246,12 +4246,19 @@ def show_enhanced_detailed_analysis(res_df):
             if formatted_explanation and str(formatted_explanation).strip():
                 st.markdown("**Explanation:**")
                 render_formatted_content(formatted_explanation)
-            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)    
+            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+            # Show explanation image if available
+            if 'Explanation Image' in row:
+                exp_img = row['Explanation Image']
+                if exp_img is not None and not pd.isna(exp_img) and str(exp_img).strip() != "":
+                    display_question_image(exp_img, f"Explanation Image {i+1}")
+            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
             # Show explanation video if available
             if 'Explanation Media' in row:
                 media_url = row['Explanation Media']
                 if media_url is not None and not pd.isna(media_url) and str(media_url).strip() != "":
                     display_youtube_video(media_url)
+
             # Add some spacing
             st.markdown("")
 
