@@ -14,6 +14,7 @@ from firebase_admin import credentials, firestore
 import json
 from datetime import datetime
 import pytz
+import re
 
 
 # =============================
@@ -150,7 +151,9 @@ LITMUSQ_THEME = {
     "text": "#1E293B",
     "success": "#059669",      # Green for correct answers
     "warning": "#D97706",      # Amber for warnings
-    "light_bg": "#EFF6FF"      # Light blue background
+    "light_bg": "#EFF6FF",
+    "image_border": "#E2E8F0",      # Border for images
+    "image_bg": "#F8FAFC"          # Background for images# Light blue background
 }
 
 def now_ist():
@@ -237,7 +240,40 @@ inject_mobile_css()
 def inject_custom_css():
     st.markdown(f"""
     <style>
-
+    /* =========================================================
+       QUESTION IMAGES
+    ==========================================================*/
+    
+    .question-image {{
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 2px solid {LITMUSQ_THEME['image_border']};
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 1rem 0;
+        padding: 0.5rem;
+        background-color: {LITMUSQ_THEME['image_bg']};
+        display: block;
+    }}
+    
+    .image-container {{
+        text-align: center;
+        margin: 1rem 0;
+    }}
+    
+    .image-caption {{
+        font-size: 0.9rem;
+        color: #64748B;
+        font-style: italic;
+        margin-top: 0.5rem;
+    }}
+    
+    /* Responsive images */
+    @media (max-width: 768px) {{
+        .question-image {{
+            max-width: 95%;
+        }}
+    }} 
     /* =========================================================
        GLOBAL SAFE SPACING (NO OVERLAPS, NO HUGE MARGINS)
     ==========================================================*/
@@ -998,7 +1034,71 @@ def save_formatted_questions(formatted_data):
     except Exception as e:
         st.error(f"Error saving formatted questions: {e}")
         return False
+
+def display_question_image(image_url, alt_text="Question Image"):
+    """Safely display question image from URL with error handling."""
+    if not image_url or pd.isna(image_url) or str(image_url).strip() == "":
+        return False
     
+    image_url = str(image_url).strip()
+    
+    # Validate URL format
+    url_pattern = re.compile(
+        r'^(https?://)'  # http:// or https://
+        r'([a-zA-Z0-9.-]+)'  # domain
+        r'(\.[a-zA-Z]{2,})'  # .com, .org, etc
+        r'(/[^\s]*)?$'  # path
+    )
+    
+    if not url_pattern.match(image_url):
+        st.warning(f"⚠️ Invalid image URL format: {image_url[:50]}...")
+        return False
+    
+    # Check for Google Drive specific patterns
+    if "drive.google.com" in image_url:
+        # Convert Google Drive URL to direct image link if needed
+        if "/file/d/" in image_url:
+            file_id = image_url.split("/file/d/")[1].split("/")[0]
+            image_url = f"https://drive.google.com/uc?export=view&id={file_id}"
+    
+    try:
+        # Display the image
+        st.markdown(f"""
+        <div class="image-container">
+            <img src="{image_url}" alt="{alt_text}" class="question-image" 
+                 onerror="this.style.display='none';">
+            <div class="image-caption">📷 Question Image</div>
+        </div>
+        """, unsafe_allow_html=True)
+        return True
+    except Exception as e:
+        st.warning(f"⚠️ Could not load image: {e}")
+        return False  
+
+def process_google_drive_url(url):
+    """Convert Google Drive shareable link to direct image link."""
+    if not url or "drive.google.com" not in url:
+        return url
+    
+    try:
+        # Pattern 1: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+        if "/file/d/" in url:
+            file_id = url.split("/file/d/")[1].split("/")[0]
+            return f"https://drive.google.com/uc?export=view&id={file_id}"
+        
+        # Pattern 2: https://drive.google.com/open?id=FILE_ID
+        elif "open?id=" in url:
+            file_id = url.split("open?id=")[1]
+            return f"https://drive.google.com/uc?export=view&id={file_id}"
+        
+        # Pattern 3: Already direct link
+        elif "uc?export=view" in url:
+            return url
+        
+        return url
+    except:
+        return url
+        
 # =============================
 # Branded Header
 # =============================
@@ -1518,11 +1618,14 @@ def show_system_settings():
             # Note: In production, save these to Firebase
             
 def get_question_key(file_path, sheet_name, question_index, field="question"):
-    """Generate a unique key for each question/option."""
+    """Generate a unique key for each question/option/image."""
+    # Normalize field names for images
+    if field in ["question_image", "image", "Question Image"]:
+        field = "question_image"
     return f"{file_path}::{sheet_name}::{question_index}::{field}"
 
-def render_formatted_content(content, sl_no=None):
-    """Render formatted content with HTML/CSS styling, with optional Sl No prefix."""
+def render_formatted_content(content, sl_no=None, image_url=None):
+    """Render formatted content with optional image."""
     if not content:
         content = ""
     
@@ -1534,8 +1637,12 @@ def render_formatted_content(content, sl_no=None):
     prefix_html = ""
     if sl_no is not None:
         prefix_html = f"<b>Q. {sl_no}</b> "
-
-    # If HTML detected, treat as HTML
+    
+    # First display image if available
+    if image_url and str(image_url).strip() != "":
+        display_question_image(image_url)
+    
+    # Then display question text
     if any(tag in content for tag in ['<b>', '<strong>', '<i>', '<em>', '<u>', '<br>', '<span', '<div', '<p>']):
         final_html = f'<div class="formatted-content">{prefix_html}{content}</div>'
         return st.markdown(final_html, unsafe_allow_html=True)
@@ -1700,14 +1807,20 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             "option_b": question_row.get('Option B', ''),
             "option_c": question_row.get('Option C', ''),
             "option_d": question_row.get('Option D', ''),
-            "explanation": question_row.get('Explanation', '')
+            "explanation": question_row.get('Explanation', ''),
+            "question_image": question_row.get('Question Image', '')  # ADD THIS
         }
     
     original_content = st.session_state[session_key]
     
-    # Display original question for reference
+    # Display original question for reference - ADD IMAGE
     with st.expander("👀 Original Question (Read-only)", expanded=False):
         st.write(f"**Question:** {original_content['question']}")
+        # Display image if exists in original
+        if original_content.get('question_image'):
+            st.write(f"**Image URL:** {original_content['question_image']}")
+            if display_question_image(original_content['question_image']):
+                st.write("✓ Image loaded successfully")
         st.write(f"**Option A:** {original_content['option_a']}")
         st.write(f"**Option B:** {original_content['option_b']}")
         st.write(f"**Option C:** {original_content['option_c']}")
@@ -1715,16 +1828,17 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         if original_content['explanation']:
             st.write(f"**Explanation:** {original_content['explanation']}")
     
-    # Generate keys for this question
+    # Generate keys for this question - ADD IMAGE KEY
     question_key = get_question_key(file_path, sheet_name, question_index, "question")
+    image_key = get_question_key(file_path, sheet_name, question_index, "question_image")  # ADD THIS
     option_a_key = get_question_key(file_path, sheet_name, question_index, "option_a")
     option_b_key = get_question_key(file_path, sheet_name, question_index, "option_b")
     option_c_key = get_question_key(file_path, sheet_name, question_index, "option_c")
     option_d_key = get_question_key(file_path, sheet_name, question_index, "option_d")
     explanation_key = get_question_key(file_path, sheet_name, question_index, "explanation")
     
-    # Load existing formatted content
     default_question = formatted_questions.get(question_key, original_content['question'])
+    default_image = formatted_questions.get(image_key, original_content.get('question_image', ''))  # ADD THIS
     default_a = formatted_questions.get(option_a_key, original_content['option_a'])
     default_b = formatted_questions.get(option_b_key, original_content['option_b'])
     default_c = formatted_questions.get(option_c_key, original_content['option_c'])
@@ -1755,6 +1869,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
     with st.form(f"edit_question_{question_index}"):
         st.markdown("**Edit Content**")
         
+        # Question text
         edited_question = st.text_area(
             "**Question Text**",
             value=default_question,
@@ -1762,6 +1877,21 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             key=f"q_{question_index}"
         )
         
+        # NEW: Image URL field
+        edited_image = st.text_input(
+            "**Question Image URL** (Google Drive or direct link)",
+            value=default_image,
+            key=f"img_{question_index}",
+            help="Paste Google Drive shareable link or direct image URL"
+        )
+        
+        # Display image preview
+        if edited_image and str(edited_image).strip() != "":
+            st.markdown("**Image Preview:**")
+            if not display_question_image(edited_image):
+                st.warning("Could not load image from provided URL")
+        
+        # Options columns
         col1, col2 = st.columns(2)
         with col1:
             edited_a = st.text_area("Option A", value=default_a, height=100, key=f"a_{question_index}")
@@ -1778,9 +1908,14 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         )
         
         # Preview
+        
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         st.markdown("👁️**Live Previe**")
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
+        # Preview image
+        if edited_image and str(edited_image).strip() != "":
+            st.markdown("**Image:**")
+            display_question_image(edited_image)
         st.markdown("**Question:**")
         render_formatted_content(edited_question)
         
@@ -1805,12 +1940,13 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         # Create three columns for action buttons INSIDE THE FORM
         save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
         reset_btn = st.form_submit_button("🔁 Reset to Original", use_container_width=True, type="secondary")
-        clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True, type="secondary")
+        clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True, type="secondary"))
     
     # Handle button actions after the form
     if save_btn:
         # Save formatted content
         formatted_questions[question_key] = edited_question
+        formatted_questions[image_key] = edited_image  # ADD THIS
         formatted_questions[option_a_key] = edited_a
         formatted_questions[option_b_key] = edited_b
         formatted_questions[option_c_key] = edited_c
@@ -1825,6 +1961,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             # Clear widget state so new defaults appear
             for k in [
                 f"q_{question_index}",
+                f"img_{question_index}",  # ADD THIS
                 f"a_{question_index}",
                 f"b_{question_index}",
                 f"c_{question_index}",
@@ -1838,6 +1975,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
     elif reset_btn:
         # Reset to original content
         formatted_questions[question_key] = original_content['question']
+        formatted_questions[image_key] = original_content.get('question_image', '')  # ADD THIS
         formatted_questions[option_a_key] = original_content['option_a']
         formatted_questions[option_b_key] = original_content['option_b']
         formatted_questions[option_c_key] = original_content['option_c']
@@ -1852,6 +1990,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
             # Clear widget state so new defaults appear
             for k in [
                 f"q_{question_index}",
+                f"img_{question_index}",
                 f"a_{question_index}",
                 f"b_{question_index}",
                 f"c_{question_index}",
@@ -1865,7 +2004,7 @@ def show_question_editing_interface(question_row, question_index, file_path, she
     elif clear_btn:
         # Remove formatting (delete keys from formatted_questions)
         keys_to_delete = []
-        for key in [question_key, option_a_key, option_b_key, option_c_key, option_d_key, explanation_key]:
+        for key in [question_key, image_key, option_a_key, option_b_key, option_c_key, option_d_key, explanation_key]:
             if key in formatted_questions:
                 keys_to_delete.append(key)
         
@@ -1921,6 +2060,13 @@ def get_formatted_content(file_path, sheet_name, question_index, field, original
         # Original behavior for non-retests
         formatted_questions = load_formatted_questions()
         key = get_question_key(file_path, sheet_name, question_index, field)
+        # Special handling for images
+        if field == "question_image" and key not in formatted_questions:
+            # Try alternative naming if not found
+            alt_key = get_question_key(file_path, sheet_name, question_index, "image")
+            if alt_key in formatted_questions:
+                return formatted_questions.get(alt_key)
+    
         return formatted_questions.get(key, original_content)
 # =============================
 # Firebase User Progress & Analytics
@@ -2998,6 +3144,17 @@ def show_enhanced_question_interface():
     formatted_question = get_formatted_content(
         file_path, sheet_name, current_idx, "question", row['Question']
     )
+    
+    # NEW: Get image URL if available
+    image_url = None
+    if 'Question Image' in row:
+        image_url = row['Question Image']
+        # Also try to get formatted image URL if exists
+        image_key = get_question_key(file_path, sheet_name, current_idx, "question_image")
+        formatted_questions = load_formatted_questions()
+        formatted_image_url = formatted_questions.get(image_key)
+        if formatted_image_url:
+            image_url = formatted_image_url
     formatted_a = get_formatted_content(file_path, sheet_name, current_idx, "option_a", row.get('Option A', ''))
     formatted_b = get_formatted_content(file_path, sheet_name, current_idx, "option_b", row.get('Option B', ''))
     formatted_c = get_formatted_content(file_path, sheet_name, current_idx, "option_c", row.get('Option C', ''))
@@ -3005,7 +3162,14 @@ def show_enhanced_question_interface():
     
     # Enhanced question card with formatted content
     # Render formatted question
+    # Render formatted question WITH image
     sl_no = row.get("Sl No", current_idx + 1)
+    
+    # Display image first (if available), then question
+    if image_url and str(image_url).strip() != "":
+        display_question_image(image_url)
+    
+    # Now render the question text
     render_formatted_content(formatted_question, sl_no)
     st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
     st.markdown("---")
@@ -3941,6 +4105,16 @@ def show_enhanced_detailed_analysis(res_df):
         
         # Get formatted content
         formatted_question = get_formatted_content(file_path, sheet_name, i, "question", row['Question'])
+        # NEW: Get image URL
+        image_url = None
+        if 'Question Image' in row:
+            image_url = row['Question Image']
+            # Check for formatted image URL
+            image_key = get_question_key(file_path, sheet_name, i, "question_image")
+            formatted_questions = load_formatted_questions()
+            formatted_image_url = formatted_questions.get(image_key)
+            if formatted_image_url:
+                image_url = formatted_image_url
         formatted_a = get_formatted_content(file_path, sheet_name, i, "option_a", row.get('Option A', ''))
         formatted_b = get_formatted_content(file_path, sheet_name, i, "option_b", row.get('Option B', ''))
         formatted_c = get_formatted_content(file_path, sheet_name, i, "option_c", row.get('Option C', ''))
@@ -3985,6 +4159,10 @@ def show_enhanced_detailed_analysis(res_df):
             </div>
             """, unsafe_allow_html=True)
             
+             # Display image if available
+            if image_url and str(image_url).strip() != "":
+                display_question_image(image_url, f"Question {i+1} Image")
+                
             # Question text
             st.markdown("**Question:**")
             sl_no = row.get("Sl No", i + 1)
@@ -4238,7 +4416,8 @@ def load_questions(file_path):
         essential_columns = [
             'Question', 'Option A', 'Option B', 'Option C', 'Option D',
             'Explanation', 'Correct Option (Final Answer Key)',
-            'Correct option (Provisional Answer Key)', 'Marks', 'Subject', 'Exam Year'
+            'Correct option (Provisional Answer Key)', 'Marks', 'Subject', 'Exam Year',
+            'Question Image'  # ADD THIS LINE
         ]
         
         # Read only necessary columns
