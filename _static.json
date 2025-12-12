@@ -1,0 +1,11 @@
+{
+  "routes": [
+    {
+      "src": "/\\.well-known/(.*)",
+      "dest": "/public/.well-known/$1",
+      "headers": {
+        "Content-Type": "application/json"
+      }
+    }
+  ]
+}
