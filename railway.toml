@@ -1,0 +1,10 @@
+[build]
+builder = "NIXPACKS"
+
+[deploy]
+start = "streamlit run streamlit_app.py"
+
+[[plugins]]
+name = "static"
+directory = ".well-known"
+mount_path = "/.well-known"
