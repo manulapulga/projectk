@@ -6,3 +6,5 @@ streamlit-autorefresh>=0.1.6
 psutil>=5.9.0
 firebase-admin>=6.0.0
 google-cloud-firestore>=2.0.0
+fastapi
+uvicorn

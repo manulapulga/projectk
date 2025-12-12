@@ -2,10 +2,4 @@
 builder = "NIXPACKS"
 
 [deploy]
-start = "streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0"
-
-# Force Railway to serve static files from /public
-[[plugins]]
-name = "static"
-directory = "public"
-mount_path = "/"
+start = "bash start.sh"
