@@ -2334,7 +2334,11 @@ def update_user_progress(test_results):
             "option_c": str(row.get('Option C', '')),
             "option_d": str(row.get('Option D', '')),
             "explanation": str(row.get('Explanation', '')),
-            "correct_option": str(row.get('Correct Option (Final Answer Key)', ''))  # Add this
+            "correct_option": str(row.get('Correct Option (Final Answer Key)', '')),
+            # ✅ ADD THESE FIELDS
+            "question_image": str(row.get('Question Image', '')),
+            "explanation_image": str(row.get('Explanation Image', '')),
+            "explanation_media": str(row.get('Explanation Media', ''))# Add this
         })
 
     test_entry = {
@@ -4083,7 +4087,11 @@ def show_retest_config(original_test):
             'Option C': q_data.get('option_c', ''),
             'Option D': q_data.get('option_d', ''),
             'Explanation': q_data.get('explanation', ''),
-            'Correct Option (Final Answer Key)': q_data.get('correct_option', '')
+            'Correct Option (Final Answer Key)': q_data.get('correct_option', ''),
+            # ✅ Media fields for retest
+            'Question Image': q_data.get('question_image', ''),
+            'Explanation Image': q_data.get('explanation_image', ''),
+            'Explanation Media': q_data.get('explanation_media', '')
         })
     
     df_questions = pd.DataFrame(questions_list)
