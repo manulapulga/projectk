@@ -1,0 +1,3 @@
+:80
+root * .
+file_server browse
