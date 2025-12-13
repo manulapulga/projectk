@@ -17,63 +17,7 @@ import streamlit.components.v1 as components
 import firebase_admin
 from firebase_admin import credentials, firestore
 
-from flask import Response, request
 
-
-# Add this function to serve assetlinks.json with correct headers
-def serve_assetlinks():
-    """Serve assetlinks.json with correct Content-Type header."""
-    
-    # Check if requesting assetlinks.json
-    if request.path == '/.well-known/assetlinks.json':
-        data = [{
-            "relation": ["delegate_permission/common.handle_all_urls"],
-            "target": {
-                "namespace": "android_app",
-                "package_name": "app.litmusq.android",
-                "sha256_cert_fingerprints": [
-                    "A4702D5462EC3F8E951A0174AAA2A44EF76518148CEEA9BC9590D46907E20B36"
-                ]
-            }
-        }]
-        
-        # Return with correct Content-Type
-        return Response(
-            json.dumps(data, indent=2),
-            mimetype='application/json',
-            headers={
-                'Access-Control-Allow-Origin': '*'
-            }
-        )
-    
-    # For Streamlit to continue normally
-    return None
-
-def setup_assetlinks():
-    """Create assetlinks.json for TWA verification."""
-    data = [{
-        "relation": ["delegate_permission/common.handle_all_urls"],
-        "target": {
-            "namespace": "android_app",
-            "package_name": "app.litmusq.android",
-            "sha256_cert_fingerprints": [
-                "A4702D5462EC3F8E951A0174AAA2A44EF76518148CEEA9BC9590D46907E20B36"
-            ]
-        }
-    }]
-    
-    # Create directory
-    Path(".well-known").mkdir(exist_ok=True)
-    
-    # Write file
-    with open(".well-known/assetlinks.json", "w") as f:
-        json.dump(data, f, indent=2)
-    
-    print("✅ Assetlinks.json created with package name: app.litmusq.android")
-    return True
-
-# Call the function
-setup_assetlinks()
 
 # =============================
 # Configuration & Theme
@@ -109,7 +53,7 @@ def initialize_firebase():
 
             # 1) Streamlit Cloud: st.secrets['firebase']
             try:
-                if "firebase" in st.secrets:
+                if "firebase" in st.secrets and isinstance(st.secrets["firebase"], dict):
                     firebase_config = dict(st.secrets["firebase"])
             except Exception:
                 pass
@@ -4857,25 +4801,14 @@ def optimized_show_folder_view():
 # =============================
 # Main App
 # =============================
-# In your main() function, add this at the beginning:
 def main():
-    # Serve assetlinks.json if requested
-    response = serve_assetlinks()
-    if response:
-        return response
-        
     st.set_page_config(
         page_title="LitmusQ - Professional MCQ Platform",
         page_icon="🧪",
         layout="wide",
         initial_sidebar_state="expanded"
     )
-    st.markdown("""
-    <!-- Digital Asset Links for Android TWA -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="google-play-app" content="app-id=app.litmusq.android">
-    <meta name="assetlinks" content='[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"app.litmusq.android","sha256_cert_fingerprints":["A4702D5462EC3F8E951A0174AAA2A44EF76518148CEEA9BC9590D46907E20B36"]}}]'>
-    """, unsafe_allow_html=True)
+    
     # Inject custom CSS
     inject_custom_css()
     
