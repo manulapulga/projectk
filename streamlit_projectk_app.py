@@ -51,7 +51,7 @@ def initialize_firebase():
 
             # 1) Streamlit Cloud: st.secrets['firebase']
             try:
-                if "firebase" in st.secrets and isinstance(st.secrets["firebase"], dict):
+                if "firebase" in st.secrets:
                     firebase_config = dict(st.secrets["firebase"])
             except Exception:
                 pass
