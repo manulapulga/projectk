@@ -1,17 +1,14 @@
 {
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "python -m pip install --upgrade pip && pip install -r requirements.txt"
+    "buildCommand": "mkdir -p .well-known && echo '[{\"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": {\"namespace\": \"android_app\", \"package_name\": \"app.litmusq.android\", \"sha256_cert_fingerprints\": [\"A4702D5462EC3F8E951A0174AAA2A44EF76518148CEEA9BC9590D46907E20B36\"]}}]' > .well-known/assetlinks.json"
   },
   "routes": [
     {
-      "handle": "filesystem",
-      "src": "/.well-known/(.*)"
+      "src": "/.well-known/assetlinks.json",
+      "headers": {
+        "Content-Type": "application/json"
+      }
     }
-  ],
-  "headers": {
-    "/.well-known/assetlinks.json": {
-      "Content-Type": "application/json"
-    }
-  }
+  ]
 }
