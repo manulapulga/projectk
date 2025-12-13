@@ -1,5 +1,8 @@
-# This file tells Railway (via Nixpacks) to use the Python buildpack
-# No specific packages are required to run the standard library's http.server
-
-# To ensure a clean environment, you can specify the base language
-python
+streamlit>=1.28.0
+pandas>=2.0.0
+numpy>=1.21.0
+openpyxl>=3.1.0
+streamlit-autorefresh>=0.1.6
+psutil>=5.9.0
+firebase-admin>=6.0.0
+google-cloud-firestore>=2.0.0
