@@ -17,7 +17,54 @@ import streamlit.components.v1 as components
 import firebase_admin
 from firebase_admin import credentials, firestore
 
+from flask import request, Response
 
+# Add this function
+def handle_assetlinks_request():
+    """Handle Digital Asset Links verification requests."""
+    
+    # Check path
+    path = request.path if hasattr(request, 'path') else ''
+    
+    # Handle /assetlinks.json
+    if path == '/assetlinks.json':
+        data = [{
+            "relation": ["delegate_permission/common.handle_all_urls"],
+            "target": {
+                "namespace": "android_app",
+                "package_name": "app.litmusq.android",
+                "sha256_cert_fingerprints": [
+                    "A4702D5462EC3F8E951A0174AAA2A44EF76518148CEEA9BC9590D46907E20B36"
+                ]
+            }
+        }]
+        
+        return Response(
+            json.dumps(data, indent=2),
+            mimetype='application/json',
+            headers={
+                'Access-Control-Allow-Origin': '*',
+                'Cache-Control': 'public, max-age=3600'
+            }
+        )
+    
+    # Handle query parameter fallback
+    import streamlit as st
+    if st.query_params.get("assetlinks") == "true":
+        data = [{
+            "relation": ["delegate_permission/common.handle_all_urls"],
+            "target": {
+                "namespace": "android_app",
+                "package_name": "app.litmusq.android",
+                "sha256_cert_fingerprints": [
+                    "A4702D5462EC3F8E951A0174AAA2A44EF76518148CEEA9BC9590D46907E20B36"
+                ]
+            }
+        }]
+        st.json(data)
+        st.stop()
+    
+    return None
 
 # =============================
 # Configuration & Theme
@@ -4802,6 +4849,10 @@ def optimized_show_folder_view():
 # Main App
 # =============================
 def main():
+    # Handle assetlinks requests
+    response = handle_assetlinks_request()
+    if response:
+        return response
     st.set_page_config(
         page_title="LitmusQ - Professional MCQ Platform",
         page_icon="🧪",
