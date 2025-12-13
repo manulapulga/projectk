@@ -1,9 +1,0 @@
-:{$PORT} {
-  # Rule 1: Route TWA assetlinks.json to the static file server
-  handle_path /.well-known/* {
-    reverse_proxy asset-link-server:{$PORT}
-  }
-
-  # Rule 2: Route all other traffic to the main Streamlit application
-  reverse_proxy streamlit:{$PORT}
-}
