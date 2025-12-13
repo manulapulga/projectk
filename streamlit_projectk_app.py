@@ -1,24 +1,53 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-from datetime import datetime, timedelta
 import os
-from pathlib import Path
 import json
-from streamlit_autorefresh import st_autorefresh
-import psutil
+import re
+from pathlib import Path
+from datetime import datetime, timedelta
 from functools import lru_cache
+
+import numpy as np
+import pandas as pd
+import psutil
+import pytz
+
+import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 import streamlit.components.v1 as components
+
 import firebase_admin
 from firebase_admin import credentials, firestore
-import json
-from datetime import datetime
-import pytz
-import re
-# Add this right after imports
-import json
-import os
-from pathlib import Path
+
+from flask import Response, request
+
+
+# Add this function to serve assetlinks.json with correct headers
+def serve_assetlinks():
+    """Serve assetlinks.json with correct Content-Type header."""
+    
+    # Check if requesting assetlinks.json
+    if request.path == '/.well-known/assetlinks.json':
+        data = [{
+            "relation": ["delegate_permission/common.handle_all_urls"],
+            "target": {
+                "namespace": "android_app",
+                "package_name": "app.litmusq.android",
+                "sha256_cert_fingerprints": [
+                    "A4702D5462EC3F8E951A0174AAA2A44EF76518148CEEA9BC9590D46907E20B36"
+                ]
+            }
+        }]
+        
+        # Return with correct Content-Type
+        return Response(
+            json.dumps(data, indent=2),
+            mimetype='application/json',
+            headers={
+                'Access-Control-Allow-Origin': '*'
+            }
+        )
+    
+    # For Streamlit to continue normally
+    return None
 
 def setup_assetlinks():
     """Create assetlinks.json for TWA verification."""
@@ -4828,7 +4857,13 @@ def optimized_show_folder_view():
 # =============================
 # Main App
 # =============================
+# In your main() function, add this at the beginning:
 def main():
+    # Serve assetlinks.json if requested
+    response = serve_assetlinks()
+    if response:
+        return response
+        
     st.set_page_config(
         page_title="LitmusQ - Professional MCQ Platform",
         page_icon="🧪",
