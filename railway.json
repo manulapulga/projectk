@@ -1,14 +1,20 @@
 {
+  "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "mkdir -p .well-known && echo '[{\"relation\": [\"delegate_permission/common.handle_all_urls\"], \"target\": {\"namespace\": \"android_app\", \"package_name\": \"app.litmusq.android\", \"sha256_cert_fingerprints\": [\"A4702D5462EC3F8E951A0174AAA2A44EF76518148CEEA9BC9590D46907E20B36\"]}}]' > .well-known/assetlinks.json"
+    "buildCommand": "pip install -r requirements.txt"
+  },
+  "deploy": {
+    "startCommand": "streamlit run streamlit_projectk_app.py --server.port $PORT --server.address 0.0.0.0",
+    "healthcheckPath": "/",
+    "healthcheckTimeout": 180
   },
   "routes": [
     {
       "src": "/.well-known/assetlinks.json",
-      "headers": {
-        "Content-Type": "application/json"
-      }
+      "dest": "/.well-known/assetlinks.json",
+      "methods": ["GET", "HEAD"],
+      "continue": false
     }
   ]
 }
