@@ -1,22 +1,20 @@
-import os
-import json
-import re
-from pathlib import Path
-from datetime import datetime, timedelta
-from functools import lru_cache
-
-import numpy as np
-import pandas as pd
-import psutil
-import pytz
-
 import streamlit as st
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import os
+from pathlib import Path
+import json
 from streamlit_autorefresh import st_autorefresh
+import psutil
+from functools import lru_cache
 import streamlit.components.v1 as components
-
 import firebase_admin
 from firebase_admin import credentials, firestore
-
+import json
+from datetime import datetime
+import pytz
+import re
 
 
 # =============================
@@ -53,7 +51,7 @@ def initialize_firebase():
 
             # 1) Streamlit Cloud: st.secrets['firebase']
             try:
-                if "firebase" in st.secrets and isinstance(st.secrets["firebase"], dict):
+                if "firebase" in st.secrets:
                     firebase_config = dict(st.secrets["firebase"])
             except Exception:
                 pass
