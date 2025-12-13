@@ -4797,8 +4797,285 @@ def optimized_show_folder_view():
     return safe_execute(show_folder_view_screen)
     
 # =============================
-# Main App
+# PWA Configuration
 # =============================
+# =============================
+# PWA Functions
+# =============================
+def inject_pwa_features():
+    """Inject all PWA-related HTML and JavaScript."""
+    inject_pwa_meta()
+    inject_pwa_scripts()
+    inject_install_prompt()
+
+def inject_pwa_meta():
+    """Inject PWA meta tags and manifest."""
+    st.markdown(f"""
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="{LITMUSQ_THEME['primary']}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="LitmusQ">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+    """, unsafe_allow_html=True)
+
+def inject_pwa_scripts():
+    """Inject PWA JavaScript."""
+    st.markdown("""
+    <script>
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+                .then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    
+                    // Check for updates every hour
+                    setInterval(() => {
+                        registration.update();
+                    }, 3600000);
+                })
+                .catch(function(error) {
+                    console.log('ServiceWorker registration failed: ', error);
+                });
+        });
+    }
+    
+    // Online/offline detection
+    function updateOnlineStatus() {
+        if (!navigator.onLine) {
+            document.body.classList.add('offline');
+            console.log('App is offline');
+        } else {
+            document.body.classList.remove('offline');
+            console.log('App is online');
+        }
+    }
+    
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+    
+    // Detect standalone mode
+    function detectStandaloneMode() {
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            document.body.classList.add('standalone');
+            console.log('Running in PWA standalone mode');
+        } else {
+            document.body.classList.remove('standalone');
+        }
+    }
+    
+    window.addEventListener('load', detectStandaloneMode);
+    window.matchMedia('(display-mode: standalone)').addListener(detectStandaloneMode);
+    </script>
+    """, unsafe_allow_html=True)
+
+def inject_install_prompt():
+    """Inject install prompt and banner."""
+    st.markdown("""
+    <div id="pwa-install-banner" style="display: none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: linear-gradient(135deg, #21918e, #dc56e8); color: white; border-radius: 10px; margin: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <div style="flex: 1; padding-right: 15px;">
+                <div style="font-weight: bold; font-size: 1rem;">📱 Install LitmusQ</div>
+                <div style="font-size: 0.8rem; opacity: 0.9;">Get the best experience with our app!</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="installPWA()" style="background: white; color: #21918e; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">
+                    Install
+                </button>
+                <button onclick="dismissInstallBanner()" style="background: transparent; color: white; border: 1px solid white; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.9rem;">
+                    Later
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    let deferredPrompt;
+    const installBanner = document.getElementById('pwa-install-banner');
+    const bannerDismissed = localStorage.getItem('pwaBannerDismissed');
+    
+    // Show install banner if not already installed and not dismissed
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Don't show if already installed or dismissed
+        if (!window.matchMedia('(display-mode: standalone)').matches && !bannerDismissed) {
+            setTimeout(() => {
+                installBanner.style.display = 'block';
+            }, 3000); // Show after 3 seconds
+        }
+    });
+    
+    function installPWA() {
+        if (!deferredPrompt) return;
+        
+        deferredPrompt.prompt();
+        
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+                installBanner.style.display = 'none';
+            }
+            deferredPrompt = null;
+        });
+    }
+    
+    function dismissInstallBanner() {
+        installBanner.style.display = 'none';
+        localStorage.setItem('pwaBannerDismissed', 'true');
+    }
+    
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+        console.log('Already installed as PWA');
+    }
+    </script>
+    """, unsafe_allow_html=True)
+
+def inject_pwa_css():
+    """Inject PWA-specific CSS."""
+    st.markdown(f"""
+    <style>
+    /* PWA-specific styles */
+    @media (display-mode: standalone) {{
+        /* Adjust for notch/safe areas */
+        .block-container {{
+            padding-top: calc(env(safe-area-inset-top) + 0.1rem) !important;
+            padding-bottom: calc(env(safe-area-inset-bottom) + 80px) !important;
+            padding-left: calc(env(safe-area-inset-left) + 0.5rem) !important;
+            padding-right: calc(env(safe-area-inset-right) + 0.5rem) !important;
+        }}
+        
+        .fixed-quiz-header {{
+            top: env(safe-area-inset-top) !important;
+            padding-top: calc(env(safe-area-inset-top) + 0.5rem) !important;
+        }}
+        
+        .fixed-quiz-footer {{
+            bottom: env(safe-area-inset-bottom) !important;
+            padding-bottom: calc(env(safe-area-inset-bottom) + 0.8rem) !important;
+        }}
+        
+        /* Hide scrollbars in standalone mode */
+        ::-webkit-scrollbar {{
+            display: none;
+        }}
+    }}
+    
+    /* Offline indicator */
+    .offline-indicator {{
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: #dc56e8;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        z-index: 10001;
+        display: none;
+    }}
+    
+    body.offline .offline-indicator {{
+        display: block;
+    }}
+    
+    /* Better touch targets for mobile PWA */
+    @media (max-width: 768px) {{
+        button, [role="button"] {{
+            min-height: 44px !important;
+            min-width: 44px !important;
+            touch-action: manipulation;
+        }}
+        
+        input, select, textarea {{
+            font-size: 16px !important; /* Prevents iOS zoom */
+        }}
+        
+        /* Prevent text selection on mobile */
+        * {{
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }}
+        
+        /* Allow text selection in input fields */
+        input, textarea {{
+            -webkit-user-select: text;
+            user-select: text;
+        }}
+    }}
+    
+    /* Splash screen animation */
+    @keyframes fadeIn {{
+        from {{ opacity: 0; }}
+        to {{ opacity: 1; }}
+    }}
+    
+    .splash-screen {{
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, #21918e, #dc56e8);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease-in;
+    }}
+    
+    .splash-screen h1 {{
+        color: white;
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+    }}
+    
+    .splash-screen .spinner {{
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(255,255,255,0.3);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }}
+    
+    @keyframes spin {{
+        to {{ transform: rotate(360deg); }}
+    }}
+    </style>
+    
+    <div class="offline-indicator">📶 Offline</div>
+    
+    <div id="splash-screen" class="splash-screen">
+        <h1>🧪 LitmusQ</h1>
+        <div class="spinner"></div>
+    </div>
+    
+    <script>
+    // Hide splash screen when page loads
+    window.addEventListener('load', function() {{
+        setTimeout(function() {{
+            document.getElementById('splash-screen').style.display = 'none';
+        }}, 1000);
+    }});
+    </script>
+    """, unsafe_allow_html=True)
+    
+    
+
+# =============================
+# Update Main Function
+# =============================
+# In your main() function, add after set_page_config():
 def main():
     st.set_page_config(
         page_title="LitmusQ - Professional MCQ Platform",
@@ -4807,9 +5084,13 @@ def main():
         initial_sidebar_state="expanded"
     )
     
-    # Inject custom CSS
-    inject_custom_css()
+    # Inject PWA features
+    inject_pwa_features()
+    inject_pwa_css()
     
+    # Rest of your existing code...
+    inject_custom_css()
+
     # Initialize Firebase
     global db
     if 'db' not in globals():
@@ -4935,6 +5216,7 @@ def main():
         st.session_state.current_screen = "home"
         optimize_session_state()
         st.rerun()
+
 
 if __name__ == "__main__":
     main()
