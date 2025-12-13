@@ -1,0 +1,5 @@
+# This file tells Railway (via Nixpacks) to use the Python buildpack
+# No specific packages are required to run the standard library's http.server
+
+# To ensure a clean environment, you can specify the base language
+python
