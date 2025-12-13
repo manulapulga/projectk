@@ -15,7 +15,36 @@ import json
 from datetime import datetime
 import pytz
 import re
+# Add this right after imports
+import json
+import os
+from pathlib import Path
 
+def setup_assetlinks():
+    """Create assetlinks.json for TWA verification."""
+    data = [{
+        "relation": ["delegate_permission/common.handle_all_urls"],
+        "target": {
+            "namespace": "android_app",
+            "package_name": "app.litmusq.android",
+            "sha256_cert_fingerprints": [
+                "A4702D5462EC3F8E951A0174AAA2A44EF76518148CEEA9BC9590D46907E20B36"
+            ]
+        }
+    }]
+    
+    # Create directory
+    Path(".well-known").mkdir(exist_ok=True)
+    
+    # Write file
+    with open(".well-known/assetlinks.json", "w") as f:
+        json.dump(data, f, indent=2)
+    
+    print("✅ Assetlinks.json created with package name: app.litmusq.android")
+    return True
+
+# Call the function
+setup_assetlinks()
 
 # =============================
 # Configuration & Theme
@@ -4806,7 +4835,12 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded"
     )
-    
+    st.markdown("""
+    <!-- Digital Asset Links for Android TWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="google-play-app" content="app-id=app.litmusq.android">
+    <meta name="assetlinks" content='[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"app.litmusq.android","sha256_cert_fingerprints":["A4702D5462EC3F8E951A0174AAA2A44EF76518148CEEA9BC9590D46907E20B36"]}}]'>
+    """, unsafe_allow_html=True)
     # Inject custom CSS
     inject_custom_css()
     
