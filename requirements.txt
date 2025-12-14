@@ -7,3 +7,5 @@ psutil>=5.9.0
 firebase-admin>=6.0.0
 google-cloud-firestore>=2.0.0
 pytz>=2023.0
+fastapi
+uvicorn
