@@ -1948,8 +1948,9 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         )
         
         # Preview
+        
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
-        st.markdown("👁️**Live Preview**")
+        st.markdown("👁️**Live Previe**")
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         # Preview image
         if edited_image and str(edited_image).strip() != "":
@@ -1977,13 +1978,11 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         
         st.markdown("<div style='margin-top: 0.5rem;'></div>", unsafe_allow_html=True)
         # Create three columns for action buttons INSIDE THE FORM
-        col_save, col_reset, col_clear = st.columns(3)
-        with col_save:
-            save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
-        with col_reset:
-            reset_btn = st.form_submit_button("🔁 Reset to Original", use_container_width=True, type="secondary")
-        with col_clear:
-            clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True, type="secondary")
+        save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
+        reset_btn = st.form_submit_button("🔁 Reset to Original", use_container_width=True, type="secondary")
+        clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True, type="secondary")
+        # ✅ SAFETY BUTTON (never used, but prevents warning)
+        _ = st.form_submit_button("hidden_guard", disabled=True)
     
     # Handle button actions after the form
     if save_btn:
