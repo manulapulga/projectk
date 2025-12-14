@@ -1981,6 +1981,8 @@ def show_question_editing_interface(question_row, question_index, file_path, she
         save_btn = st.form_submit_button("💾 Save Changes", use_container_width=True, type="primary")
         reset_btn = st.form_submit_button("🔁 Reset to Original", use_container_width=True, type="secondary")
         clear_btn = st.form_submit_button("🗑️ Clear Formatting", use_container_width=True, type="secondary")
+        # ✅ SAFETY BUTTON (never used, but prevents warning)
+        _ = st.form_submit_button("hidden_guard", disabled=True)
     
     # Handle button actions after the form
     if save_btn:
