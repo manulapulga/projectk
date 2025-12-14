@@ -3493,7 +3493,7 @@ def show_question_palette():
         <span>🟩: Answered & marked for review</span>
     </div>
     <div class="legend-item">
-        <div style='margin-top: 3.5rem;'></div>
+        <div style='margin-top: 1rem;'></div>
     </div>
     """, unsafe_allow_html=True)
     
