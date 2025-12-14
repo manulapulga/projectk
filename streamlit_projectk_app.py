@@ -3494,7 +3494,7 @@ def show_question_palette():
     </div>
     """, unsafe_allow_html=True)
     
-
+    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     # Question palette grid
     total_questions = len(st.session_state.quiz_questions)
     if total_questions == 0:
