@@ -3491,6 +3491,7 @@ def show_question_palette():
     </div>
     <div class="legend-item">
         <span>🟩: Answered & marked for review</span>
+        <div style='margin-top: 3.5rem;'></div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -3502,7 +3503,6 @@ def show_question_palette():
         return
     
     # ----- 5 Column Question Palette -----
-    st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
     cols = st.sidebar.columns(5)
     
     for q_num in range(total_questions):
