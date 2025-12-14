@@ -9,3 +9,4 @@ google-cloud-firestore>=2.0.0
 pytz>=2023.0
 fastapi
 uvicorn
+httpx

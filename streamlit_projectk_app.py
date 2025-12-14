@@ -3501,12 +3501,15 @@ def show_question_palette():
         st.sidebar.warning("No questions loaded")
         return
     
-    # ----- Single Column Question Palette -----
+    # ----- 5 Column Question Palette -----
+    cols = st.sidebar.columns(5)
+    
     for q_num in range(total_questions):
+    
+        col = cols[q_num % 5]   # distribute buttons across 5 columns
     
         # emoji, number, tooltip
         emoji, number, tooltip = get_question_display_info(q_num)
-    
         button_text = f"{emoji} {number}".strip()
     
         # highlight current question
@@ -3548,8 +3551,8 @@ def show_question_palette():
         """
         st.sidebar.markdown(button_style, unsafe_allow_html=True)
     
-        # Render button
-        if st.sidebar.button(
+        # Render button inside column
+        if col.button(
             button_text,
             key=f"palette_{q_num}",
             use_container_width=True,
@@ -3559,6 +3562,7 @@ def show_question_palette():
             if st.session_state.question_status[q_num]['status'] == 'not_visited':
                 update_question_status(q_num, 'not_answered')
             st.rerun()
+
 
                         
 def live_timer_component(seconds_left: int):
