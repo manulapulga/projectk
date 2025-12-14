@@ -1,13 +1,11 @@
 [
   {
-    "relation": [
-      "delegate_permission/common.handle_all_urls"
-    ],
+    "relation": ["delegate_permission/common.handle_all_urls"],
     "target": {
       "namespace": "android_app",
-      "package_name": "com.example.litmusq",
+      "package_name": "com.litmusq.app",
       "sha256_cert_fingerprints": [
-        "AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99:AA:BB:CC:DD:EE:FF:00:11:22:33:44:55:66:77:88:99"
+        "D1:25:09:BA:7A:9A:07:34:7A:34:09:80:0C:CB:5A:ED:D1:7B:19:D8:64:41:00:0F:2A:93:F1:07:D4:53:0E:E1"
       ]
     }
   }
